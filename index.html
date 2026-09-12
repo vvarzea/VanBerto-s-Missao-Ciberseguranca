@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+  <meta name="description" content="VanBerto's — Missão Cibersegurança: jogo educativo sobre segurança online para crianças." />
+  <meta name="theme-color" content="#ff6b35" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="VanBerto's" />
+  <title>VanBerto's — Missão Cibersegurança</title>
+  <link rel="stylesheet" href="dia-crianca.css" />
+</head>
+<body>
+
+  <div id="game"></div>
+
+  <!-- ═══════════════════════════════════════════
+       MENU PRINCIPAL
+  ═══════════════════════════════════════════ -->
+  <div id="startOverlay" class="overlay">
+    <div class="card">
+      <div class="card-seal" aria-hidden="true">🌟</div>
+      <h1>🛡️ VanBerto's — Missão Cibersegurança</h1>
+      <p class="sub"><strong>Professora:</strong> Vanda Várzea</p>
+      <p class="desc">
+        Ajuda o VanBerto's a recuperar as <strong>competências de Cibersegurança</strong>,
+        espalhadas por 4 mundos mágicos!<br>
+        Apanha itens pelo caminho e chega ao <strong>portal ✨</strong> para responder à pergunta.<br>
+        No fim de cada mundo espera-te um <strong>chefe</strong> — salta-lhe em cima 3 vezes para o derrotar!<br>
+        Clica em <strong>"Como jogar ❓"</strong> para ver tudo explicado!
+      </p>
+      <div class="name-row">
+        <label for="playerName">O teu nome:</label>
+        <input type="text" id="playerName" maxlength="20" placeholder="Escreve o teu nome…" autocomplete="off" />
+      </div>
+
+      <!-- MENU PRINCIPAL — grelha de opções -->
+      <div class="main-menu-grid">
+        <button id="btnStart" class="btn primary menu-tile">🚀<span>Nova Aventura</span></button>
+        <button id="btnOpenMap" class="btn menu-tile">🗺️<span>Mapa</span></button>
+        <button id="btnAchievements" class="btn menu-tile">🏆<span>Conquistas</span></button>
+        <button id="btnAlbum" class="btn menu-tile">📖<span>Álbum das Competências</span></button>
+        <button id="btnStats" class="btn menu-tile">📊<span>Estatísticas</span></button>
+        <button id="btnOptions" class="btn menu-tile">⚙️<span>Opções</span></button>
+        <button id="btnHow" class="btn menu-tile">❓<span>Como Jogar</span></button>
+        <button id="btnExitGame" class="btn menu-tile">🚪<span>Sair</span></button>
+      </div>
+
+      <div class="row">
+        <button id="btnMute" class="btn">🔊 Som: ON</button>
+        <button id="btnTouchToggleStart" class="btn">📱 Botões: AUTO</button>
+        <button id="btnFullscreen" class="btn">⛶ Ecrã todo</button>
+      </div>
+      <p class="tiny">
+        PC: ← → para andar, ↑/Espaço para saltar e ↓/S para agachar.<br>
+        Tablet/telemóvel: mantém o dedo no lado esquerdo/direito para andar e faz um toque rápido para saltar.
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       NÍVEL DE DIFICULDADE — 3º Ciclo / Secundário
+       Pedido do Berto: o mesmo jogo serve turmas de idades diferentes.
+       Mostrado sempre que se clica em "Nova Aventura" (ver btnStart em
+       dia-crianca.js), antes de reiniciar o progresso e abrir o mapa.
+       Também pode ser mudado mais tarde em Opções (optBtnDifficulty),
+       sem ser preciso recomeçar tudo.
+  ═══════════════════════════════════════════ -->
+  <div id="difficultyOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Escolher nível de dificuldade">
+    <div class="card">
+      <h1>🎯 Escolhe o nível</h1>
+      <p class="desc">Isto ajusta as perguntas do quiz e o desafio dos combates de chefe.</p>
+      <div class="main-menu-grid">
+        <button id="btnDiff3Ciclo" class="btn primary menu-tile">🎒<span>3º Ciclo</span></button>
+        <button id="btnDiffSecundario" class="btn menu-tile">🎓<span>Secundário</span></button>
+      </div>
+      <p class="tiny">🎒 3º Ciclo: ritmo habitual.<br>🎓 Secundário: perguntas mais aprofundadas, chefes mais rápidos e menos vidas.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       HISTÓRIA PRINCIPAL — introdução narrativa
+  ═══════════════════════════════════════════ -->
+  <div id="mainStoryOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="História principal">
+    <div class="card history-card main-story-card">
+      <div class="main-story-robot">
+        <img src="vanberto_voar.png" alt="VanBerto's" class="main-story-robot-img" />
+        <div class="main-story-particles" aria-hidden="true"></div>
+      </div>
+      <div class="history-header">
+        <span class="history-icon">🌟</span>
+        <div>
+          <h2>VanBerto's precisa de ajuda!</h2>
+          <p class="history-subtitle">A missão começa agora</p>
+        </div>
+      </div>
+      <p class="history-text">Olá! Eu sou o VanBerto's! Algo terrível aconteceu! As competências de Cibersegurança desapareceram do mundo digital e foram espalhadas por 4 mundos mágicos. Preciso da tua ajuda para as recuperar todas e devolver a internet segura a todas as crianças!</p>
+      <div class="row">
+        <button id="btnMainStoryContinue" class="btn primary">Vamos lá! 🗺️ ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MAPA DA AVENTURA
+  ═══════════════════════════════════════════ -->
+  <div id="mapOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Mapa da Aventura">
+    <div class="card map-card">
+      <div class="card-seal" aria-hidden="true">🗺️</div>
+      <h2>🗺️ Mapa da Aventura</h2>
+      <p class="map-progress-line">
+        <span id="mapProgressPct">0%</span> concluído ·
+        <span id="mapStarsTotal">0</span> ⭐ obtidas
+      </p>
+      <div class="map-progress-track"><div id="mapProgressFill" class="map-progress-fill"></div></div>
+
+      <div id="mapRegionsGrid" class="map-regions-grid"><!-- preenchido via JS --></div>
+
+      <p class="tiny map-hint">💡 Toca numa região desbloqueada para começar esse troço da aventura.</p>
+      <div class="row">
+        <button id="btnCloseMap" class="btn primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="worldMapOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Mapa do Mundo">
+    <div class="world-map-panel" id="worldMapPanel">
+      <button type="button" id="btnBackToMap" class="world-map-back" aria-label="Voltar ao mapa">← Mundos</button>
+      <div class="world-map-title">
+        <div class="world-map-icon" id="worldMapIcon" aria-hidden="true"></div>
+        <div class="world-map-text">
+          <h2 id="worldMapName"></h2>
+          <p id="worldMapSub"></p>
+        </div>
+      </div>
+      <div class="world-map-progress" id="worldMapProgress"></div>
+      <div id="worldMapNodes" class="world-map-nodes"><!-- preenchido via JS --></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       CONQUISTAS
+  ═══════════════════════════════════════════ -->
+  <div id="achievementsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Conquistas">
+    <div class="card achievements-card">
+      <div class="card-seal" aria-hidden="true">🏆</div>
+      <h2>🏆 Conquistas</h2>
+      <p class="map-progress-line">
+        Desbloqueadas: <span id="achievementsCounter" style="color:#ffd700;">0/7</span>
+      </p>
+      <div id="achievementsGrid" class="achievements-grid"><!-- preenchido via JS --></div>
+      <div class="row">
+        <button id="btnCloseAchievements" class="btn primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ÁLBUM DOS DIREITOS
+  ═══════════════════════════════════════════ -->
+  <div id="albumOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Álbum das Competências">
+    <div class="card album-card-outer">
+      <div class="card-seal" aria-hidden="true">📖</div>
+      <h2>📖 Álbum das Competências</h2>
+      <p class="map-progress-line">
+        Coleção: <span id="albumProgressPct" style="color:#ffd700;">0%</span> concluída
+      </p>
+      <div class="map-progress-track"><div id="albumProgressFill" class="map-progress-fill"></div></div>
+      <div id="albumGrid" class="album-grid"><!-- preenchido via JS --></div>
+      <div class="row">
+        <button id="btnCloseAlbum" class="btn primary">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ESTATÍSTICAS
+  ═══════════════════════════════════════════ -->
+  <div id="statsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Estatísticas">
+    <div class="card stats-card">
+      <div class="card-seal" aria-hidden="true">📊</div>
+      <h2>📊 As Tuas Estatísticas</h2>
+      <div id="statsContent" class="stats-content"><!-- preenchido via JS --></div>
+      <div class="row">
+        <button id="btnCloseStats" class="btn primary">Fechar</button>
+        <button id="btnResetStats" class="btn stats-reset-btn">🗑️ Limpar tudo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       OPÇÕES
+  ═══════════════════════════════════════════ -->
+  <div id="optionsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Opções">
+    <div class="card options-card">
+      <div class="card-seal" aria-hidden="true">⚙️</div>
+      <h2>⚙️ Opções</h2>
+
+      <div class="options-section">
+        <p class="options-section-title">🔊 Áudio</p>
+        <label class="options-toggle-row">
+          <span>Som do jogo</span>
+          <button id="optBtnSound" class="option-toggle-btn">🔊 ON</button>
+        </label>
+      </div>
+
+      <div class="options-section">
+        <p class="options-section-title">🎯 Dificuldade</p>
+        <label class="options-toggle-row">
+          <span>Nível (perguntas do quiz e desafio dos chefes)</span>
+          <button id="optBtnDifficulty" class="option-toggle-btn">🎒 3º Ciclo</button>
+        </label>
+        <p class="tiny">Só faz efeito a partir do próximo combate de chefe/quiz — não interrompe o que já estás a jogar.</p>
+      </div>
+
+      <div class="options-section">
+        <p class="options-section-title">♿ Acessibilidade</p>
+        <label class="options-toggle-row">
+          <span>Alto Contraste (também tecla <kbd>H</kbd>)</span>
+          <button id="optBtnHC" class="option-toggle-btn">⬛ OFF</button>
+        </label>
+        <label class="options-toggle-row">
+          <span>Botões tácteis (móvel)</span>
+          <button id="optBtnTouch" class="option-toggle-btn">📱 AUTO</button>
+        </label>
+      </div>
+
+      <div class="options-section">
+        <p class="options-section-title">🖥️ Ecrã</p>
+        <label class="options-toggle-row">
+          <span>Ecrã completo (também tecla <kbd>F</kbd>)</span>
+          <button id="optBtnFS" class="option-toggle-btn">⛶ Entrar</button>
+        </label>
+      </div>
+
+      <div class="options-section">
+        <p class="options-section-title">📋 Atalhos de teclado</p>
+        <div class="options-keys-grid">
+          <span><kbd>← →</kbd></span><span>Mover o VanBerto's</span>
+          <span><kbd>↑</kbd> / <kbd>Espaço</kbd></span><span>Saltar</span>
+          <span><kbd>↓</kbd> / <kbd>S</kbd></span><span>Agachar</span>
+          <span><kbd>H</kbd></span><span>Alto Contraste</span>
+          <span><kbd>F</kbd></span><span>Ecrã completo</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btnCloseOptions" class="btn primary">Guardar e Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       CERTIFICADO FINAL
+  ═══════════════════════════════════════════ -->
+  <div id="certificateOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Certificado">
+    <div class="card certificate-card">
+      <div class="certificate-header">
+        <div class="certificate-seal">🏛️</div>
+        <h2 class="certificate-title">Certificado Oficial</h2>
+        <p class="certificate-subtitle">de Guardião da Cibersegurança</p>
+      </div>
+      <div class="certificate-robot">
+        <img src="vanberto_voar.png" alt="VanBerto's" class="certificate-robot-img" />
+      </div>
+      <div class="certificate-body">
+        <p class="certificate-text">Este certificado é atribuído a</p>
+        <p class="certificate-name" id="certPlayerName">Ciber-Herói</p>
+        <p class="certificate-text">que, com coragem, atenção e sabedoria, concluiu a missão das</p>
+        <p class="certificate-highlight">20 Competências de Cibersegurança</p>
+        <p class="certificate-text">tornando-se oficialmente Guardião da Cibersegurança.</p>
+      </div>
+      <div class="certificate-stats">
+        <div class="cert-stat"><span class="cert-stat-icon">🌟</span><strong id="certScore">0</strong><span>pontos</span></div>
+        <div class="cert-stat"><span class="cert-stat-icon">✅</span><strong id="certCorrect">—</strong><span>acertos</span></div>
+        <div class="cert-stat"><span class="cert-stat-icon">⭐</span><strong id="certStars">—</strong><span>estrelas</span></div>
+        <div class="cert-stat"><span class="cert-stat-icon">🏆</span><strong id="certMedal">—</strong><span>medalha</span></div>
+      </div>
+      <p class="certificate-date" id="certDate"></p>
+      <div class="certificate-signature">
+        <div class="cert-sig-line"></div>
+        <p class="cert-sig-name">Professora Vanda Várzea</p>
+        <p class="cert-sig-role">Professora de Tecnologias de Informação e Comunicação</p>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button id="btnCertBack" class="btn">← Voltar</button>
+        <button id="btnCertPrint" class="btn">🖨️ Imprimir</button>
+        <button id="btnCertRestart" class="btn primary">🔄 Jogar de novo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       "DIREITO RECUPERADO!" — popup curto
+  ═══════════════════════════════════════════ -->
+  <div id="rightRecoveredOverlay" aria-hidden="true">
+    <div id="rightRecoveredPanel">
+      <div class="rr-icon">✅</div>
+      <p class="rr-title">Competência recuperada!</p>
+      <p class="rr-name" id="rrName"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MENSAGEM DINÂMICA (feedback contextual)
+  ═══════════════════════════════════════════ -->
+  <div id="dynamicMsgOverlay" aria-hidden="true">
+    <div id="dynamicMsgPanel">
+      <p id="dynamicMsgText"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       COMO JOGAR
+  ═══════════════════════════════════════════ -->
+  <div id="howOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Como jogar">
+    <div class="card" style="max-height:88dvh;overflow-y:auto;padding:18px 20px;">
+      <h2 style="margin-bottom:4px;">Como jogar</h2>
+      <p style="font-size:11px;color:#ffd070;margin:0 0 12px;font-style:italic;">Lê com atenção antes de começar!</p>
+
+      <!-- OBJETIVO -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 4px;">🎯 Objetivo</p>
+      <p style="font-size:12px;color:#ffe0d0;margin:0 0 10px;line-height:1.6;">
+        Chega ao <strong>portal ✨</strong> no fim de cada nível. Quando chegares, aparece uma <strong>pergunta</strong> sobre Cibersegurança — responde corretamente para avançar! O jogo tem <strong>20 níveis</strong>.
+      </p>
+
+      <!-- VILÕES -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">👾 Os Vilões — cuidado com cada tipo!</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        <div style="background:rgba(255,30,0,0.12);border:1px solid rgba(255,80,80,0.3);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          🔴 <strong>Bola Vermelha — PEQUENA</strong> (mais fácil)<br>
+          <span style="color:#ffb0a0;">Patrulha uma zona pequena em vai-e-vem. Lenta e previsível — boa para treinar!</span>
+        </div>
+        <div style="background:rgba(0,60,220,0.14);border:1px solid rgba(80,130,255,0.3);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          🔵 <strong>Espinhoso Azul — MÉDIO</strong><br>
+          <span style="color:#b0c8ff;">Patrulha horizontalmente e salta de vez em quando. Mantém distância!</span>
+        </div>
+        <div style="background:rgba(0,160,0,0.12);border:1px solid rgba(80,200,80,0.3);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          🟢 <strong>Inseto Verde — GRANDE</strong> (mais perigoso)<br>
+          <span style="color:#a0ffb0;">Salta frequentemente e dirige-se ao jogador. Aparece nos níveis mais avançados — muito cuidado!</span>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#ffd070;margin:0 0 10px;font-style:italic;">
+        💡 Se apanhares a estrela ⭐, podes atropelar qualquer vilão durante 8 segundos!
+      </p>
+
+      <!-- ITENS -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">🎁 O que apanhar</p>
+      <ul style="margin:0 0 10px;padding-left:18px;font-size:12px;color:#ffe0d0;line-height:1.9;">
+        <li>⭐ <strong>Estrela</strong> — ativa o <strong>Star Power por 8s</strong>: atropela vilões e ganha pontos!</li>
+        <li>🛡️ <strong>Escudo</strong> — fica maior e <strong>invencível por 8s</strong>; absorve um golpe de vilão</li>
+        <li>🦅 <strong>Asas</strong> — permite <strong>saltar duas vezes</strong> no ar durante 10s (muito útil em plataformas altas!)</li>
+        <li>❤️ <strong>Coração</strong> — ganha <strong>+1 vida</strong> (máximo 5 vidas)</li>
+        <li>🔐 <strong>Chip de Segurança / 🔑 Chave / 🏅 Medalha</strong> — valem <strong>pontos bónus</strong></li>
+        <li>❓ <strong>Ponto de interrogação</strong> — esconde um item surpresa! Passa por cima para revelar</li>
+      </ul>
+      <p style="font-size:11px;color:#ffd070;margin:0 0 10px;font-style:italic;">
+        💡 Se perderes uma vida, <strong>todos os itens voltam a aparecer</strong> — podes apanhá-los de novo!
+      </p>
+
+      <!-- PLATAFORMAS ESPECIAIS -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">🟡 Plataformas especiais</p>
+      <ul style="margin:0 0 10px;padding-left:18px;font-size:12px;color:#ffe0d0;line-height:1.9;">
+        <li>↔ <strong>Setas horizontais</strong> — a plataforma move-se da esquerda para a direita</li>
+        <li>↕ <strong>Setas verticais</strong> — a plataforma sobe e desce</li>
+        <li>🟠 <strong>Trampolim</strong> — catapulta-te muito mais alto que um salto normal!</li>
+      </ul>
+
+      <!-- CANOS -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">🚇 Canos</p>
+      <ul style="margin:0 0 10px;padding-left:18px;font-size:12px;color:#ffe0d0;line-height:1.9;">
+        <li>Chega-te perto de um cano e carrega <strong>↓</strong> (ou <strong>S</strong>) para tentares um atalho!</li>
+        <li>🎁 Alguns levam a uma <strong>sala secreta</strong>, com uma recompensa e uma curiosidade à espera</li>
+        <li>Nem todos os canos são de entrar — alguns são só obstáculos, tens de lhes saltar por cima!</li>
+      </ul>
+
+      <!-- PONTUAÇÃO -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">⭐ Pontuação</p>
+      <ul style="margin:0 0 10px;padding-left:18px;font-size:12px;color:#ffe0d0;line-height:1.9;">
+        <li>✅ Resposta certa à primeira → <strong>+100 pontos por nível</strong></li>
+        <li>🥇 Nível sem perder nenhuma vida → <strong>bónus +50 pontos</strong></li>
+        <li>💥 Atropelar vilão com Star Power → <strong>+50 pontos por vilão</strong></li>
+      </ul>
+
+      <!-- ESTRELAS COLECIONÁVEIS -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">⭐ Estrelas Colecionáveis (por nível)</p>
+      <ul style="margin:0 0 10px;padding-left:18px;font-size:12px;color:#ffe0d0;line-height:1.9;">
+        <li>⭐ 1ª estrela — encontraste segredos escondidos no nível</li>
+        <li>⭐ 2ª estrela — completaste sem perder nenhuma vida</li>
+        <li>⭐ 3ª estrela — acertaste a pergunta à primeira tentativa</li>
+      </ul>
+
+      <!-- CONTROLOS -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 4px;">🖥️ Controlos — PC / Teclado</p>
+      <p style="margin:2px 0 8px;font-size:12px;color:#ffe0d0;">← → para andar &nbsp;|&nbsp; ↑ ou Espaço para saltar &nbsp;|&nbsp; ↓ ou S para agachar &nbsp;|&nbsp; <strong style="color:#ffd700;">P</strong> — pausa &nbsp;|&nbsp; <strong style="color:#ffd700;">H</strong> — alto contraste &nbsp;|&nbsp; <strong style="color:#ffd700;">F</strong> — ecrã todo</p>
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:4px 0 4px;">📱 Tablet / Telemóvel</p>
+      <p style="margin:2px 0 14px;font-size:12px;color:#ffe0d0;">Mantém o dedo no lado esquerdo/direito para andar · Toque rápido para saltar</p>
+
+      <button id="btnCloseHow" class="btn primary" style="width:100%;">Entendido — vamos jogar! ▶</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL PERGUNTA
+  ═══════════════════════════════════════════ -->
+  <div id="quizOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="quizQuestion">
+    <div class="card">
+      <div class="card-seal" aria-hidden="true">🔐</div>
+      <p id="quizQuestion" class="q" aria-live="polite"></p>
+      <div id="quizAnswers" class="answers" role="group" aria-label="Opções de resposta"></div>
+      <p id="quizFeedback" class="feedback" aria-live="assertive"></p>
+      <p id="quizExplanation" class="explanation hidden"></p>
+      <button id="btnCloseQuiz" class="btn hidden">Continuar</button>
+    </div>
+  </div>
+
+  <!-- NOME DO JOGADOR — HUD HTML -->
+  <div id="playerNameHtml" style="
+    display:none; position:fixed; top:8px; left:8px; z-index:9400;
+    font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:900;
+    color:#ffd700; text-shadow:0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
+    pointer-events:none; letter-spacing:0.3px;
+    background:rgba(10,4,32,0.55); border-radius:8px; padding:4px 10px;
+    border:1px solid rgba(255,215,0,0.25);
+  "></div>
+
+  <!-- CONTROLO DO PROFESSOR — botão ☰ único durante o jogo -->
+  <div id="teacherControls" style="position:fixed;top:10px;right:10px;z-index:9500;">
+    <button id="btnTeacherMenu" class="btn" aria-label="Menu do jogo" title="Menu">☰ Menu</button>
+    <!-- Botões fantasma — usados internamente pelo JS para compatibilidade -->
+    <button id="btnFullscreenGame" style="display:none"></button>
+    <button id="btnTouchToggle"    style="display:none"></button>
+    <button id="btnPause"          style="display:none"></button>
+    <button id="btnInGameMap"      style="display:none"></button>
+    <button id="btnInGameAchievements" style="display:none"></button>
+    <button id="btnInGameAlbum"    style="display:none"></button>
+    <button id="btnInGameStats"    style="display:none"></button>
+    <button id="btnInGameOptions"  style="display:none"></button>
+    <button id="btnInGameHow"      style="display:none"></button>
+    <button id="btnRestartLevel"   style="display:none"></button>
+    <button id="btnGoToLevel"      style="display:none"></button>
+    <button id="btnRestartGame"    style="display:none"></button>
+  </div>
+
+  <!-- MENU SUSPENSO — acessível durante o jogo via botão ☰ -->
+  <div id="teacherMenuPanel">
+    <p class="tmenu-section">📋 Ver</p>
+    <button id="mBtnMap"          class="btn">🗺️ Mapa da Aventura</button>
+    <button id="mBtnAchievements" class="btn">🏆 Conquistas</button>
+    <button id="mBtnAlbum"        class="btn">📖 Álbum das Competências</button>
+    <button id="mBtnStats"        class="btn">📊 Estatísticas</button>
+    <button id="mBtnErrors"       class="btn">🧠 Rever Erros</button>
+    <button id="mBtnHow"          class="btn">❓ Como Jogar</button>
+
+    <p class="tmenu-section">⚙️ Jogo</p>
+    <button id="mBtnPause"        class="btn">⏸ Pausa / Continuar</button>
+    <button id="mBtnOptions"      class="btn">⚙️ Opções</button>
+    <button id="mBtnFullscreen"   class="btn">⛶ Ecrã todo</button>
+    <button id="mBtnTouch"        class="btn">📱 Botões tácteis</button>
+
+    <p class="tmenu-section">🔄 Nível</p>
+    <button id="mBtnLevel"        class="btn">🔄 Reiniciar este nível</button>
+    <button id="mBtnGoToLevel"    class="btn">🎯 Ir para nível…</button>
+    <button id="mBtnRestart"      class="btn">🔁 Recomeçar do início</button>
+
+    <p class="tmenu-section">🚪 Sair</p>
+    <button id="mBtnExit"         class="btn tmenu-exit-btn">🚪 Menu Inicial</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL HISTÓRIA (entre níveis)
+  ═══════════════════════════════════════════ -->
+  <div id="historyOverlay" class="overlay hidden">
+    <div class="card history-card">
+      <div class="history-header">
+        <span class="history-icon">🛡️</span>
+        <div>
+          <h2>Cibersegurança</h2>
+          <p class="history-subtitle">Sabias que…?</p>
+        </div>
+      </div>
+      <p id="historyText" class="history-text"></p>
+      <div class="row">
+        <button id="btnHistory" class="btn primary">Continuar ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GAME OVER
+  ═══════════════════════════════════════════ -->
+  <div id="gameOverOverlay" class="overlay hidden">
+    <div class="card gameover-card">
+      <h2>Missão Falhada!</h2>
+      <div class="gameover-robot-stage" aria-hidden="true">
+        <div class="gameover-tears">💧&nbsp;💧</div>
+        <img class="gameover-robot-img" src="vanberto_voar.png" alt="" />
+        <div class="gameover-robot-shadow"></div>
+      </div>
+      <p class="sub">Ficaste sem vidas! A internet precisa de ti — não desistas!</p>
+      <button id="btnReviewModeGO" class="btn" style="display:none;width:100%;margin-bottom:10px;">📋 Ver erros</button>
+      <div class="row">
+        <button id="btnRetry" class="btn primary">🔄 Tentar de novo</button>
+        <button id="btnExit" class="btn">🏠 Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       VITÓRIA FINAL
+  ═══════════════════════════════════════════ -->
+  <div id="winOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+    <div class="card win-card">
+      <div class="win-icon">🏆</div>
+      <h2>Missão Concluída!</h2>
+      <p class="win-name">Parabéns, <span id="winPlayerName">Ciber-Herói</span>!</p>
+
+      <div class="win-robot-stage" aria-hidden="true">
+        <img class="win-robot-img" src="vanberto_voar.png" alt="VanBerto's" />
+        <div class="win-robot-shadow"></div>
+        <div class="win-robot-notes">🎵<span>🎶</span>🎵</div>
+      </div>
+
+      <div class="win-stats">
+        <div class="win-stat">⭐ <strong id="winScore">0</strong> pontos</div>
+        <div class="win-stat">✅ Respostas certas: <strong id="winPct">—</strong></div>
+        <div class="win-stat win-medal" id="winMedal">🥇 Excelente!</div>
+      </div>
+
+      <!-- TABS -->
+      <div id="winTabs" class="win-tabs">
+        <button class="win-tab active" data-panel="winPanelReport">📋 Relatório</button>
+        <button class="win-tab" data-panel="winPanelRights">🏅 Competências</button>
+      </div>
+      <!-- PAINEL RELATÓRIO -->
+      <div id="winPanelReport" class="win-panel active">
+        <div id="winThemeErrors" style="display:none;margin:10px 0;">
+          <p style="font-weight:700;font-size:12px;color:#ffd700;margin:0 0 6px;">📊 Erros por tema</p>
+          <table id="winThemeTable" style="width:100%;border-collapse:collapse;font-size:11px;color:#ffe0d0;"></table>
+        </div>
+        <button id="btnReviewMode" class="btn" style="display:none;margin-top:6px;">📋 Ver erros</button>
+      </div>
+      <!-- PAINEL COMPETÊNCIAS CONQUISTADAS -->
+      <div id="winPanelRights" class="win-panel">
+        <p style="font-size:11px;color:#ff9060;margin:4px 0 8px;text-align:center;">🏅 As 20 Competências que recuperaste</p>
+        <div id="winRightsGrid" class="win-rights-grid"></div>
+      </div>
+      <!-- BOTÕES -->
+      <div class="row" style="margin-top:12px;">
+        <button id="btnWinRestart" class="btn">🔄 Jogar de novo</button>
+        <button id="btnWinCertificate" class="btn primary">🎓 Certificado</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PAUSA — overlay informativo
+  ═══════════════════════════════════════════ -->
+  <div id="pauseInfoOverlay" class="hidden">
+    <div class="pause-card">
+      <p class="pause-title"><span>⏸</span> PAUSA</p>
+      <div class="pause-robot-wrap" aria-hidden="true">
+        <img class="pause-robot-img" src="vanberto_voar.png" alt="" />
+      </div>
+      <div class="pause-info-grid">
+        <div class="pause-info-box">
+          <strong>🎮 Nível</strong>
+          <span class="pause-info-val" id="pauseLevel">—</span>
+        </div>
+        <div class="pause-info-box">
+          <strong>⭐ Pontos</strong>
+          <span class="pause-info-val" id="pauseScore">0</span>
+        </div>
+        <div class="pause-info-box">
+          <strong>❤️ Vidas</strong>
+          <span class="pause-info-val" id="pauseLives">3</span>
+        </div>
+        <div class="pause-info-box">
+          <strong>🏁 Progresso</strong>
+          <span class="pause-info-val" id="pauseProgress">—</span>
+        </div>
+      </div>
+      <div class="pause-tip" id="pauseTip">
+        💡 <b>Dica:</b> Apanha a estrela ⭐ para ativar o <b>Star Power</b> e atropelar vilões durante 8 segundos!
+      </div>
+      <p class="pause-controls-hint">← → andar &nbsp;|&nbsp; ↑ / Espaço saltar &nbsp;|&nbsp; ↓ / S agachar &nbsp;|&nbsp; Prima ▶ Continuar para retomar</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       TRANSIÇÃO DE NÍVEL
+  ═══════════════════════════════════════════ -->
+  <div id="levelTransitionOverlay" aria-hidden="true" style="
+    display:none; position:fixed; inset:0; z-index:9000;
+    align-items:center; justify-content:center;
+    pointer-events:auto;
+  ">
+    <div id="levelTransitionPanel" style="
+      background:rgba(0,0,0,0.42);
+      border:2px solid rgba(255,255,255,0.25);
+      border-radius:18px;
+      padding:32px 40px;
+      text-align:center;
+      min-width:320px; max-width:88vw;
+      font-family:'Baloo 2',sans-serif;
+    ">
+      <p id="ltNum"    style="margin:0 0 6px;font-size:15px;font-weight:800;letter-spacing:1px;opacity:0.85;"></p>
+      <p id="ltTitle"  style="margin:0 0 14px;font-size:32px;font-weight:900;line-height:1.2;text-shadow:0 2px 10px rgba(0,0,0,0.6);"></p>
+      <p id="ltPhrase" style="margin:0 0 16px;font-size:20px;font-weight:800;opacity:0.95;"></p>
+      <p id="ltName"   style="margin:0 0 20px;font-size:17px;font-weight:900;opacity:0.90;"></p>
+      <p id="ltTap"    style="margin:0;font-size:13px;font-weight:700;opacity:0.55;letter-spacing:0.5px;">toca para continuar ▶</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ARTEFACTO DESBLOQUEADO — popup épico
+  ═══════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════
+       NÍVEL CONCLUÍDO — celebração, antes da revelação do artefacto
+  ═══════════════════════════════════════════ -->
+  <div id="levelCompleteOverlay" aria-hidden="true">
+    <div id="levelCompletePanel">
+      <div id="lcConfettiLayer" class="lc-confetti-layer"></div>
+      <img id="lcVanberto" class="lc-vanberto" src="vanberto_voar.png" alt="" />
+      <p id="lcTitle" class="lc-title">Conseguiste!</p>
+      <p id="lcLevelName" class="lc-level-name">Nível 1 — Nasce a Internet</p>
+      <div id="lcStars" class="lc-stars">
+        <div class="lc-star-item">
+          <span class="lc-star" data-i="0">★</span>
+          <span class="lc-star-label" data-label-i="0"></span>
+        </div>
+        <div class="lc-star-item">
+          <span class="lc-star" data-i="1">★</span>
+          <span class="lc-star-label" data-label-i="1"></span>
+        </div>
+        <div class="lc-star-item">
+          <span class="lc-star" data-i="2">★</span>
+          <span class="lc-star-label" data-label-i="2"></span>
+        </div>
+      </div>
+      <p id="lcUnlock" class="lc-unlock" style="display:none"></p>
+      <button id="lcContinue" class="lc-continue-btn">Continuar ▶</button>
+    </div>
+  </div>
+
+  <div id="artefactRevealOverlay" aria-hidden="true">
+    <div id="artefactRevealPanel">
+      <p class="ar-label">✨ Competência Recuperada! ✨</p>
+      <div id="arRevParticles" class="ar-particles"></div>
+      <div id="arRevEmoji"  class="ar-emoji">🛡️</div>
+      <p  id="arRevName"   class="ar-name">Nome do Artefacto</p>
+      <p  id="arRevShort"  class="ar-short">Competência</p>
+      <!-- Novos campos de enriquecimento -->
+      <div id="arRevArticle" class="ar-article" style="display:none"></div>
+      <div id="arRevCurio"   class="ar-curio"   style="display:none"></div>
+      <div id="arRevStats"   class="ar-stats"   style="display:none"></div>
+      <p  id="arRevSpeech" class="ar-speech">"Fala do VanBerto!"</p>
+      <button id="arRevClose" class="ar-close-btn">Continuar ▶</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       BÓNUS DE CONJUNTO
+  ═══════════════════════════════════════════ -->
+  <div id="setBonusOverlay" aria-hidden="true">
+    <div id="setBonusPanel">
+      <p id="sbIcon"  class="sb-icon">📜</p>
+      <p class="sb-label">Conjunto Completo!</p>
+      <p id="sbName"  class="sb-name">Nome do Conjunto</p>
+      <p id="sbBonus" class="sb-bonus">+150 pontos</p>
+      <p id="sbMsg"   class="sb-msg">Fantástico!</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GALERIA FINAL DE ARTEFACTOS
+  ═══════════════════════════════════════════ -->
+  <div id="artefactGalleryOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Galeria das Competências">
+    <div class="card ag-card">
+      <div class="card-seal" aria-hidden="true">🏆</div>
+      <h2>✨ As tuas Competências Recuperadas ✨</h2>
+      <p id="agPct" class="ag-pct">0/20 competências recuperadas</p>
+      <div id="agGrid" class="ag-grid"></div>
+      <div class="row">
+        <button id="btnAgContinue" class="btn primary">🏆 Ver resultado final ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFETIS + EFEITOS -->
+  <div id="confetti" class="confetti hidden" aria-hidden="true"></div>
+  <div id="celebrationBurst" class="celebration-burst hidden" aria-hidden="true"></div>
+
+  <!-- ═══════════════════════════════════════════
+       TOAST DE CONQUISTA
+  ═══════════════════════════════════════════ -->
+  <div id="achievementToastHost" class="achievement-toast-host" aria-live="polite"></div>
+
+  <!-- ═══════════════════════════════════════════
+       BOTÕES TOUCH
+  ═══════════════════════════════════════════ -->
+  <div id="touchControls">
+    <div class="tc-left">
+      <div class="tc-btn-wrap"><button id="btnLeft"  class="touch-btn" aria-label="Mover esquerda">◀</button><span class="tc-label">Esq</span></div>
+      <div class="tc-btn-wrap"><button id="btnRight" class="touch-btn" aria-label="Mover direita">▶</button><span class="tc-label">Dir</span></div>
+      <div class="tc-btn-wrap"><button id="btnCrouch" class="touch-btn touch-crouch" aria-label="Agachar">↓</button><span class="tc-label">Baixar</span></div>
+    </div>
+    <div class="tc-right">
+      <div class="tc-btn-wrap"><button id="btnJump" class="touch-btn touch-jump" aria-label="Saltar">↑</button><span class="tc-label">Saltar</span></div>
+    </div>
+  </div>
+
+  <!-- INDICADOR DE ALTO CONTRASTE -->
+  <div id="hc-indicator" aria-live="polite">⬛ ALTO CONTRASTE ATIVO — prima H para desativar</div>
+
+  <div id="vbSpeech" aria-live="polite" aria-atomic="true">
+    <img id="vbSpeechAvatar" src="vanberto_voar.png" alt="VanBerto's" />
+    <div id="vbSpeechBubble"><p id="vbSpeechText"></p><div id="vbSpeechTail"></div></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODO REVISÃO
+  ═══════════════════════════════════════════ -->
+  <div id="reviewOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Revisão das perguntas erradas">
+    <div class="card" style="max-height:88dvh;overflow-y:auto;padding:18px 20px;">
+      <h2 style="margin-bottom:4px;">📋 Modo Revisão</h2>
+      <p style="font-size:12px;color:#ffd070;margin:0 0 14px;font-style:italic;">As perguntas que erraste — com a resposta certa e a explicação completa.</p>
+      <div id="reviewList"></div>
+      <div class="row">
+        <button id="btnCloseReview" class="btn primary" style="width:100%;">✅ Entendido — fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+  <script type="module" src="dia-crianca.js?v=20260910bossfix4"></script>
+</body>
+</html>
