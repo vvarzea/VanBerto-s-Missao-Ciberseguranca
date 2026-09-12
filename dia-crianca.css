@@ -1358,6 +1358,39 @@ body.hc-mode .review-explanation { color: #ffff00 !important; border-color: #555
 body.hc-mode .menu-tile { border-color: #fff !important; }
 body.hc-mode .menu-tile span { color: #ffff00 !important; }
 
+/* Ecrã "Escolhe o nível" (Fácil/Difícil) — duas opções COM O MESMO PESO
+   VISUAL, por isso não reaproveita .menu-tile.primary (feita para 1 botão
+   grande + vários pequenos no menu principal, não para 2 iguais lado a
+   lado — era isso que ficava "estranho"). */
+.difficulty-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0 6px;
+}
+.difficulty-tile {
+  flex: 1 1 150px;
+  max-width: 220px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 18px 10px;
+  font-size: 32px;
+  min-height: 88px;
+  border-radius: 12px;
+}
+.difficulty-tile span {
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+}
+@media (max-width: 460px) {
+  .difficulty-tile { flex-basis: calc(50% - 6px); min-height: 76px; font-size: 26px; padding: 14px 8px; }
+  .difficulty-tile span { font-size: 15px; }
+}
+body.hc-mode .difficulty-tile { border-color: #fff !important; }
+body.hc-mode .difficulty-tile span { color: #ffff00 !important; }
+
 /* =====================================================
    MAPA DA AVENTURA (FASE 1)
    ===================================================== */

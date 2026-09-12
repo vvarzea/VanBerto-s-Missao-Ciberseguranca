@@ -3406,7 +3406,11 @@ window.addEventListener("DOMContentLoaded", () => {
     L.malwares.forEach(m=>spawnVilao(scene,m.x,480,m.vx,df,m.pattern||"patrol"));
 
     // Garantir que os 3 tipos de vilao aparecem SEMPRE em todos os niveis
+    // (no Difícil, todos saem como "jumper" de qualquer forma — ver
+    // spawnVilao — mas os limiares abaixo continuam a controlar QUANTOS
+    // vilões extra aparecem, não o comportamento deles)
     if(L.platforms.length>=5) {
+      const hardDif = getDifficulty() === "dificil";
       const mid  = L.platforms[Math.floor(L.platforms.length/2)];
       const q1   = L.platforms[Math.floor(L.platforms.length/4)];
       const q3   = L.platforms[Math.floor(L.platforms.length*3/4)];
@@ -3417,23 +3421,30 @@ window.addEventListener("DOMContentLoaded", () => {
       // Tipo 2 - vilao_spike (patrol): sempre presente no 1/4 do nivel
       spawnVilao(scene, q1.x, 480, (currentLevel%2===0)?-170:170, df, "patrol");
 
-      // Tipo 3 - vilao_bug (jumper): sempre presente no 3/4 do nivel (a partir do nivel 2)
-      if(currentLevel>=2){
+      // Tipo 3 - vilao_bug (jumper): sempre presente no 3/4 do nivel (a
+      // partir do nivel 2; no Difícil, mais vilões espalhados pelo nível —
+      // pedido do Berto — por isso os limiares abaixo são bem mais baixos,
+      // reaproveitando exactamente as mesmas posições seguras (mid/q1/q3/
+      // qEx/qLate) já validadas pelo design de cada nível, só desbloqueadas
+      // mais cedo em vez de inventar posições novas.
+      if(hardDif || currentLevel>=2){
         spawnVilao(scene, q3.x, 480, (currentLevel%2===0)?190:-190, df, "jumper");
       }
-      // Segundo jumper extra a partir do nivel 4
-      if(currentLevel>=4){
+      // Segundo jumper extra a partir do nivel 4 (Difícil: desde o nivel 2)
+      if(hardDif ? currentLevel>=2 : currentLevel>=4){
         const qEx = L.platforms[Math.floor(L.platforms.length*2/3)];
         spawnVilao(scene, qEx.x, 480, (currentLevel%2===0)?-200:200, df, "jumper");
       }
-      // Terceiro jumper e patrol extra nos ultimos 6 niveis (14-20)
-      if(currentLevel>=14){
+      // Terceiro jumper e patrol extra nos ultimos 6 niveis (Difícil: a
+      // partir de meio-jogo, nivel 6)
+      if(hardDif ? currentLevel>=6 : currentLevel>=14){
         const qLate = L.platforms[Math.floor(L.platforms.length*5/6)] || q3;
         spawnVilao(scene, qLate.x, 480, (currentLevel%2===0)?210:-210, df, "jumper");
         spawnVilao(scene, q1.x+200, 480, (currentLevel%2===0)?-160:160, df, "patrol");
       }
-      // Ultimo nivel — viloes em todos os quartos
-      if(currentLevel>=19){
+      // Ultimo nivel — viloes em todos os quartos (Difícil: a partir do
+      // nivel 10)
+      if(hardDif ? currentLevel>=10 : currentLevel>=19){
         spawnVilao(scene, mid.x+300, 480, (currentLevel%2===0)?220:-220, df, "jumper");
         spawnVilao(scene, mid.x-300, 480, (currentLevel%2===0)?-180:180, df, "patrol");
       }
@@ -3514,6 +3525,11 @@ window.addEventListener("DOMContentLoaded", () => {
    *   "jumper"  → patrulha E salta frequentemente (difícil, níveis 7-10)
    */
   function spawnVilao(scene, x, y, vx, df, pattern="patrol") {
+    // No Difícil, os vilões ficam sempre no comportamento mais "esperto"
+    // (jumper/Perseguião) em vez da mistura normal mini/patrol/jumper —
+    // pedido do Berto. Um único sítio a decidir isto, em vez de mudar cada
+    // um dos ~10 sítios que chamam spawnVilao().
+    if (getDifficulty() === "dificil") pattern = "jumper";
     const keyMap = { mini:"vilao_round", patrol:"vilao_spike", jumper:"vilao_bug" };
     const keys = ["vilao_round","vilao_spike","vilao_bug"];
     const key = keyMap[pattern] || keys[Math.floor(Math.random()*keys.length)];
@@ -4517,8 +4533,15 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function startBossFight(scene, levelJustCompleted, onComplete) {
-    const def = BOSS_BY_LEVEL[levelJustCompleted];
-    if (!def) { onComplete(); return; } // sem boss neste ponto — segue o fluxo normal
+    const rawDef = BOSS_BY_LEVEL[levelJustCompleted];
+    if (!rawDef) { onComplete(); return; } // sem boss neste ponto — segue o fluxo normal
+    // No Difícil, o boss aguenta +1 salto na cabeça (nunca mexe no objeto
+    // original de data-bosses.js, partilhado por todas as partidas — clona-
+    // -se só aqui). def.hp é o único valor lido daqui para a frente (pela
+    // barra de vida, pelo HUD "saltos: X/Y" e pelos taunts), por isso basta
+    // este clone para tudo ficar consistente, sem precisar de tocar em mais
+    // nenhum sítio do combate.
+    const def = getDifficulty() === "dificil" ? { ...rawDef, hp: rawDef.hp + 1 } : rawDef;
 
     inBossFight = true;
     controlsInvertedUntil = 0;
