@@ -133,7 +133,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 4 — Quem Nos Protege Online",
-    artIdx:9, theme:9, quizTheme:"instituicoes_apoio", worldW:3300,
+    artIdx:3, theme:3, quizTheme:"instituicoes_apoio", worldW:3300,
     spawn:{x:480,y:460}, doorX:2950,
     // Layout: "trampolim central obrigatório" — vão largo a meio onde o trampolim é o único caminho
     platforms:[
@@ -165,7 +165,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 5 — Vírus e Malware",
-    artIdx:5, theme:5, quizTheme:"virus_malware", worldW:3100,
+    artIdx:4, theme:4, quizTheme:"virus_malware", worldW:3100,
     spawn:{x:480,y:460}, doorX:2950,
     platforms:[
       {x:520,y:520,w:1000,h:28},{x:880,y:450,w:220,h:22},{x:1160,y:380,w:220,h:22},
@@ -187,7 +187,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 6 — Jogar em Segurança",
-    artIdx:3, theme:3, quizTheme:"jogos_seguros", worldW:3100,
+    artIdx:5, theme:5, quizTheme:"jogos_seguros", worldW:3100,
     spawn:{x:480,y:460}, doorX:2700,
     // Layout: ilhas a alturas variadas — umas altas, outras baixas, sem padrão regular
     platforms:[
@@ -213,7 +213,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 7 — A Tua Pegada Digital",
-    artIdx:8, theme:8, quizTheme:"pegada_digital", worldW:2800,
+    artIdx:6, theme:6, quizTheme:"pegada_digital", worldW:2800,
     spawn:{x:480,y:460}, doorX:2630,
     // signX: por defeito o letreiro/informação ficaria em spawn.x+240 (=720),
     // o que cai quase em cima do 1º trampolim (x:680) e a poucos passos do
@@ -257,7 +257,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 8 — Notícias Falsas (Fake News)",
-    artIdx:16, theme:16, quizTheme:"fake_news", worldW:3400,
+    artIdx:7, theme:7, quizTheme:"fake_news", worldW:3400,
     spawn:{x:480,y:460}, doorX:3050,
     // Layout: "cascata de terraços" — desce e sobe de forma orgânica, com plataformas a alturas muito variadas
     platforms:[
@@ -290,7 +290,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 9 — Reconhece o Phishing",
-    artIdx:4, theme:4, quizTheme:"phishing", worldW:3500,
+    artIdx:8, theme:8, quizTheme:"phishing", worldW:3500,
     spawn:{x:480,y:460}, doorX:3100,
     platforms:[
       {x:520,y:520,w:1000,h:28},{x:920,y:442,w:185,h:22},{x:1200,y:368,w:185,h:22},
@@ -318,7 +318,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 10 — Cuida dos Teus Dispositivos",
-    artIdx:6, theme:6, quizTheme:"dispositivos", worldW:3600,
+    artIdx:9, theme:9, quizTheme:"dispositivos", worldW:3600,
     spawn:{x:480,y:460}, doorX:3200,
     // Layout: "escadinhas duplas" — dois picos com vale ao meio
     platforms:[
@@ -343,7 +343,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 11 — Regras de Ecrã em Família",
-    artIdx:11, theme:11, quizTheme:"regras_familia", worldW:3200,
+    artIdx:10, theme:10, quizTheme:"regras_familia", worldW:3200,
     spawn:{x:480,y:460}, doorX:2850,
     // Layout: pirâmide central alta + plataformas laterais baixas
     platforms:[
@@ -370,7 +370,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 12 — Cuidado com o Wi-Fi Público",
-    artIdx:12, theme:12, quizTheme:"wifi_publico", worldW:3650,
+    artIdx:11, theme:11, quizTheme:"wifi_publico", worldW:3650,
     spawn:{x:480,y:460}, doorX:3340,
     // Layout: "mini-mundos" — 3 grupos de plataformas isolados com vãos entre eles
     platforms:[
@@ -401,7 +401,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 13 — Faz Cópias de Segurança",
-    artIdx:13, theme:13, quizTheme:"copias_seguranca", worldW:3700,
+    artIdx:12, theme:12, quizTheme:"copias_seguranca", worldW:3700,
     spawn:{x:480,y:460}, doorX:3300,
     // Layout: "labirinto horizontal" — plataformas em ziguezague apertado exige precisão
     platforms:[
@@ -429,7 +429,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 14 — Tecnologia para Todos",
-    artIdx:17, theme:17, quizTheme:"acessibilidade_digital", worldW:3750,
+    artIdx:13, theme:13, quizTheme:"acessibilidade_digital", worldW:3750,
     spawn:{x:480,y:460}, doorX:3350,
     platforms:[
       {x:520,y:520,w:960,h:28},
@@ -476,7 +476,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 15 — Spam e Compras Seguras",
-    artIdx:18, theme:18, quizTheme:"spam_compras", worldW:3800,
+    artIdx:14, theme:14, quizTheme:"spam_compras", worldW:3800,
     spawn:{x:480,y:460}, doorX:3400,
     platforms:[
       {x:520,y:520,w:1000,h:28},{x:980,y:432,w:160,h:22},{x:1260,y:350,w:160,h:22},
@@ -502,7 +502,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 16 — Denuncia e Pede Ajuda",
-    artIdx:7, theme:7, quizTheme:"denuncia_conteudo", worldW:3850,
+    artIdx:15, theme:15, quizTheme:"denuncia_conteudo", worldW:3850,
     spawn:{x:480,y:460}, doorX:3450,
     // Layout: "degraus duplos" — sobe dois andares, desce dois andares, plataformas estreitas
     platforms:[
@@ -536,7 +536,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 17 — A Tua Identidade Digital",
-    artIdx:10, theme:10, quizTheme:"identidade_digital", worldW:3900,
+    artIdx:16, theme:16, quizTheme:"identidade_digital", worldW:3900,
     spawn:{x:480,y:460}, doorX:3500,
     // Layout: "cultura em círculos" — plataformas em grupos de 3 como constelações
     platforms:[
@@ -568,7 +568,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 18 — Respeita a Privacidade",
-    artIdx:15, theme:15, quizTheme:"privacidade", worldW:3950,
+    artIdx:17, theme:17, quizTheme:"privacidade", worldW:3950,
     spawn:{x:480,y:460}, doorX:3550,
     // ══ MECÂNICA ESPECIAL: ESTEIRA — PLATAFORMAS TODAS EM MOVIMENTO ══
     // Todas as plataformas intermédias se movem. Umas horizontalmente (esq/dir),
@@ -619,7 +619,7 @@ export const LEVELS = [
   },
   {
     name: "Nível 19 — Cuidado com Desconhecidos",
-    artIdx:14, theme:14, quizTheme:"contacto_desconhecidos", worldW:4000,
+    artIdx:18, theme:18, quizTheme:"contacto_desconhecidos", worldW:4000,
     spawn:{x:480,y:460}, doorX:3600,
     // Layout: "floresta" — muitas plataformas pequenas a alturas variadas, como ramos de árvores
     platforms:[

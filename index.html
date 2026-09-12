@@ -32,7 +32,8 @@
         Ajuda o VanBerto's a recuperar as <strong>competências de Cibersegurança</strong>,
         espalhadas por 4 mundos mágicos!<br>
         Apanha itens pelo caminho e chega ao <strong>portal ✨</strong> para responder à pergunta.<br>
-        No fim de cada mundo espera-te um <strong>chefe</strong> — salta-lhe em cima 3 vezes para o derrotar!<br>
+        Cuidado com os <strong>3 tipos de vilões</strong>:
+        🔴 Trapalhão (fácil) · 🔵 Saltitão (médio) · 🟢 Perseguilão (difícil).<br>
         Clica em <strong>"Como jogar ❓"</strong> para ver tudo explicado!
       </p>
       <div class="name-row">
@@ -65,22 +66,22 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       NÍVEL DE DIFICULDADE — 3º Ciclo / Secundário
-       Pedido do Berto: o mesmo jogo serve turmas de idades diferentes.
-       Mostrado sempre que se clica em "Nova Aventura" (ver btnStart em
-       dia-crianca.js), antes de reiniciar o progresso e abrir o mapa.
-       Também pode ser mudado mais tarde em Opções (optBtnDifficulty),
-       sem ser preciso recomeçar tudo.
+       NÍVEL DE DIFICULDADE — Fácil / Difícil
+       Pedido do Berto: o jogo era só para 1º/2º ciclo; este ano é preciso
+       também para 3º ciclo e secundário. Mostrado sempre que se clica em
+       "Nova Aventura" (ver btnStart em dia-crianca.js), antes de reiniciar
+       o progresso e abrir o mapa. Também pode ser mudado mais tarde em
+       Opções (optBtnDifficulty), sem ser preciso recomeçar tudo.
   ═══════════════════════════════════════════ -->
   <div id="difficultyOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Escolher nível de dificuldade">
     <div class="card">
       <h1>🎯 Escolhe o nível</h1>
-      <p class="desc">Isto ajusta as perguntas do quiz e o desafio dos combates de chefe.</p>
+      <p class="desc">Isto ajusta as perguntas do quiz e o desafio dos vilões/chefes.</p>
       <div class="main-menu-grid">
-        <button id="btnDiff3Ciclo" class="btn primary menu-tile">🎒<span>3º Ciclo</span></button>
-        <button id="btnDiffSecundario" class="btn menu-tile">🎓<span>Secundário</span></button>
+        <button id="btnDiffFacil" class="btn primary menu-tile">😊<span>Fácil</span></button>
+        <button id="btnDiffDificil" class="btn menu-tile">🎓<span>Difícil</span></button>
       </div>
-      <p class="tiny">🎒 3º Ciclo: ritmo habitual.<br>🎓 Secundário: perguntas mais aprofundadas, chefes mais rápidos e menos vidas.</p>
+      <p class="tiny">😊 Fácil — 1º e 2º ciclo: ritmo habitual.<br>🎓 Difícil — 3º ciclo e secundário: perguntas mais aprofundadas, vilões/chefes mais rápidos e menos vidas.</p>
     </div>
   </div>
 
@@ -213,10 +214,10 @@
       <div class="options-section">
         <p class="options-section-title">🎯 Dificuldade</p>
         <label class="options-toggle-row">
-          <span>Nível (perguntas do quiz e desafio dos chefes)</span>
-          <button id="optBtnDifficulty" class="option-toggle-btn">🎒 3º Ciclo</button>
+          <span>Nível (perguntas do quiz e desafio de vilões/chefes)</span>
+          <button id="optBtnDifficulty" class="option-toggle-btn">😊 Fácil</button>
         </label>
-        <p class="tiny">Só faz efeito a partir do próximo combate de chefe/quiz — não interrompe o que já estás a jogar.</p>
+        <p class="tiny">Só faz efeito a partir do próximo nível/combate — não interrompe o que já estás a jogar.</p>
       </div>
 
       <div class="options-section">
@@ -739,6 +740,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
-  <script type="module" src="dia-crianca.js?v=20260910bossfix4"></script>
+  <script type="module" src="dia-crianca.js?v=20260912bossrewards1"></script>
 </body>
 </html>

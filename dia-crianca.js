@@ -21,7 +21,7 @@ import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelS
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
          resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js";
-import { BOSS_BY_LEVEL } from "./data-bosses.js";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js";
 import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js";
 import { playTitleCard, playCinematic } from "./cinematics.js";
 import { loadNamespace, saveNamespace } from "./storage.js";
@@ -206,7 +206,7 @@ window.addEventListener("DOMContentLoaded", () => {
   function loadGame() {
     const s = loadNamespace("settings", {});
     if (typeof s.muted === "boolean") setMuted(s.muted);
-    if (s.difficulty === "secundario" || s.difficulty === "3ciclo") difficulty = s.difficulty;
+    if (s.difficulty === "dificil" || s.difficulty === "facil") difficulty = s.difficulty;
   }
 
   // ===== Elogios =====
@@ -215,6 +215,25 @@ window.addEventListener("DOMContentLoaded", () => {
   function showFloat(scene, x, y, msg, color="#ff6b35") {
     const t = scene.add.text(x, y, msg, { fontSize:"24px", fontStyle:"900", color, stroke:"#fff8e0", strokeThickness:5 }).setOrigin(0.5).setDepth(999);
     scene.tweens.add({ targets:t, y:y-44, alpha:0, duration:640, ease:"Sine.easeOut", onComplete:()=>t.destroy() });
+  }
+
+  // "Hit-stop": congela a física e os tweens por instantes (efeito clássico
+  // de plataformas para dar peso a um golpe). Chamado logo a seguir a
+  // configurar o knockback/rotação de um toque — como a velocidade e os
+  // tweens já foram todos definidos antes de pausar, ficam visualmente
+  // "presos" na pose do impacto por ms milissegundos, e só depois
+  // continuam a animar normalmente. Sem isto, o toque, o tremor de câmara,
+  // o flash e o texto flutuante aconteciam todos ao mesmo tempo e depressa
+  // demais para uma criança perceber claramente que perdeu uma vida.
+  function applyHitStop(scene, ms = 80) {
+    if (!scene || !scene.physics || !scene.physics.world) return;
+    scene.physics.world.pause();
+    scene.tweens.pauseAll();
+    scene.time.delayedCall(ms, () => {
+      if (!scene || !scene.physics || !scene.physics.world) return;
+      scene.physics.world.resume();
+      scene.tweens.resumeAll();
+    });
   }
 
   // ===== Quiz stats =====
@@ -699,6 +718,21 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   loadArtefacts();
 
+  // Álbum dos Direitos dos Bosses (novo — ver "Direito Recuperado" em
+  // startBossQuizPhase): { [bossId]: {flawless:bool} }, mesmo padrão de
+  // collectedArtefacts acima, só que a chave é o id do boss (data-bosses.js)
+  // em vez do índice no ARTEFACTS. Namespace próprio ("bossRights"), não
+  // misturado com "artefacts", para os 20 artefactos normais continuarem
+  // exactamente como estavam para quem já tenha progresso guardado.
+  let collectedBossRights = {};
+  function loadBossRights() {
+    collectedBossRights = loadNamespace("bossRights", {});
+  }
+  function saveBossRights() {
+    saveNamespace("bossRights", collectedBossRights);
+  }
+  loadBossRights();
+
   // =====================================================
   // ===== RESET COMPLETO DE PROGRESSO =====
   // Função única chamada por TODOS os pontos de "recomeçar" (menu inicial
@@ -716,6 +750,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // Álbum dos Direitos
     collectedArtefacts = {};
     saveArtefacts();
+    // Álbum dos Direitos dos Bosses (novo, ver loadBossRights/saveBossRights
+    // acima) — sem isto, um "Apagar progresso" deixava crachás de bosses
+    // antigos por trás, incoerentes com o resto do progresso já limpo.
+    collectedBossRights = {};
+    saveBossRights();
     // Conquistas (achievements.js) — desbloqueios + contadores internos
     resetAchievements();
     // Estrelas por nível (stars.js)
@@ -1074,6 +1113,47 @@ window.addEventListener("DOMContentLoaded", () => {
     const pctEl = document.getElementById("agPct");
     if (pctEl) pctEl.textContent = `${got}/${total} competências recuperadas`;
 
+    // Crachás dos Bosses (novo, pedido: os "Direitos Recuperados" de cada
+    // boss apareciam num toast e desapareciam, sem nenhum sítio onde a
+    // criança os visse todos juntos no fim — um fecho narrativo mais forte
+    // do que só o ecrã de vitória genérico). Reaproveita a MESMA grelha e
+    // as mesmas classes CSS dos 20 artefactos normais (.ag-grid/.ag-cell —
+    // zero CSS novo), só com os 4 bosses em vez dos 20 níveis; construída
+    // uma única vez (guarda "agBossGrid") e só voltada a preencher em
+    // chamadas seguintes, tal como a grelha principal acima.
+    let bossHeading = document.getElementById("agBossHeading");
+    let bossGrid = document.getElementById("agBossGrid");
+    if (grid && grid.parentNode && (!bossHeading || !bossGrid)) {
+      bossHeading = document.createElement("p");
+      bossHeading.id = "agBossHeading";
+      bossHeading.className = "ag-pct";
+      bossHeading.style.marginTop = "10px";
+      bossHeading.textContent = "🏆 Direitos Recuperados dos Bosses";
+      grid.parentNode.insertBefore(bossHeading, grid.nextSibling);
+      bossGrid = document.createElement("div");
+      bossGrid.id = "agBossGrid";
+      bossGrid.className = "ag-grid";
+      grid.parentNode.insertBefore(bossGrid, bossHeading.nextSibling);
+    }
+    if (bossGrid) {
+      bossGrid.innerHTML = "";
+      [...BOSSES].sort((a, b) => a.afterLevel - b.afterLevel).forEach((b, i) => {
+        const info = collectedBossRights[b.id];
+        const gotIt = !!info;
+        const cell = document.createElement("div");
+        cell.className = "ag-cell" + (gotIt ? " ag-cell--got" : " ag-cell--miss");
+        cell.style.animationDelay = (i * 60) + "ms";
+        const rr = b.rightRecovered;
+        const name = gotIt && rr ? rr.name + (info.flawless ? " ⭐" : "") : "?";
+        cell.innerHTML = `
+          <div class="ag-emoji">${gotIt && rr ? rr.emoji : "🔒"}</div>
+          <div class="ag-name">${name}</div>
+        `;
+        if (gotIt && info.flawless) cell.title = "Combate Perfeito — nenhuma vida perdida!";
+        bossGrid.appendChild(cell);
+      });
+    }
+
     overlay.classList.remove("hidden");
     overlay.classList.add("show");
     ensureAudio();
@@ -1237,37 +1317,41 @@ window.addEventListener("DOMContentLoaded", () => {
   let transitionGfx, transitionLabel;
   let score=0, lives=3, livesLostThisLevel=0;
   const MAX_LIVES=5;
-  // ===== Nível de dificuldade — 3º Ciclo / Secundário =====
-  // Pedido do Berto: o mesmo jogo serve turmas de 3º ciclo e de secundário,
-  // por isso precisa de 2 níveis. Escolhido sempre que se começa uma "Nova
-  // Aventura" (ver btnStart mais abaixo), guardado em "settings" para
-  // sobreviver a um refresh de página a meio de uma partida, e também
-  // alterável mais tarde em Opções (ver optBtnDifficulty), sem ser preciso
-  // recomeçar tudo. Afeta 2 coisas: o banco de perguntas do quiz (ver
-  // getQuizPool) e a velocidade/ritmo de ataque + vidas dos combates de
-  // boss (ver getBossSpeedMult/getStartLives).
-  let difficulty = "3ciclo"; // "3ciclo" | "secundario"
+  // ===== Nível de dificuldade — Fácil (1º/2º ciclo) / Difícil (3º ciclo e
+  // secundário) =====
+  // Pedido do Berto: o jogo era só para 1º/2º ciclo; este ano vai também
+  // usá-lo com 3º ciclo e secundário, por isso precisa de um 2º nível mais
+  // desafiante. Escolhido sempre que se começa uma "Nova Aventura" (ver
+  // btnStart mais abaixo), guardado em "settings" para sobreviver a um
+  // refresh de página a meio de uma partida, e também alterável mais tarde
+  // em Opções (optBtnDifficulty), sem ser preciso recomeçar tudo.
+  // NOTA: isto não tem nada a ver com difficultyFactor(idx) mais abaixo, que
+  // é a progressão natural de dificuldade ao longo dos 20 níveis (sempre
+  // existiu). Os dois multiplicam-se — ver getVillainSpeedMult().
+  let difficulty = "facil"; // "facil" | "dificil"
   function getDifficulty() { return difficulty; }
   function setDifficulty(d) {
-    difficulty = (d === "secundario") ? "secundario" : "3ciclo";
+    difficulty = (d === "dificil") ? "dificil" : "facil";
     const s = loadNamespace("settings", {});
     s.difficulty = difficulty;
     saveNamespace("settings", s);
   }
-  // Vidas iniciais — 3 no 3º ciclo (como sempre foi), 2 no secundário
-  // (pedido: "jogo mais desafiante... menos vidas").
-  function getStartLives() { return difficulty === "secundario" ? 2 : 3; }
-  // Multiplicador de velocidade/ritmo de ataque dos bosses — ver
+  // Vidas iniciais — 3 no Fácil (como sempre foi), 2 no Difícil (pedido:
+  // "jogo mais desafiante... menos vidas").
+  function getStartLives() { return difficulty === "dificil" ? 2 : 3; }
+  // Multiplicador de velocidade/ritmo de ataque dos BOSSES — ver
   // bossState.speedMult/baseSpeedMult em spawnBossFight e bossEnterRage.
-  // +20% no secundário: sensível mas não injusto, a mesma ordem de grandeza
-  // do 1º nível de fúria (rageLevel 1 = 1.35×) já usado nos 4 bosses.
-  function getBossSpeedMult() { return difficulty === "secundario" ? 1.2 : 1; }
+  function getBossSpeedMult() { return difficulty === "dificil" ? 1.2 : 1; }
+  // Multiplicador de velocidade dos VILÕES normais (Trapalhão/Saltitão/
+  // Perseguilão) — aplicado dentro de difficultyFactor(), a única função que
+  // já controlava a velocidade deles consoante o nível.
+  function getVillainSpeedMult() { return difficulty === "dificil" ? 1.2 : 1; }
   // Banco de perguntas a usar, conforme o nível escolhido — cai sempre para
-  // o banco base (3º ciclo) se o avançado ainda não tiver perguntas para
-  // aquele tema, para nunca ficar sem quiz nenhum a meio de um combate.
+  // o banco base (Fácil) se o avançado ainda não tiver perguntas para aquele
+  // tema, para nunca ficar sem quiz nenhum a meio de um combate.
   function getQuizPool(theme) {
     const base = QUIZ_BY_THEME[theme] || QUIZ_BY_THEME["historia_internet"];
-    if (difficulty === "secundario") {
+    if (difficulty === "dificil") {
       const adv = QUIZ_BY_THEME_AVANCADO[theme];
       if (adv && adv.length) return adv;
     }
@@ -2736,6 +2820,7 @@ window.addEventListener("DOMContentLoaded", () => {
       ease: "Sine.easeInOut",
       onComplete: () => { if (player) player.setAngle(0); }
     });
+    applyHitStop(scene);
 
     if (powered) { clearPower(scene); setInvuln(scene, 800); tipText.setText("🛡️ Escudo usado! Cuidado."); return; }
 
@@ -2745,6 +2830,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const hazardNames = { lava: "🔥 Lava!", acid: "☠️ Ácido!", void: "🌑 Abismo!" };
     showFloat(scene, player.x, player.y - 60, hazardNames[h.kind] || "⚠️ Perigo!", "#ff4400");
+    // Aviso claro de perda de vida — mesmo motivo do onHitMalware (ver ali).
+    showFloat(scene, player.x, player.y - 90, "💥 -1 Vida!", "#ff5050");
 
     scene.time.delayedCall(420, () => {
       if (!player) return;
@@ -3107,7 +3194,9 @@ window.addEventListener("DOMContentLoaded", () => {
     let f = 1 + idx * 0.02;
     if (idx >= 8)  f += (idx - 8)  * 0.015;
     if (idx >= 14) f += (idx - 14) * 0.02;
-    return Math.min(1.35, f); // cap mais baixo — 1.35 em vez de 1.85
+    // × getVillainSpeedMult(): o nível de dificuldade escolhido pelo
+    // jogador (Fácil/Difícil) — ver bloco no topo do ficheiro.
+    return Math.min(1.35, f) * getVillainSpeedMult(); // cap mais baixo — 1.35 em vez de 1.85
   }
 
   // ===== Carregar nível =====
@@ -4471,7 +4560,11 @@ window.addEventListener("DOMContentLoaded", () => {
     destroyBossHpBar();
     // Começa em "intro": todos os timers/movimentos do boss (que verificam
     // phase!=="platform") ficam inertes enquanto decorre a cinemática de entrada.
-    bossState = { def, hp: def.hp, phase: "intro", collected: 0, onComplete, hitCooldownUntil: 0, rageLevel: 0, speedMult: getBossSpeedMult(), baseSpeedMult: getBossSpeedMult(), qmarkShotCount: 0 };
+    bossState = { def, hp: def.hp, phase: "intro", collected: 0, onComplete, hitCooldownUntil: 0, rageLevel: 0, speedMult: getBossSpeedMult(), baseSpeedMult: getBossSpeedMult(), qmarkShotCount: 0,
+      // tookDamage (novo): fica true na 1ª vez que bossHitPlayer() acertar
+      // durante este combate — usado só no fim (ver "Combate Perfeito" na
+      // vitória do quiz) para saber se o jogador não perdeu nenhuma vida.
+      tookDamage: false };
 
     // Limpar o palco tal como loadLevel já faz — arena dedicada, isolada do nível anterior
     enemyTimers.forEach(t=>{try{t.remove(false);}catch{}}); enemyTimers=[];
@@ -4854,7 +4947,10 @@ window.addEventListener("DOMContentLoaded", () => {
       spawnBossSign(scene, signX, def.signY != null ? def.signY : 486, objEmoji, objective);
       if (def.stompBoss) {
         // Sem estrela, sem carga — o HUD mostra logo o progresso dos saltos.
-        itemCountText.setText(`👣 Saltos: 0/${def.hp}`);
+        // stompLabel (nova, opt-in): rótulo temático por boss em vez do
+        // genérico "👣 Saltos" para todos — dá mais identidade a cada
+        // combate (ver data-bosses.js).
+        itemCountText.setText(`${def.stompLabel || "👣 Saltos"}: 0/${def.hp}`);
       } else if (!def.specialAttack) {
         // Lembrete visual permanente por cima do boss — 🔒 enquanto não podes
         // tocar-lhe, ⭐ assim que apanhas o poder da estrela. Substitui/completa
@@ -4986,15 +5082,15 @@ window.addEventListener("DOMContentLoaded", () => {
     scene.time.delayedCall(2600, () => { if (news.active) news.destroy(); });
   }
 
-  // ---- Momento "último fôlego" (opt-in via def.finalStandBurst, ver
-  // data-bosses.js — só o Guardião das Sombras, por agora): disparado uma
-  // única vez a partir de damageBoss() quando o boss fica a só 1 salto de
-  // ser derrotado. Lança 2 sombras vindas dos extremos da arena, a voar na
-  // horizontal (sem gravidade, tal como o antigo "Fake News", mas com as
-  // dimensões da arena ATUAL — 960px, não os 1600px de antes da conversão
-  // para "boss clássico à Mario"). altura da cabeça: o chão da arena tem o
-  // topo em y=506 e o VanBerto's de pé mede ~72px (pés sempre no mesmo
-  // sítio) → cabeça de pé por volta de y=434; agachado (~60% da altura, ver
+  // ---- Momento "último fôlego" (opt-in via def.finalStandBurst — agora
+  // nos 4 bosses, ver data-bosses.js): disparado uma única vez a partir de
+  // damageBoss() quando o boss fica a só 1 salto de ser derrotado. Lança 3
+  // sombras vindas dos extremos da arena, a voar na horizontal (sem
+  // gravidade, tal como o antigo "Fake News", mas com as dimensões da
+  // arena ATUAL — 960px, não os 1600px de antes da conversão para "boss
+  // clássico à Mario"). altura da cabeça: o chão da arena tem o topo em
+  // y=506 e o VanBerto's de pé mede ~72px (pés sempre no mesmo sítio) →
+  // cabeça de pé por volta de y=434; agachado (~60% da altura, ver
   // isCrouching) → cabeça por volta de y=463. y=452 fica a meio dos dois:
   // acerta em pé, passa por cima agachado. Não altera hp nem timers normais
   // do boss (patrulha/teleporte/❓ continuam) — é só uma camada extra.
@@ -5019,11 +5115,18 @@ window.addEventListener("DOMContentLoaded", () => {
       shadow.setAngularVelocity(fromLeft ? -180 : 180);
       scene.time.delayedCall(3000, () => { if (shadow.active) shadow.destroy(); });
     };
-    // 2 sombras em sequência (não simultâneas) — dá tempo de perceber o
-    // padrão e agachar a tempo, mesmo sendo a 1ª vez que a criança vê este
-    // ataque em particular.
-    scene.time.delayedCall(500, () => spawnShadow(true));
-    scene.time.delayedCall(1300, () => spawnShadow(false));
+    // Sequência alternada (esquerda-direita-esquerda-...), espaçada 800ms —
+    // dá tempo de perceber o padrão e agachar a tempo, mesmo sendo a 1ª vez
+    // que a criança vê este ataque em particular. Número de sombras via
+    // def.finalStandBurstHits (opt-in, omisso = 3): o último fôlego de
+    // qualquer boss é pensado para ser o momento mais difícil do combate,
+    // por isso o motor por omissão sobe para 3 (era só 2) — mas o Vírus
+    // Gigante, por continuar a ser o 1º boss do jogo, pede explicitamente
+    // para ficar nos 2 originais (ver finalStandBurstHits em data-bosses.js).
+    const hits = def.finalStandBurstHits || 3;
+    for (let i = 0; i < hits; i++) {
+      scene.time.delayedCall(500 + i * 800, () => spawnShadow(i % 2 === 0));
+    }
   }
 
   function spawnBossSprite(scene, def, x) {
@@ -5287,8 +5390,14 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
   function spawnMiniViruses(scene, count) {
+    // CORRIGIDO — x ia de 350 a 1250, herdado da arena antiga (1600px de
+    // largura, antes da conversão para "boss clássico à Mario"); nas
+    // arenas atuais (960px) isso mandava vírus para fora do ecrã, à direita
+    // da câmara. Agora usa a largura real da arena do boss em combate, com
+    // uma margem de 60px de cada lado.
+    const worldW = (bossState && bossState.def.arena && bossState.def.arena.worldW) || 960;
     for (let i=0;i<count;i++){
-      const x = 350 + Math.random()*900;
+      const x = 60 + Math.random()*(worldW-120);
       const v = malwareGroup.create(x, 320 + Math.random()*100, "vilao_round");
       v.setScale(0.7).setTint(0x30c060).setData("isMiniHazard", true);
       v.body.setAllowGravity(false);
@@ -5449,20 +5558,95 @@ window.addEventListener("DOMContentLoaded", () => {
     // do 2º, e qualquer boss sem forceFirstOrbRight) mantêm o
     // comportamento antigo, incluindo o ressalto normal nas plataformas.
     q.body.setCollideWorldBounds(!isForcedFirstShot);
-    q.setVelocity(towardPlayer * 90, -120);
+
+    // Personalidade do arremesso (pedido: os 4 bosses tinham exactamente o
+    // mesmo projétil físico — só a textura/tint mudavam). Cada boss "opt-in"
+    // a uma pequena variação de trajectória própria, tudo por cima da mesma
+    // base (gravidade 480, bounce 0.5) para continuar previsível/justo.
+    if (def.hookDrift) {
+      // Anzol do Monstro do Phishing: lançamento bem mais horizontal e
+      // rápido (como um lance de cana de pesca), que "assenta" a meio do
+      // ar — a velocidade horizontal cai de repente aos 380ms, como se o
+      // anzol tivesse ficado sem linha e começasse só a cair/arrastar.
+      q.setVelocity(towardPlayer * 170, -150);
+      scene.time.delayedCall(380, () => {
+        if (q.active && q.body) q.body.setVelocityX(towardPlayer * 45);
+      });
+    } else if (def.homingDrift) {
+      // Orbe do Espião das Sombras: parte mais devagar que os outros 3, mas
+      // vai sendo ligeiramente "puxada" na direção do VanBerto's nos
+      // primeiros ~600ms de voo (pequenos empurrões, sempre com um teto de
+      // velocidade) — não é perseguição perfeita, só o suficiente para
+      // parecer que o boss está mesmo a mirar, em vez de atirar às cegas.
+      q.setVelocity(towardPlayer * 55, -100);
+      const homingTimer = scene.time.addEvent({
+        delay: 150, repeat: 3,
+        callback: () => {
+          if (!q.active || !q.body) { try{homingTimer.remove(false);}catch{} return; }
+          const dir = (player.x < q.x) ? -1 : 1;
+          q.body.setVelocityX(Phaser.Math.Clamp(q.body.velocity.x + dir * 18, -110, 110));
+        }
+      });
+      bossTimers.push(homingTimer);
+    } else {
+      q.setVelocity(towardPlayer * 90, -120);
+    }
     q.setAngularVelocity(towardPlayer * 130);
-    scene.physics.add.collider(q, platforms);
+
+    if (def.splitOnBounce) {
+      // Micróbio do Vírus Gigante: ao primeiro toque numa plataforma,
+      // "parte" em 2 micróbios mais pequenos que se afastam um do outro —
+      // sensação de vírus a replicar-se, sem precisar de arte nova (reusa
+      // a mesma textura, só mais pequena). hasSplit evita que os próprios
+      // filhos (que não têm este collider especial) voltassem a partir-se.
+      let hasSplit = false;
+      scene.physics.add.collider(q, platforms, () => {
+        if (hasSplit || !q.active) return;
+        hasSplit = true;
+        spawnBossGermSplit(scene, q.x, q.y, def);
+        q.destroy();
+      });
+    } else {
+      scene.physics.add.collider(q, platforms);
+    }
     scene.time.delayedCall(4500, () => { if (q.active) q.destroy(); });
 
-    // Ataque duplo na fúria máxima (pedido "mais género Mario" — o boss
-    // fica mais intenso nos seus próprios ataques, sem precisar de nenhum
-    // perigo novo no chão): na 2ª fúria (desesperada), cada arremesso vem
-    // acompanhado de um 2º, um pouco atrás — como um boss clássico a
-    // atirar em sequência quando está mais fraco. isFollowUp evita uma
-    // cadeia infinita (o 2º disparo nunca gera um 3º).
-    if (!isFollowUp && def.doubleThrowAtMaxRage && bossState.rageLevel >= 2) {
+    // Ataque duplo (pedido "mais género Mario" — o boss fica mais intenso
+    // nos seus próprios ataques, sem precisar de nenhum perigo novo no
+    // chão): cada arremesso vem acompanhado de um 2º, um pouco atrás, como
+    // um boss clássico a atirar em sequência. Antes só acontecia na 2ª
+    // fúria (desesperada) de qualquer boss (doubleThrowAtMaxRage); o Robô
+    // do Spam agora fá-lo sempre (alwaysDoubleThrow, opt-in em
+    // data-bosses.js) — cartas de spam vêm sempre aos pares, é a sua
+    // assinatura, não só quando está a perder. isFollowUp evita uma cadeia
+    // infinita (o 2º disparo nunca gera um 3º, mesmo com as duas condições
+    // reunidas). doubleThrowFromRage1 (nova, só Monstro do Phishing): este
+    // boss passa a atirar em par já na 1ª fúria (rageLevel>=1), uma fúria
+    // mais cedo que os outros 3 (que só duplicam na 2ª/desesperada) — dá-lhe
+    // uma escalada própria em vez de só ficar mais rápido como antes.
+    if (!isFollowUp && ((def.doubleThrowAtMaxRage && bossState.rageLevel >= 2) || def.alwaysDoubleThrow || (def.doubleThrowFromRage1 && bossState.rageLevel >= 1))) {
       scene.time.delayedCall(260, () => doBossRollQmark(scene, true));
     }
+  }
+
+  // Os 2 micróbios-filho de spawnBossGermSplit (ver splitOnBounce acima) —
+  // mais pequenos, mais rápidos a espalhar-se, com um tempo de vida mais
+  // curto que o micróbio original (não seria justo ficarem tanto tempo em
+  // jogo como o "pai").
+  function spawnBossGermSplit(scene, x, y, def) {
+    [-1, 1].forEach(dir => {
+      const child = itemsGroup.create(x, y - 4, def.orbTexture || "boss_proj_qmark");
+      if (def.orbTint != null) child.setTint(def.orbTint);
+      child.setScale(0.62).setDepth(2).setData("bossProjQmark", true);
+      child.body.setAllowGravity(true);
+      child.body.setGravityY(480);
+      child.body.setBounce(0.5, 0);
+      child.body.setCollideWorldBounds(true);
+      child.setVelocity(dir * 140, -180);
+      child.setAngularVelocity(dir * 200);
+      scene.physics.add.collider(child, platforms);
+      scene.time.delayedCall(2600, () => { if (child.active) child.destroy(); });
+    });
   }
 
   // ---- Baforada de fumo do Poluidor Mecânico (marca própria do boss — ver
@@ -5832,17 +6016,32 @@ window.addEventListener("DOMContentLoaded", () => {
     if (bossState.qmarkTimer) bossState.qmarkTimer.delay = bossState.qmarkBaseDelay / bossState.speedMult;
     if (bossState.smokeTimer) bossState.smokeTimer.delay = bossState.smokeBaseDelay / bossState.speedMult;
 
-    // Escalada da arena contaminada/poluída (Vírus Gigante, Poluidor Mecânico) —
-    // 100% opt-in via def.contaminatedArena.escalations[level]; bosses sem esse
-    // campo (Monstro, Guardião) ficam exatamente iguais a antes. Cada boss
-    // decide em que nível de fúria quer escalar (Vírus na 1ª fúria, Poluidor
-    // só na fúria final) — não é um valor fixo do motor.
+    // Escalada da arena contaminada/poluída (Vírus Gigante, Robô do Spam) —
+    // 100% opt-in via def.contaminatedArena.escalations[level]; bosses sem
+    // esse campo (Monstro, Guardião) ficam exatamente iguais a antes. Os 2
+    // bosses que a usam escalam nas 2 fúrias (zonas cada vez mais largas).
     if (def.contaminatedArena && typeof def.contaminatedArena === "object") {
       const esc = def.contaminatedArena.escalations && def.contaminatedArena.escalations[level];
       if (esc) {
         if (esc.zones) spawnToxicZones(scene, esc.zones, def.contaminatedArena.hazardType);
         if (esc.virus != null) bossState.desiredVirusCount = esc.virus;
+        // Reação visual ao chão a piorar (nova) — sem isto, o alargamento das
+        // zonas era silencioso, fácil de não notar a meio da ação. Um flash
+        // rápido na cor do próprio perigo (verde ácido / laranja lava) chama
+        // a atenção exactamente no instante em que o chão fica mais perigoso.
+        const flashRGB = def.contaminatedArena.hazardType === "lava" ? [255,120,20] : [40,220,80];
+        scene.cameras.main.flash(260, flashRGB[0], flashRGB[1], flashRGB[2]);
       }
+    }
+
+    // Teletransporte-surpresa (nova, só Espião das Sombras — def.extraTeleportOnRage):
+    // ao entrar em fúria (1ª ou 2ª), o Espião desaparece e reaparece de
+    // imediato, além dos seus teletransportes normais por temporizador —
+    // reforça a identidade de "difícil de apanhar quando está a perder",
+    // dando-lhe uma escalada própria tal como o chão contaminado dá ao
+    // Vírus/Robô e o ataque duplo mais cedo dá ao Monstro do Phishing.
+    if (def.extraTeleportOnRage && (def.movementType === "teleport" || def.movementType === "blink")) {
+      doBossTeleport(scene);
     }
 
     // Cara fica vermelha de raiva (pedido) — nova variante de textura
@@ -5946,7 +6145,7 @@ window.addEventListener("DOMContentLoaded", () => {
       // 3º (e último) salto. Só sobe até ao 2º salto — no 3º o boss já foi
       // derrotado, não há "fúria" nenhuma para mostrar.
       const stomps = hitsTaken;
-      itemCountText.setText(`👣 Saltos: ${Math.max(0,stomps)}/${bossState.def.hp}`);
+      itemCountText.setText(`${bossState.def.stompLabel || "👣 Saltos"}: ${Math.max(0,stomps)}/${bossState.def.hp}`);
       const taunts = BOSS_HP_TAUNTS[bossState.def.id];
       if (taunts && bossState.hp > 0) {
         const key = bossState.hp === 2 ? "hp2" : bossState.hp === 1 ? "hp1" : "atStart";
@@ -6087,6 +6286,12 @@ window.addEventListener("DOMContentLoaded", () => {
   function bossHitPlayer(scene, sourceObj, warnMsg) {
     if (invuln || lives <= 0) return;
     ensureAudio(); SFX.hit();
+    // Combate Perfeito (novo, ver "flawless" na vitória em startBossQuizPhase):
+    // marca que este combate já não é "sem perder uma vida", assim que o
+    // boss acerta pela 1ª vez. Só dentro de um combate ativo — bossHitPlayer
+    // também é chamada por outras fontes de dano fora daí (ver comentário
+    // logo abaixo sobre a risada trocista).
+    if (inBossFight && bossState) bossState.tookDamage = true;
     // Risada trocista (pedido: "mais expressões... rir") — sempre que o
     // boss consegue acertar no VanBerto's durante o combate, mostra por
     // instantes a mesma cara de riso maléfico da entrada (textura
@@ -6117,6 +6322,7 @@ window.addEventListener("DOMContentLoaded", () => {
       ease: "Sine.easeInOut",
       onComplete: () => { if(player) player.setAngle(0); }
     });
+    applyHitStop(scene);
     lives -= 1; updateHearts(); livesLostThisLevel++; _hudDirty = true;
     triggerVanBertoSad(scene);
     if (heartsGfx) scene.tweens.add({targets:heartsGfx,x:{from:-4,to:4},duration:60,yoyo:true,repeat:3,ease:"Sine.easeInOut",onComplete:()=>{if(heartsGfx)heartsGfx.x=0;}});
@@ -6389,6 +6595,10 @@ window.addEventListener("DOMContentLoaded", () => {
     showQuiz(quiz, () => {
       const def = bossState.def;
       const finished = bossState.onComplete;
+      // Combate Perfeito (novo): capturado ANTES de bossState ser posto a
+      // null mais abaixo — usado depois de "Direito Recuperado" para saber
+      // se este combate específico decorreu sem perder nenhuma vida.
+      const flawless = !bossState.tookDamage;
       ensureAudio(); SFX.win();
       player.setAlpha(1);
       // Pequena "pose de vitória" — dois saltinhos rápidos do VanBerto's, para
@@ -6451,6 +6661,23 @@ window.addEventListener("DOMContentLoaded", () => {
       // conquistas (achv-toast) que já existe e já é usado neste jogo.
       if (def.rightRecovered) {
         showAchievementToast({ tier: def.rightRecovered.emoji, name: def.rightRecovered.name }, "🎉 Direito Recuperado!");
+        // Álbum dos Direitos dos Bosses (novo, pedido: os 4 "Direitos
+        // Recuperados" apareciam e desapareciam num toast, sem nenhum sítio
+        // onde a criança os visse todos juntos no fim). Regista este boss
+        // como vencido — mostrado na Galeria de Competências, a seguir aos
+        // 20 artefactos normais (ver showArtefactGallery).
+        collectedBossRights[def.id] = { flawless };
+        saveBossRights();
+      }
+      // Combate Perfeito (novo, pedido: "não há recompensa nenhuma por jogar
+      // bem um boss") — um 2º toast, um pouco depois do primeiro para não
+      // amontoar tudo no mesmo instante (banner+confetti+acorde+toast já
+      // acontecem todos ali). Só visual (reaproveita o mesmo achv-toast já
+      // usado no jogo) — não mexe no sistema de conquistas nem no HUD.
+      if (flawless) {
+        sceneRef.time.delayedCall(1200, () => {
+          showAchievementToast({ tier: "🏆", name: "Nenhuma vida perdida neste combate!" }, "✨ Combate Perfeito!");
+        });
       }
       // awaitingQuiz continua true durante a cinemática de vitória — só liberta
       // o jogador quando o portal for criado, a seguir ao diálogo.
@@ -7209,11 +7436,16 @@ window.addEventListener("DOMContentLoaded", () => {
     // ─────────────────────────────────────────────────────────
 
     if(powered){clearPower(sceneRef);setInvuln(sceneRef,800);tipText.setText("🛡️ Escudo usado! Cuidado.");return;}
+    applyHitStop(sceneRef);
     lives-=1; updateHearts(); livesLostThisLevel++; _hudDirty=true;
     triggerVanBertoSad(sceneRef);
     if(heartsGfx&&sceneRef) sceneRef.tweens.add({targets:heartsGfx,x:{from:-4,to:4},duration:60,yoyo:true,repeat:3,ease:"Sine.easeInOut",onComplete:()=>{if(heartsGfx)heartsGfx.x=0;}});
     // Marca invuln imediatamente para bloquear hits durante o voo de knockback
     invuln=true;
+    // Aviso claro de perda de vida — antes só existia nos combates de boss
+    // (bossHitPlayer), por isso num toque normal de vilão a perda de vida
+    // passava despercebida (só o coração no HUD mudava, pequeno e discreto).
+    showFloat(sceneRef, playerObj.x, playerObj.y-90, "💥 -1 Vida!", "#ff5050");
     // Após o voo de knockback, teletransportar e iniciar 2s de proteção completa
     sceneRef.time.delayedCall(400, () => {
       if(!player) return;
@@ -7793,9 +8025,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // "Começar" mostra primeiro o ecrã de nível de dificuldade (pedido do
-  // Berto — 3º ciclo e secundário na mesma turma/ano letivo); só depois de
-  // escolhido é que o jogo reinicia de facto. Ver reallyStartNewGame() e o
-  // difficultyOverlay em index.html.
+  // Berto — o jogo era só para 1º/2º ciclo, este ano é preciso também para
+  // 3º ciclo e secundário); só depois de escolhido é que o jogo reinicia de
+  // facto. Ver reallyStartNewGame() e o difficultyOverlay em index.html.
   function reallyStartNewGame(){
     ensureAudio();SFX.coin();
     playerName=(playerNameInput?.value||"").trim();
@@ -7835,15 +8067,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (diffOverlay) diffOverlay.classList.remove("hidden");
     else reallyStartNewGame(); // rede de segurança, caso o HTML não tenha o overlay
   };
-  const btnDiff3Ciclo = document.getElementById("btnDiff3Ciclo");
-  const btnDiffSecundario = document.getElementById("btnDiffSecundario");
+  const btnDiffFacil = document.getElementById("btnDiffFacil");
+  const btnDiffDificil = document.getElementById("btnDiffDificil");
   const pickDifficultyAndStart = (level) => {
     setDifficulty(level);
     document.getElementById("difficultyOverlay")?.classList.add("hidden");
     reallyStartNewGame();
   };
-  btnDiff3Ciclo?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("3ciclo"); });
-  btnDiffSecundario?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("secundario"); });
+  btnDiffFacil?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("facil"); });
+  btnDiffDificil?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("dificil"); });
 
   // ===== Menu Principal / In-game — botão Mapa =====
   document.getElementById("btnOpenMap")?.addEventListener("click", () => {
@@ -8117,7 +8349,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const btnFS    = document.getElementById("optBtnFS");
     const btnDiff  = document.getElementById("optBtnDifficulty");
     if (btnDiff) {
-      btnDiff.textContent = difficulty === "secundario" ? "🎓 Secundário" : "🎒 3º Ciclo";
+      btnDiff.textContent = difficulty === "dificil" ? "🎓 Difícil" : "😊 Fácil";
     }
     if (btnSound) {
       btnSound.textContent = isMuted() ? "🔇 OFF" : "🔊 ON";
@@ -8162,7 +8394,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("optBtnDifficulty")?.addEventListener("click", () => {
     ensureAudio(); SFX.coin();
-    setDifficulty(difficulty === "secundario" ? "3ciclo" : "secundario");
+    setDifficulty(difficulty === "dificil" ? "facil" : "dificil");
     syncOptionsUI();
   });
   document.getElementById("optBtnHC")?.addEventListener("click", () => {
