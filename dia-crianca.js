@@ -1346,6 +1346,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // Perseguilão) — aplicado dentro de difficultyFactor(), a única função que
   // já controlava a velocidade deles consoante o nível.
   function getVillainSpeedMult() { return difficulty === "dificil" ? 1.2 : 1; }
+  // Multiplicador do intervalo entre saltos dos VILÕES normais — no
+  // Difícil o intervalo encolhe (saltam com mais frequência). Usado em
+  // spawnVilao() para o Trapalhão/Saltitão/Perseguilão continuarem a ser os
+  // mesmos 3 tipos no Difícil, só que mais rápidos E a saltar mais, em vez
+  // de trocarem todos para o comportamento "jumper".
+  function getVillainJumpIntervalMult() { return difficulty === "dificil" ? 0.6 : 1; }
   // Banco de perguntas a usar, conforme o nível escolhido — cai sempre para
   // o banco base (Fácil) se o avançado ainda não tiver perguntas para aquele
   // tema, para nunca ficar sem quiz nenhum a meio de um combate.
@@ -3523,13 +3529,12 @@ window.addEventListener("DOMContentLoaded", () => {
    *   "mini"    → patrulha zona pequena (±120px), devagar, sem saltar (mais fácil, níveis 1-3)
    *   "patrol"  → patrulha horizontal normal (médio, níveis 1-8)
    *   "jumper"  → patrulha E salta frequentemente (difícil, níveis 7-10)
+   * No modo Difícil (getDifficulty()) os 3 tipos continuam a aparecer tal
+   * como no Fácil — em vez de trocarem todos para "jumper", ficam mais
+   * rápidos e saltam mais (mini passa também a saltar) — ver
+   * getVillainSpeedMult()/getVillainJumpIntervalMult() acima.
    */
   function spawnVilao(scene, x, y, vx, df, pattern="patrol") {
-    // No Difícil, os vilões ficam sempre no comportamento mais "esperto"
-    // (jumper/Perseguião) em vez da mistura normal mini/patrol/jumper —
-    // pedido do Berto. Um único sítio a decidir isto, em vez de mudar cada
-    // um dos ~10 sítios que chamam spawnVilao().
-    if (getDifficulty() === "dificil") pattern = "jumper";
     const keyMap = { mini:"vilao_round", patrol:"vilao_spike", jumper:"vilao_bug" };
     const keys = ["vilao_round","vilao_spike","vilao_bug"];
     const key = keyMap[pattern] || keys[Math.floor(Math.random()*keys.length)];
@@ -3551,7 +3556,10 @@ window.addEventListener("DOMContentLoaded", () => {
     v.setData("originY", y);
 
     if (pattern === "mini") {
-      const miniSpeed = 60 + Math.random() * 40;
+      // × getVillainSpeedMult(): antes só o patrol/jumper ficavam mais
+      // rápidos no Difícil — o Trapalhão mantinha sempre a mesma
+      // velocidade lenta, mesmo no Difícil.
+      const miniSpeed = (60 + Math.random() * 40) * getVillainSpeedMult();
       v.setVelocityX(miniSpeed);
       v.setData("speed", miniSpeed);
       v.setData("dir", 1);
@@ -3569,11 +3577,18 @@ window.addEventListener("DOMContentLoaded", () => {
       v.setData("dir", vx >= 0 ? 1 : -1);
     }
 
-    // Saltos periódicos — só patrol e jumper
-    if (pattern === "patrol" || pattern === "jumper") {
+    // Saltos periódicos — patrol e jumper sempre; no Difícil o Trapalhão
+    // ("mini") passa também a saltar (pedido: os 3 tipos saltarem mais no
+    // Difícil), continuando sem saltar no Fácil ("lento e previsível").
+    // × getVillainJumpIntervalMult(): no Difícil o intervalo encolhe, ou
+    // seja, salta-se com mais frequência.
+    const jimMult = getVillainJumpIntervalMult();
+    if (pattern === "patrol" || pattern === "jumper" || (pattern === "mini" && difficulty === "dificil")) {
       const jumpInterval = pattern === "jumper"
-        ? 1400 + Math.random() * 700
-        : 2200 + Math.random() * 1400;
+        ? (1400 + Math.random() * 700) * jimMult
+        : pattern === "mini"
+          ? (2600 + Math.random() * 1400) * jimMult
+          : (2200 + Math.random() * 1400) * jimMult;
 
       const outerTimer = scene.time.addEvent({
         delay: 400 + Math.random() * 1000,
