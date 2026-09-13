@@ -2672,6 +2672,129 @@ function makeItemTextures(scene){
     tex.refresh();
   }
 
+  // Drone HOSTIL — 64×52. Inimigo aéreo exclusivo do nível Extremo (pedido:
+  // "drones maus"). Mesma família visual do item_drone (amigável, continua
+  // a existir e a dar pontos), mas paleta vermelha/laranja agressiva,
+  // silhueta mais espigada, e um único "olho" vermelho pulsante ao centro
+  // em vez do núcleo cyan + luzes verde/vermelho — para nunca se confundir
+  // com o drone bom, mesmo à distância ou num relance rápido.
+  if(!scene.textures.exists("drone_hostil")){
+    const tex=scene.textures.createCanvas("drone_hostil",64,52), ctx=tex.getContext();
+    const bx=32, by=23;
+
+    // --- AURA AMBIENTE (glow vermelho, mais intenso que a do drone bom) ---
+    const aura=ctx.createRadialGradient(bx,by,4,bx,by,30);
+    aura.addColorStop(0,"rgba(255,60,40,0.30)");
+    aura.addColorStop(1,"rgba(255,60,40,0)");
+    ctx.fillStyle=aura;
+    ctx.beginPath(); ctx.arc(bx,by,30,0,Math.PI*2); ctx.fill();
+
+    // --- 4 BRAÇOS + ANÉIS DE PLASMA VERMELHOS (atrás do corpo) ---
+    const arms=[[-22,-9],[22,-9],[-22,9],[22,9]];
+    arms.forEach(([dx,dy])=>{
+      const rx=bx+dx, ry=by+dy;
+      ctx.strokeStyle="#2a1010"; ctx.lineWidth=3; ctx.lineCap="round";
+      ctx.beginPath(); ctx.moveTo(bx+dx*0.22,by+dy*0.3); ctx.lineTo(rx,ry); ctx.stroke();
+      ctx.strokeStyle="rgba(255,90,60,0.9)"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(bx+dx*0.22,by+dy*0.3); ctx.lineTo(rx,ry); ctx.stroke();
+      // housing do motor — hexagonal, mais afiado (pontas em vez de faces largas)
+      ctx.fillStyle="#20100e";
+      ctx.beginPath();
+      ctx.moveTo(rx-5,ry); ctx.lineTo(rx-2,ry-4); ctx.lineTo(rx+2,ry-4);
+      ctx.lineTo(rx+5,ry); ctx.lineTo(rx+2,ry+4); ctx.lineTo(rx-2,ry+4);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="rgba(255,90,60,0.7)"; ctx.lineWidth=0.8; ctx.stroke();
+      // anel de plasma do motor, vermelho
+      ctx.save();
+      ctx.translate(rx,ry-1); ctx.scale(1,0.38);
+      const ringGr=ctx.createRadialGradient(0,0,1,0,0,10);
+      ringGr.addColorStop(0,"rgba(255,220,200,0.95)");
+      ringGr.addColorStop(0.5,"rgba(255,70,40,0.6)");
+      ringGr.addColorStop(1,"rgba(255,70,40,0)");
+      ctx.fillStyle=ringGr;
+      ctx.shadowColor="#ff3b1a"; ctx.shadowBlur=7;
+      ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.strokeStyle="rgba(255,255,255,0.7)"; ctx.lineWidth=0.9;
+      ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    });
+
+    // --- ESTABILIZADORES EM LÂMINA ---
+    ctx.strokeStyle="#2a1010"; ctx.lineWidth=2;
+    [[-9,1],[9,1]].forEach(([dx])=>{
+      ctx.beginPath(); ctx.moveTo(bx+dx,by+8); ctx.lineTo(bx+dx*1.6,by+15); ctx.stroke();
+    });
+    ctx.strokeStyle="rgba(255,90,60,0.7)"; ctx.lineWidth=1.4; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(bx-16,by+15); ctx.lineTo(bx-8,by+15); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx+8,by+15); ctx.lineTo(bx+16,by+15); ctx.stroke();
+
+    // --- DUAS "PONTAS" VERMELHAS NO TOPO (em vez da antena com halo
+    // dourado do drone bom — sem qualquer ligação à marca VanBerto's) ---
+    ctx.strokeStyle="#2a1010"; ctx.lineWidth=1.8;
+    [[-5,-1],[5,-1]].forEach(([dx])=>{
+      ctx.beginPath(); ctx.moveTo(bx+dx*0.6,by-9); ctx.lineTo(bx+dx,by-16); ctx.stroke();
+    });
+    ctx.fillStyle="#ff3b1a"; ctx.shadowColor="#ff3b1a"; ctx.shadowBlur=4;
+    ctx.beginPath(); ctx.arc(bx-5,by-16,1.6,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx+5,by-16,1.6,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+
+    // --- CORPO (chassis angular, mais espigado que o do drone bom) ---
+    ctx.beginPath();
+    ctx.moveTo(bx-15,by);
+    ctx.lineTo(bx-7,by-10);
+    ctx.lineTo(bx+7,by-10);
+    ctx.lineTo(bx+15,by);
+    ctx.lineTo(bx+7,by+10);
+    ctx.lineTo(bx-7,by+10);
+    ctx.closePath();
+    const bodyGr=ctx.createLinearGradient(bx,by-10,bx,by+10);
+    bodyGr.addColorStop(0,"#4a1c18"); bodyGr.addColorStop(0.5,"#2a1210"); bodyGr.addColorStop(1,"#120806");
+    ctx.fillStyle=bodyGr; ctx.fill();
+    ctx.strokeStyle="rgba(255,90,60,0.9)"; ctx.lineWidth=1.3;
+    ctx.shadowColor="#ff3b1a"; ctx.shadowBlur=3;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+
+    // faixa de luz central (linha de energia vermelha)
+    const stripGr=ctx.createLinearGradient(bx-11,by,bx+11,by);
+    stripGr.addColorStop(0,"rgba(255,70,40,0)");
+    stripGr.addColorStop(0.5,"rgba(255,150,120,0.9)");
+    stripGr.addColorStop(1,"rgba(255,70,40,0)");
+    ctx.fillStyle=stripGr;
+    ctx.beginPath(); ctx.roundRect(bx-11,by-1,22,2,1); ctx.fill();
+
+    // --- OLHO ÚNICO, VERMELHO, PULSANTE (substitui núcleo + luzes de
+    // estado do drone bom) — a marca visual mais clara de "isto é hostil" ---
+    const eyeGr=ctx.createRadialGradient(bx,by,0.5,bx,by,6);
+    eyeGr.addColorStop(0,"#ffffff"); eyeGr.addColorStop(0.35,"#ff5a3c"); eyeGr.addColorStop(1,"rgba(255,30,10,0)");
+    ctx.fillStyle=eyeGr; ctx.shadowColor="#ff2a0a"; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle="rgba(60,10,5,0.9)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.stroke();
+
+    // --- SCANNER PENDURADO POR BAIXO (feixe vermelho em vez de cyan) ---
+    ctx.strokeStyle="#2a1010"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(bx,by+10); ctx.lineTo(bx,by+12); ctx.stroke();
+    ctx.fillStyle="#160908";
+    ctx.beginPath(); ctx.roundRect(bx-6,by+11,12,7,3); ctx.fill();
+    ctx.strokeStyle="rgba(255,90,60,0.6)"; ctx.lineWidth=0.9;
+    ctx.beginPath(); ctx.roundRect(bx-6,by+11,12,7,3); ctx.stroke();
+    const lensIris=ctx.createRadialGradient(bx-0.6,by+14.3,0.3,bx,by+14.8,3.2);
+    lensIris.addColorStop(0,"#ffffff"); lensIris.addColorStop(0.35,"#ff6a4a"); lensIris.addColorStop(1,"#a01e0e");
+    ctx.fillStyle=lensIris; ctx.shadowColor="#ff5a3c"; ctx.shadowBlur=3;
+    ctx.beginPath(); ctx.arc(bx,by+14.8,3.2,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    const beam2=ctx.createLinearGradient(bx,by+17,bx,by+23);
+    beam2.addColorStop(0,"rgba(255,90,60,0.5)"); beam2.addColorStop(1,"rgba(255,90,60,0)");
+    ctx.fillStyle=beam2;
+    ctx.beginPath(); ctx.moveTo(bx-3,by+17); ctx.lineTo(bx+3,by+17); ctx.lineTo(bx+5,by+23); ctx.lineTo(bx-5,by+23); ctx.closePath(); ctx.fill();
+
+    tex.refresh();
+  }
+
   // Coração — vermelho vivo, grande, com brilho e gradiente
   if(!scene.textures.exists("item_heart")){
     const tex=scene.textures.createCanvas("item_heart",44,40), ctx=tex.getContext();

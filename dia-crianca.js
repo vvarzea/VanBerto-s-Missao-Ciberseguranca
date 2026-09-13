@@ -215,7 +215,7 @@ window.addEventListener("DOMContentLoaded", () => {
   function loadGame() {
     const s = loadNamespace("settings", {});
     if (typeof s.muted === "boolean") setMuted(s.muted);
-    if (s.difficulty === "dificil" || s.difficulty === "facil") difficulty = s.difficulty;
+    if (s.difficulty === "dificil" || s.difficulty === "facil" || s.difficulty === "extremo") difficulty = s.difficulty;
   }
 
   // ===== Elogios =====
@@ -1342,9 +1342,8 @@ window.addEventListener("DOMContentLoaded", () => {
   let pauseOverlayGfx, pauseVanImg, pauseLabel;
   let transitionGfx, transitionLabel;
   let score=0, lives=3, livesLostThisLevel=0;
-  const MAX_LIVES=5;
   // ===== Nível de dificuldade — Fácil (1º/2º ciclo) / Difícil (3º ciclo e
-  // secundário) =====
+  // secundário) / Extremo (pedido: "um nível acima do Difícil") =====
   // Pedido do Berto: o jogo era só para 1º/2º ciclo; este ano vai também
   // usá-lo com 3º ciclo e secundário, por isso precisa de um 2º nível mais
   // desafiante. Escolhido sempre que se começa uma "Nova Aventura" (ver
@@ -1354,30 +1353,36 @@ window.addEventListener("DOMContentLoaded", () => {
   // NOTA: isto não tem nada a ver com difficultyFactor(idx) mais abaixo, que
   // é a progressão natural de dificuldade ao longo dos 20 níveis (sempre
   // existiu). Os dois multiplicam-se — ver getVillainSpeedMult().
-  let difficulty = "facil"; // "facil" | "dificil"
+  let difficulty = "facil"; // "facil" | "dificil" | "extremo"
   function getDifficulty() { return difficulty; }
   function setDifficulty(d) {
-    difficulty = (d === "dificil") ? "dificil" : "facil";
+    difficulty = (d === "dificil" || d === "extremo") ? d : "facil";
     const s = loadNamespace("settings", {});
     s.difficulty = difficulty;
     saveNamespace("settings", s);
   }
-  // Vidas iniciais — 3 no Fácil (como sempre foi), 2 no Difícil (pedido:
-  // "jogo mais desafiante... menos vidas").
-  function getStartLives() { return difficulty === "dificil" ? 2 : 3; }
+  // Vidas iniciais — 3 no Fácil (como sempre foi), 2 no Difícil, 1 no
+  // Extremo (pedido: "jogo mais desafiante... menos vidas").
+  function getStartLives() { return difficulty === "extremo" ? 1 : difficulty === "dificil" ? 2 : 3; }
+  // Teto de vidas acumuláveis (corações extra) — 5 por omissão, reduzido a
+  // 3 no Extremo para não dar para "almofadar" o desafio com corações.
+  function getMaxLives() { return difficulty === "extremo" ? 3 : 5; }
   // Multiplicador de velocidade/ritmo de ataque dos BOSSES — ver
   // bossState.speedMult/baseSpeedMult em spawnBossFight e bossEnterRage.
-  function getBossSpeedMult() { return difficulty === "dificil" ? 1.2 : 1; }
+  function getBossSpeedMult() { return difficulty === "extremo" ? 1.4 : difficulty === "dificil" ? 1.2 : 1; }
   // Multiplicador de velocidade dos VILÕES normais (Trapalhão/Saltitão/
   // Perseguilão) — aplicado dentro de difficultyFactor(), a única função que
   // já controlava a velocidade deles consoante o nível.
-  function getVillainSpeedMult() { return difficulty === "dificil" ? 1.2 : 1; }
+  function getVillainSpeedMult() { return difficulty === "extremo" ? 1.4 : difficulty === "dificil" ? 1.2 : 1; }
   // Multiplicador do intervalo entre saltos dos VILÕES normais — no
-  // Difícil o intervalo encolhe (saltam com mais frequência). Usado em
-  // spawnVilao() para o Trapalhão/Saltitão/Perseguilão continuarem a ser os
-  // mesmos 3 tipos no Difícil, só que mais rápidos E a saltar mais, em vez
-  // de trocarem todos para o comportamento "jumper".
-  function getVillainJumpIntervalMult() { return difficulty === "dificil" ? 0.6 : 1; }
+  // Difícil/Extremo o intervalo encolhe (saltam com mais frequência). Usado
+  // em spawnVilao() para o Trapalhão/Saltitão/Perseguilão continuarem a ser
+  // os mesmos 3 tipos, só que mais rápidos E a saltar mais, em vez de
+  // trocarem todos para o comportamento "jumper".
+  function getVillainJumpIntervalMult() { return difficulty === "extremo" ? 0.4 : difficulty === "dificil" ? 0.6 : 1; }
+  // HP extra dos bosses (stomps a levar para derrotar) — +1 no Difícil,
+  // +2 no Extremo.
+  function getBossExtraHp() { return difficulty === "extremo" ? 2 : difficulty === "dificil" ? 1 : 0; }
   // CORRIGIDO — a versão original desta função reduzia TODOS os itens
   // menos corações, incluindo estrela (Star Power — a ÚNICA forma de matar
   // vilões), medalha (escudo) e duplosalto (o único duplo-salto do nível
@@ -1388,15 +1393,31 @@ window.addEventListener("DOMContentLoaded", () => {
   // (balão, brinquedo, balão de festa) — nunca poderes.
   function isReducibleItemKind(kind) { return kind === "balao" || kind === "brinquedo" || kind === "balaofesta"; }
   // Quantos itens "reduzíveis" (balão/brinquedo/balão de festa) ficam
-  // visíveis num nível — no Difícil fica só cerca de metade (idx par),
-  // para a recolha a 100% ser mais desafiante sem tocar em nenhum poder.
+  // visíveis num nível — no Difícil/Extremo fica só cerca de metade (idx
+  // par), para a recolha a 100% ser mais desafiante sem tocar em nenhum
+  // poder.
   function isItemVisibleInDificil(reducibleIdx) { return reducibleIdx % 2 === 0; }
+  // Star Power no Extremo (pedido: "no máximo 1 Star Power por nível" nos
+  // níveis 1-14, e "a partir do nível 15 não haver Star Powers"). levelIdx
+  // é 0-based (Nível 15 = idx 14). starOrderIdx é a posição desta estrela
+  // dentro da lista de estrelas do próprio nível (0 = a 1ª). "Por vida":
+  // esta função só decide QUAIS estrelas se CRIAM; como os itens são
+  // sempre recriados do zero ao perder uma vida (ver hitByHazard/
+  // onHitMalware) ou ao (re)carregar o nível (loadLevel), o limite reinicia
+  // sozinho em cada nova tentativa — nunca fica preso entre vidas.
+  function isStarAllowedExtremo(levelIdx, starOrderIdx) {
+    if (difficulty !== "extremo") return true;
+    if (levelIdx >= 14) return false; // Nível 15 em diante: nenhum Star Power
+    return starOrderIdx === 0; // só a 1ª estrela do nível
+  }
   // Banco de perguntas a usar, conforme o nível escolhido — cai sempre para
   // o banco base (Fácil) se o avançado ainda não tiver perguntas para aquele
   // tema, para nunca ficar sem quiz nenhum a meio de um combate.
   function getQuizPool(theme) {
     const base = QUIZ_BY_THEME[theme] || QUIZ_BY_THEME["historia_internet"];
-    if (difficulty === "dificil") {
+    // Extremo usa o mesmo banco avançado do Difícil (não há um 3º banco
+    // dedicado) — nunca deve voltar ao banco base, que seria mais fácil.
+    if (difficulty !== "facil") {
       const adv = QUIZ_BY_THEME_AVANCADO[theme];
       if (adv && adv.length) return adv;
     }
@@ -2369,6 +2390,22 @@ window.addEventListener("DOMContentLoaded", () => {
         if (m.x >= minR || m.body.blocked.right) { m.setVelocityX(-spd); m.setData("dir", -1); }
         if (Math.abs(m.body.velocity.x) < 8) { m.setVelocityX(spd * dir); }
         if (!isBoss) m.rotation += 0.012;
+      } else if (pat === "drone_hostil") {
+        // Drone Extremo — voa em patrulha horizontal (mesmo esquema de
+        // minLeft/minRight do "mini"), mas SEM tocar no chão: gravidade
+        // desligada em spawnHostileDrone(), e oscila em altura com um seno
+        // em torno de "baseY" para dar sensação de voo, em vez de girar
+        // como os vilões de chão (não faz sentido um drone rodar sobre si
+        // próprio).
+        const minL = m.getData("minLeft") ?? (m.x - 140);
+        const minR = m.getData("minRight") ?? (m.x + 140);
+        if (m.x <= minL || m.body.blocked.left)  { m.setVelocityX(spd);  m.setData("dir", 1); }
+        if (m.x >= minR || m.body.blocked.right) { m.setVelocityX(-spd); m.setData("dir", -1); }
+        if (Math.abs(m.body.velocity.x) < 8) { m.setVelocityX(spd * dir); }
+        const baseY = m.getData("baseY") ?? m.y;
+        const phase = (m.getData("bobPhase") || 0) + sceneRef.time.now * 0.0018;
+        m.y = baseY + Math.sin(phase) * 16;
+        m.rotation = Math.sin(phase * 0.5) * 0.06; // ligeira inclinação ao voar, nunca gira 360°
       } else {
         // minLeft/minRight (opcional, ver spawnVilao) — prende "patrol"/
         // "jumper" à largura de uma plataforma específica, exatamente como
@@ -2930,7 +2967,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const keyMap = { estrela:"item_estrela", balao:"item_chave", brinquedo:"item_chip",
                      medalha:"item_medalha", heart:"item_heart", duplosalto:"item_duplosalto",
                      balaofesta:"item_cadeado_2" };
+    let _starIdxRespawn = 0;
     LEVELS[currentLevel].items.forEach((it, idx) => {
+      // Extremo — mesma regra de isStarAllowedExtremo() usada em loadLevel():
+      // sem isto, uma estrela suprimida voltava a aparecer ao perder uma vida.
+      if (it.kind === "estrela") {
+        const sIdx = _starIdxRespawn++;
+        if (!isStarAllowedExtremo(currentLevel, sIdx)) return;
+      }
       const exists = itemsGroup.getChildren().some(o => o.getData("itemIdx") === idx);
       if (exists) return;
       const _km = keyMap[it.kind]; const _key = (typeof _km === "function" ? _km() : _km) || "item_estrela";
@@ -3329,15 +3373,18 @@ window.addEventListener("DOMContentLoaded", () => {
     itemsCollected=0;
     // itemsTotal — no Difícil conta só os itens "reduzíveis" que ficam
     // mesmo visíveis (ver isItemVisibleInDificil()/isReducibleItemKind()
-    // acima); corações e poderes (estrela/medalha/duplosalto) nunca saem
-    // da contagem.
+    // acima); no Extremo conta também só as estrelas que realmente vão
+    // aparecer (ver isStarAllowedExtremo()) — senão a coleta a 100% ficava
+    // impossível em níveis onde nem todas as estrelas chegam a ser criadas.
+    // Corações nunca saem da contagem.
     {
-      let _r = 0;
+      let _r = 0, _s = 0;
       const visibleNonHeart = L.items.filter(it=>{
         if (it.kind === "heart") return false;
+        if (it.kind === "estrela") { const sIdx=_s++; return isStarAllowedExtremo(idx, sIdx); }
         if (!isReducibleItemKind(it.kind)) return true;
         const idxR = _r++;
-        return !(difficulty === "dificil" && !isItemVisibleInDificil(idxR));
+        return !(difficulty !== "facil" && !isItemVisibleInDificil(idxR));
       }).length;
       itemsTotal = visibleNonHeart
         + (L.pipes||[]).filter(p=>p.room && p.kind!=="heart").length;
@@ -3480,11 +3527,17 @@ window.addEventListener("DOMContentLoaded", () => {
     // duplosalto/coração (ver isReducibleItemKind() acima). Usa o MESMO
     // critério (idx par/ímpar) que o cálculo de itemsTotal logo acima, para
     // os dois nunca desalinharem.
-    let _rIdx = 0;
+    let _rIdx = 0, _starIdx = 0;
     L.items.forEach((it,idx)=>{
       if (isReducibleItemKind(it.kind)) {
         const idxR = _rIdx++;
-        if (difficulty === "dificil" && !isItemVisibleInDificil(idxR)) return; // não cria este item
+        if (difficulty !== "facil" && !isItemVisibleInDificil(idxR)) return; // não cria este item
+      }
+      // Extremo — ver isStarAllowedExtremo(): no máximo 1 estrela por nível
+      // (níveis 1-14), nenhuma a partir do nível 15.
+      if (it.kind === "estrela") {
+        const sIdx = _starIdx++;
+        if (!isStarAllowedExtremo(currentLevel, sIdx)) return; // não cria esta estrela
       }
       const _km=keyMap[it.kind]; const _key=typeof _km==="function"?_km():(_km||"item_estrela");
       const obj=itemsGroup.create(it.x,it.y,_key);
@@ -3500,12 +3553,27 @@ window.addEventListener("DOMContentLoaded", () => {
     const df=difficultyFactor(currentLevel);
     L.malwares.forEach(m=>spawnVilao(scene,m.x,480,m.vx,df,m.pattern||"patrol"));
 
+    // Drone hostil — exclusivo do Extremo (pedido: "drones maus"). Nº cresce
+    // lentamente com o nível (2 a partir do Nível 1, +1 a cada 5 níveis, até
+    // um máximo de 5), sempre na banda alta do céu, afastados do spawn (para
+    // não emboscar logo à entrada) e da porta (para não bloquear a saída).
+    if (difficulty === "extremo") {
+      const droneCount = Math.min(5, 2 + Math.floor(currentLevel / 5));
+      const startX = (L.spawn?.x ?? 0) + 500;
+      const spanX = Math.max(200, L.worldW - startX - 300);
+      for (let i = 0; i < droneCount; i++) {
+        const dx = startX + (spanX / droneCount) * i + Math.random() * (spanX / droneCount) * 0.6;
+        const dy = 120 + Math.random() * 160;
+        spawnHostileDrone(scene, dx, dy, 110 + Math.random() * 60);
+      }
+    }
+
     // Garantir que os 3 tipos de vilao aparecem SEMPRE em todos os niveis —
     // no Difícil os 3 tipos mantêm-se distintos (ver spawnVilao), só que os
     // limiares abaixo desbloqueiam bem mais cedo, para haver mais vilões
     // espalhados pelas plataformas (pedido: "mais vilões nas plataformas").
     if(L.platforms.length>=5) {
-      const hardDif = getDifficulty() === "dificil";
+      const hardDif = getDifficulty() !== "facil";
       const mid  = L.platforms[Math.floor(L.platforms.length/2)];
       const q1   = L.platforms[Math.floor(L.platforms.length/4)];
       const q3   = L.platforms[Math.floor(L.platforms.length*3/4)];
@@ -3745,7 +3813,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // × getVillainJumpIntervalMult(): no Difícil o intervalo encolhe, ou
     // seja, salta-se com mais frequência.
     const jimMult = getVillainJumpIntervalMult();
-    if (pattern === "patrol" || pattern === "jumper" || (pattern === "mini" && difficulty === "dificil")) {
+    if (pattern === "patrol" || pattern === "jumper" || (pattern === "mini" && difficulty !== "facil")) {
       const jumpInterval = pattern === "jumper"
         ? (1400 + Math.random() * 700) * jimMult
         : pattern === "mini"
@@ -3827,7 +3895,40 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-
+  // ===== Drone hostil — inimigo aéreo exclusivo do Extremo =====
+  // Pedido: "drones maus" no Extremo, mas SEM mexer nos drones apanháveis
+  // normais (esses continuam a existir, ver spawnCritters/item_drone) —
+  // este é um tipo de inimigo à parte, com o seu próprio visual
+  // (drone_hostil, ver textures.js), para nunca se confundir com o drone
+  // bom. Entra no MESMO malwareGroup que os vilões normais, por isso já
+  // herda de graça toda a colisão/dano/knockback/atropelamento por Star
+  // Power de onHitMalware() — não foi preciso tocar nessa função.
+  // patrolHalfWidth: distância (px) para cada lado de x que o drone
+  // patrulha, em voo, sem depender de plataformas nem de gravidade.
+  function spawnHostileDrone(scene, x, y, patrolHalfWidth = 140) {
+    const v = malwareGroup.create(x, y, "drone_hostil");
+    v.setCollideWorldBounds(true);
+    v.setBounce(0);
+    v.body.setAllowGravity(false); // voa — nunca cai nem pousa em plataformas
+    v.setDisplaySize(52, 52); v.body.setSize(44, 44, true);
+    v.setDepth(2);
+    v.setData("pattern", "drone_hostil");
+    v.setData("originX", x); v.setData("originY", y);
+    v.setData("baseY", y);
+    v.setData("bobPhase", Math.random() * Math.PI * 2);
+    // × getVillainSpeedMult(): mesma escala de velocidade dos outros
+    // vilões — no Extremo já sai a ×1.4 automaticamente.
+    const spd = (70 + Math.random() * 30) * getVillainSpeedMult();
+    v.setVelocityX(spd);
+    v.setData("speed", spd);
+    v.setData("dir", 1);
+    v.setData("minLeft",  x - patrolHalfWidth);
+    v.setData("minRight", x + patrolHalfWidth);
+    // Pulsar o "olho" vermelho — leve variação de escala para chamar a
+    // atenção como ameaça, distinto da flutuação suave do drone bom.
+    scene.tweens.add({targets:v, scaleX:{from:1.0,to:1.08}, scaleY:{from:1.0,to:1.08},
+      duration:260+Math.random()*120, yoyo:true, repeat:-1, ease:"Sine.easeInOut"});
+  }
 
   function updateHUD(L) {
     hudText.setText(`${L.name}  (${currentLevel+1}/${LEVELS.length})`);
@@ -3870,7 +3971,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if(!heartsGfx) return;
     heartsGfx.clear();
     const startX=14,y=56,size=12,gap=17;
-    for(let i=0;i<MAX_LIVES;i++){
+    for(let i=0;i<getMaxLives();i++){
       const x=startX+i*gap, full=i<lives;
       const r=size*0.52;
       heartsGfx.fillStyle(full?0xe84d10:0xffc0a0,full?1:0.4);
@@ -4712,13 +4813,14 @@ window.addEventListener("DOMContentLoaded", () => {
   function startBossFight(scene, levelJustCompleted, onComplete) {
     const rawDef = BOSS_BY_LEVEL[levelJustCompleted];
     if (!rawDef) { onComplete(); return; } // sem boss neste ponto — segue o fluxo normal
-    // No Difícil, o boss aguenta +1 salto na cabeça (nunca mexe no objeto
-    // original de data-bosses.js, partilhado por todas as partidas — clona-
-    // -se só aqui). def.hp é o único valor lido daqui para a frente (pela
-    // barra de vida, pelo HUD "saltos: X/Y" e pelos taunts), por isso basta
-    // este clone para tudo ficar consistente, sem precisar de tocar em mais
-    // nenhum sítio do combate.
-    const def = getDifficulty() === "dificil" ? { ...rawDef, hp: rawDef.hp + 1 } : rawDef;
+    // No Difícil o boss aguenta +1 salto na cabeça, no Extremo +2 (nunca mexe
+    // no objeto original de data-bosses.js, partilhado por todas as
+    // partidas — clona-se só aqui). def.hp é o único valor lido daqui para a
+    // frente (pela barra de vida, pelo HUD "saltos: X/Y" e pelos taunts),
+    // por isso basta este clone para tudo ficar consistente, sem precisar
+    // de tocar em mais nenhum sítio do combate.
+    const _bossExtraHp = getBossExtraHp();
+    const def = _bossExtraHp > 0 ? { ...rawDef, hp: rawDef.hp + _bossExtraHp } : rawDef;
 
     inBossFight = true;
     controlsInvertedUntil = 0;
@@ -7632,7 +7734,10 @@ window.addEventListener("DOMContentLoaded", () => {
     score += totalPoints; scoreText.setText(`🌟 Pontos: ${score}`); _hudDirty=true;
     if(kind!=="heart"){ itemsCollected=Math.min(itemsCollected+1,itemsTotal); itemCountText.setText(`⭐ Itens: ${itemsCollected}/${itemsTotal}`); }
     const lbl=ITEM_LABELS[kind]||{label:"+10 ⭐",color:"#ff6b35"};
-    showFloat(sceneRef,playerObj.x,playerObj.y-68,lbl.label,lbl.color);
+    // Duração do Star Power varia com a dificuldade (ver getStarPowerDurationSec) —
+    // o texto fixo de ITEM_LABELS.estrela ("...8s") só está certo no Fácil/Difícil.
+    const floatLabel = (kind==="estrela") ? `⭐ STAR POWER! ${getStarPowerDurationSec()}s` : lbl.label;
+    showFloat(sceneRef,playerObj.x,playerObj.y-68,floatLabel,lbl.color);
     if(Math.random()<0.35) showFloat(sceneRef,playerObj.x,playerObj.y-100,pickPraise(),"#ffd700");
     ensureAudio(); SFX.coin();
     // Burst de partículas com cores específicas por tipo
@@ -7644,7 +7749,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if(kind==="duplosalto"){giveDoubleJump(sceneRef);}
     if(kind==="estrela"){giveStarPower(sceneRef);}
     if(kind==="heart"){
-      if(lives<MAX_LIVES){
+      if(lives<getMaxLives()){
         lives+=1; updateHearts(); ensureAudio(); SFX.life();
         tipText.setText("❤️ Ganhaste uma vida extra!");
         triggerVanBertoHappy(sceneRef);
@@ -7779,8 +7884,15 @@ window.addEventListener("DOMContentLoaded", () => {
       brinquedo:"item_chip",medalha:"item_medalha",heart:"item_heart",
       duplosalto:"item_duplosalto"
     };
+    let _starIdxRespawn2 = 0;
     LEVELS[currentLevel].items.forEach((it,idx)=>{
       if(it.kind==="heart" && heartIndicesCollected.has(idx)) return;
+      // Extremo — mesma regra de isStarAllowedExtremo() usada em loadLevel():
+      // sem isto, uma estrela suprimida voltava a aparecer ao perder uma vida.
+      if (it.kind === "estrela") {
+        const sIdx = _starIdxRespawn2++;
+        if (!isStarAllowedExtremo(currentLevel, sIdx)) return;
+      }
       const exists=itemsGroup.getChildren().some(o=>o.getData("itemIdx")===idx);
       if(exists) return;
       const _km=keyMap[it.kind]; const _key=typeof _km==="function"?_km():(_km||"item_estrela");
@@ -7891,10 +8003,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ===== STAR POWER — atropela vilões por 8s =====
   let _starMelodyInterval = null;
+  // Duração do Star Power — 8s por omissão, encurtado para 4s no Extremo
+  // (pedido: já com no máximo 1 por nível, fica ainda mais arriscado usá-lo).
+  function getStarPowerDurationSec() { return difficulty === "extremo" ? 4 : 8; }
   function giveStarPower(scene){
     starPower=true;
     ensureAudio();
-    if(powerIndicator) powerIndicator.setText("⭐ STAR POWER 8s");
+    const durSec = getStarPowerDurationSec();
+    if(powerIndicator) powerIndicator.setText(`⭐ STAR POWER ${durSec}s`);
     tipText.setText("⭐ STAR POWER: atropela os maus!");
     if(starPowerTimer)    starPowerTimer.remove(false);
     if(starPowerCountdown) starPowerCountdown.remove(false);
@@ -7903,13 +8019,13 @@ window.addEventListener("DOMContentLoaded", () => {
     if(_starMelodyInterval) clearInterval(_starMelodyInterval);
     _starMelodyInterval = setInterval(()=>{ if(starPower) SFX.starMelody(); }, 1520);
     window._dc_starMelodyInterval = _starMelodyInterval; // exposto para visibilitychange
-    starPowerCountVal=8;
+    starPowerCountVal=durSec;
     starPowerCountdown=scene.time.addEvent({delay:1000,loop:true,callback:()=>{
       starPowerCountVal--;
       if(powerIndicator) powerIndicator.setText(`⭐ STAR POWER ${starPowerCountVal}s`);
       if(starPowerCountVal<=0) clearStarPower(scene);
     }});
-    starPowerTimer=scene.time.delayedCall(8000,()=>clearStarPower(scene));
+    starPowerTimer=scene.time.delayedCall(durSec*1000,()=>clearStarPower(scene));
     // Piscar apenas — sem tint de cor
     if(player) player.clearTint();
     vbSayRandom(VB_STAR_POWER,"star",2800);
@@ -8411,6 +8527,7 @@ window.addEventListener("DOMContentLoaded", () => {
   };
   const btnDiffFacil = document.getElementById("btnDiffFacil");
   const btnDiffDificil = document.getElementById("btnDiffDificil");
+  const btnDiffExtremo = document.getElementById("btnDiffExtremo");
   const pickDifficultyAndStart = (level) => {
     setDifficulty(level);
     document.getElementById("difficultyOverlay")?.classList.add("hidden");
@@ -8418,6 +8535,7 @@ window.addEventListener("DOMContentLoaded", () => {
   };
   btnDiffFacil?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("facil"); });
   btnDiffDificil?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("dificil"); });
+  btnDiffExtremo?.addEventListener("click", () => { SFX.coin(); pickDifficultyAndStart("extremo"); });
 
   // ===== Menu Principal / In-game — botão Mapa =====
   document.getElementById("btnOpenMap")?.addEventListener("click", () => {
@@ -8703,7 +8821,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const btnFS    = document.getElementById("optBtnFS");
     const btnDiff  = document.getElementById("optBtnDifficulty");
     if (btnDiff) {
-      btnDiff.textContent = difficulty === "dificil" ? "🎓 Difícil" : "😊 Fácil";
+      btnDiff.textContent = difficulty === "extremo" ? "🔥 Extremo" : difficulty === "dificil" ? "🎓 Difícil" : "😊 Fácil";
     }
     if (btnSound) {
       btnSound.textContent = isMuted() ? "🔇 OFF" : "🔊 ON";
@@ -8748,7 +8866,9 @@ window.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("optBtnDifficulty")?.addEventListener("click", () => {
     ensureAudio(); SFX.coin();
-    setDifficulty(difficulty === "dificil" ? "facil" : "dificil");
+    // Ciclar: Fácil → Difícil → Extremo → Fácil
+    const next = difficulty === "facil" ? "dificil" : difficulty === "dificil" ? "extremo" : "facil";
+    setDifficulty(next);
     syncOptionsUI();
   });
   document.getElementById("optBtnHC")?.addEventListener("click", () => {
