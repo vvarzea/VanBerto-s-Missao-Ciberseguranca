@@ -18,6 +18,20 @@
 </head>
 <body>
 
+  <!-- Ecrã de carregamento (novo — pedido: "o jogo às vezes parece lento no
+       início no telemóvel"). Em HTML/CSS puro, por isso aparece no instante
+       em que a página é pintada, ANTES de o Phaser (~1,3MB) ou as imagens
+       de fundo (~4-5MB) sequer começarem a descarregar — cobre exactamente
+       o intervalo em que antes o ecrã ficava "parado" sem dar sinal
+       nenhum. Atualizado com o progresso real do preload() e escondido no
+       fim deste (ver os listeners this.load.on("progress"/"complete") em
+       dia-crianca.js). -->
+  <div id="loadingScreen">
+    <div class="loading-logo">🛡️ VanBerto's</div>
+    <div class="loading-track"><div id="loadingFill" class="loading-fill"></div></div>
+    <div id="loadingPct" class="loading-pct">A carregar… 0%</div>
+  </div>
+
   <div id="game"></div>
 
   <!-- ═══════════════════════════════════════════
@@ -739,7 +753,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
   <script type="module" src="dia-crianca.js?v=20260912chaoprofundidade"></script>
 </body>
 </html>
