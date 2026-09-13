@@ -2739,15 +2739,24 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function _drawHazard(gfx, x, y, w, kind, now) {
+  function _drawHazard(gfx, x, y, w, kind, now, h) {
     gfx.clear();
     const t = now * 0.003;
     const half = w / 2;
+    // h (opcional, por omissão 30 — igual ao comportamento de sempre nos
+    // níveis normais): altura da camada de base. Pedido: "não era o chão
+    // todo para o lado mas sim para baixo" — as zonas contaminadas de boss
+    // (spawnToxicZones) passam um h maior, para a base preencher a
+    // plataforma até ao fundo em vez de flutuar como uma faixa fina só em
+    // cima dela. As camadas de detalhe da SUPERFÍCIE (brilho, bolhas,
+    // faíscas) mantêm-se sempre perto do topo — é aí que faz sentido
+    // continuarem a aparecer, seja qual for a profundidade da base.
+    const H = h || 30;
 
     if (kind === "lava") {
       // Base: laranja escuro → vermelho
       gfx.fillStyle(0xcc2200, 1);
-      gfx.fillRect(x - half, y, w, 30);
+      gfx.fillRect(x - half, y, w, H);
       // Camada brilhante — laranja quente
       gfx.fillStyle(0xff5500, 0.85);
       gfx.fillRect(x - half, y, w, 18);
@@ -2772,7 +2781,7 @@ window.addEventListener("DOMContentLoaded", () => {
     } else if (kind === "acid") {
       // Verde ácido tóxico
       gfx.fillStyle(0x004400, 1);
-      gfx.fillRect(x - half, y, w, 30);
+      gfx.fillRect(x - half, y, w, H);
       gfx.fillStyle(0x00aa00, 0.85);
       gfx.fillRect(x - half, y, w, 18);
       // Ondas verdes
@@ -2794,7 +2803,7 @@ window.addEventListener("DOMContentLoaded", () => {
     } else {
       // void — abismo escuro com aura
       gfx.fillStyle(0x000000, 1);
-      gfx.fillRect(x - half, y, w, 30);
+      gfx.fillRect(x - half, y, w, H);
       gfx.fillStyle(0x220044, 0.8);
       gfx.fillRect(x - half, y, w, 8);
       // Estrelinhas no abismo
@@ -4936,14 +4945,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const startBossPlatformPhase = () => {
       if (!bossState) return; // segurança: nível pode ter sido reiniciado entretanto
       bossState.phase = "platform";
-      // Zona contaminada cobre agora o chão praticamente todo (pedido: "o
-      // virus verde/lava devia tapar o chão todo" — ver contaminatedArena
-      // em data-bosses.js), incluindo o próprio ponto onde o jogador
-      // aparece (playerStartX). Sem isto, o 1º frame do combate seria um
-      // hit garantido e injusto antes de o jogador sequer ganhar controlo.
-      // 1s de proteção dá tempo de reação para saltar para uma das
-      // plataformas baixas (sempre seguras) antes da zona "morder" a sério.
-      if (def.contaminatedArena) setInvuln(scene, 1000);
       // Sai do riso maléfico da intro (ver spawnBossSprite) assim que o
       // combate a sério começa — volta à cara normal, para a animação idle
       // (doBossIdleArms/doBossIdleBlink) assumir a partir daqui.
@@ -5447,12 +5448,20 @@ window.addEventListener("DOMContentLoaded", () => {
     clearToxicZones();
     const spots = (customSpots && customSpots.length) ? customSpots : [ {x:520, w:200}, {x:1080, w:200} ];
     const kind = hazardType || "acid";
+    // Altura da zona — 65 em vez dos 30 de omissão: a plataforma principal
+    // da arena vai de y=506 a y=536 (topo em 521, altura 30), e a zona
+    // desenhava-se a começar em y=496; com só 30 de altura ficava a
+    // flutuar por cima da plataforma e deixava a parte de baixo dela à
+    // mostra (por baixo do próprio verde/lava). 65 desce bem abaixo da
+    // base da plataforma (536), cobrindo-a até ao fundo — pedido: "não era
+    // o chão todo para o lado mas sim para baixo".
+    const zoneH = 65;
     spots.forEach(s => {
       const gfx = scene.add.graphics().setDepth(2);
-      _drawHazard(gfx, s.x, 496, s.w, kind, scene.time.now);
+      _drawHazard(gfx, s.x, 496, s.w, kind, scene.time.now, zoneH);
       const timer = scene.time.addEvent({
         delay: 120, loop: true,
-        callback: () => { if (gfx.active) _drawHazard(gfx, s.x, 496, s.w, kind, scene.time.now); }
+        callback: () => { if (gfx.active) _drawHazard(gfx, s.x, 496, s.w, kind, scene.time.now, zoneH); }
       });
       bossToxicZones.push({ x:s.x, y:496, w:s.w, gfx, timer, kind });
     });

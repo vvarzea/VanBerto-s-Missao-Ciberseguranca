@@ -196,21 +196,26 @@ export const BOSSES = [
     // spawnMiniViruses em dia-crianca.js, que ainda tinha coordenadas da
     // arena antiga de 1600px de largura e por isso ficava fora do ecrã na
     // arena atual de 960px; corrigido à parte, mas mantido desligado aqui
-    // por agora, só a zona de chão).
-    // ATUALIZADO (pedido: "o virus verde devia tapar o chão todo") — antes
-    // eram só 2 faixas de 140px por baixo de cada plataforma baixa, com um
-    // corredor central sempre livre (270-690). Agora é 1 zona só, a cobrir
-    // praticamente TODO o chão principal (worldW=960 — ver spawnToxicZones
-    // em dia-crianca.js, que também passou a lançar salpicos periódicos a
-    // saltar da zona). O jogador continua a ter as 2 plataformas baixas
-    // (nunca tóxicas) como refúgio seguro em vez do chão.
+    // por agora, só a zona de chão). Zonas colocadas exactamente por baixo
+    // de cada plataforma baixa (mesmo X/W dela) — o chão nessa faixa fica
+    // tóxico, o que transforma as 2 plataformas num "precisas de saltar
+    // para lá" em vez de um extra opcional. O corredor central (entre
+    // ~x=270 e ~x=690, onde fica o spawn do jogador em x=400) continua
+    // sempre livre. escalations alarga as zonas a cada fúria (bossEnterRage
+    // já lê isto — ver currentContaminationZones em dia-crianca.js).
+    // CORRIGIDO (pedido: "não era o chão todo para o lado mas sim para
+    // baixo") — larguras/posições das zonas voltaram ao layout original;
+    // quem mudou foi a ALTURA da própria zona pintada, para deixar de
+    // flutuar como uma faixa fina em cima da plataforma e passar a cobrir
+    // a plataforma até ao fundo (ver o novo parâmetro de altura em
+    // _drawHazard/spawnToxicZones, em dia-crianca.js).
     contaminatedArena: {
       hazardType: "acid",
-      zonesBase: [ {x:480,w:940} ],
+      zonesBase: [ {x:200,w:140}, {x:760,w:140} ],
       virusBase: 0,
       escalations: {
-        1: { zones: [ {x:480,w:940} ] },
-        2: { zones: [ {x:480,w:940} ] }
+        1: { zones: [ {x:200,w:180}, {x:760,w:180} ] },
+        2: { zones: [ {x:200,w:220}, {x:760,w:220} ] }
       }
     },
     movementType: "wave",    // continua a flutuar em onda, pulsando de tamanho — só a forma de o vencer mudou
@@ -454,16 +459,17 @@ export const BOSSES = [
     // para condizer com a estética mecânica/industrial deste boss (chaminé
     // + caixa metálica, ver drawPoluidorBody em textures.js) em vez do
     // verde tóxico do vírus.
-    // ATUALIZADO (pedido: "e na lava igual") — mesma mudança do Vírus
-    // Gigante: 1 zona só, a cobrir praticamente todo o chão principal, em
-    // vez de 2 faixas estreitas.
+    // CORRIGIDO (pedido: "não era o chão todo para o lado mas sim para
+    // baixo") — larguras/posições voltaram ao layout original; a mudança
+    // real foi na ALTURA da zona pintada (ver comentário completo no Vírus
+    // Gigante).
     contaminatedArena: {
       hazardType: "lava",
-      zonesBase: [ {x:480,w:940} ],
+      zonesBase: [ {x:200,w:150}, {x:760,w:150} ],
       virusBase: 0,
       escalations: {
-        1: { zones: [ {x:480,w:940} ] },
-        2: { zones: [ {x:480,w:940} ] }
+        1: { zones: [ {x:200,w:190}, {x:760,w:190} ] },
+        2: { zones: [ {x:200,w:230}, {x:760,w:230} ] }
       }
     },
     movementType: "patrol",
