@@ -53,6 +53,15 @@ window.addEventListener("DOMContentLoaded", () => {
   const btnRestart     = document.getElementById("btnRestartLevel");
   const btnRestartGame = document.getElementById("btnRestartGame");
   const playerNameInput= document.getElementById("playerName");
+  // NOVO (pedido: "o Enter devia dar para entrar no jogo") — um <input>
+  // de texto normal não reage ao Enter sozinho (isso só acontece dentro de
+  // um <form> com submit, que aqui não existe). O resto do jogo já trata
+  // bem o Enter — só faltava mesmo este listener dedicado ao campo do
+  // nome. btnStart.click() (não .onclick() direto) para disparar o mesmo
+  // fluxo de sempre, incluindo o ecrã de dificuldade.
+  playerNameInput?.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); btnStart.click(); }
+  });
   const gameOverOverlay= document.getElementById("gameOverOverlay");
   const winOverlay     = document.getElementById("winOverlay");
 
@@ -5839,6 +5848,35 @@ window.addEventListener("DOMContentLoaded", () => {
       if (b.active && bossState && !bossState.squishing && scene.textures.exists(restoreKey)) b.setTexture(restoreKey);
     });
   }
+  // Risada trocista (pedido: "mais expressões... rir" / "os bosses deviam
+  // ficar contentes ao acertar-te") — mostra por instantes a cara de riso
+  // maléfico ("_laugh"), com um pequeno saltinho de "contentamento", e
+  // depois volta ao estado em que estava. Extraído para função própria
+  // para poder ser chamado tanto na hora (bossHitPlayer) como em atraso
+  // (squishBoss, ver pendingLaugh) — antes, um acerto do boss EXATAMENTE
+  // enquanto ele ainda estava a reagir ao teu último salto na cabeça
+  // (bossState.squishing) fazia-o não reagir rigorosamente NADA a ter-te
+  // atingido — a troca de golpes onde a criança mais precisa de perceber
+  // com clareza o que aconteceu, e por isso a queixa "às vezes nem dá
+  // para perceber que perdi uma vida".
+  function showBossLaugh(scene) {
+    if (!bossState || !bossState.sprite || !bossState.sprite.active || bossState.squishing) return;
+    const bb = bossState.sprite;
+    const laughKey = "boss_" + bossState.def.id + "_laugh";
+    if (!scene.textures.exists(laughKey)) return;
+    const beforeKey = bb.texture.key;
+    bb.setTexture(laughKey);
+    const baseScaleX = bb.scaleX, baseScaleY = bb.scaleY;
+    scene.tweens.add({
+      targets: bb, scaleX: baseScaleX * 1.1, scaleY: baseScaleY * 1.1,
+      duration: 140, yoyo: true, ease: "Quad.easeOut",
+      onComplete: () => { if (bb.active) { bb.scaleX = baseScaleX; bb.scaleY = baseScaleY; } }
+    });
+    scene.time.delayedCall(650, () => {
+      if (bb.active && bossState && !bossState.squishing && scene.textures.exists(beforeKey)) bb.setTexture(beforeKey);
+    });
+  }
+
   // Reação exagerada tipo desenho animado sempre que QUALQUER boss é atingido:
   // achata-se por meio segundo (textura "_ouch" + squash) e volta ao normal,
   // com um tremor (pequeno abanão lateral) por cima, para se sentir mesmo
@@ -5876,6 +5914,12 @@ window.addEventListener("DOMContentLoaded", () => {
         if (b.active && scene.textures.exists(normalTex)) b.setTexture(normalTex);
         if (b.active) { b.scaleY = baseScaleY; b.scaleX = baseScaleX; }
         if (bossState) bossState.squishing = false;
+        // A risada tinha ficado pendente (ver bossHitPlayer) porque o boss
+        // ainda estava neste squish quando te acertou — mostra-a só agora.
+        if (bossState && bossState.pendingLaugh) {
+          bossState.pendingLaugh = false;
+          showBossLaugh(scene);
+        }
       }
     });
   }
@@ -6429,21 +6473,14 @@ window.addEventListener("DOMContentLoaded", () => {
     // logo abaixo sobre a risada trocista).
     if (inBossFight && bossState) bossState.tookDamage = true;
     // Risada trocista (pedido: "mais expressões... rir") — sempre que o
-    // boss consegue acertar no VanBerto's durante o combate, mostra por
-    // instantes a mesma cara de riso maléfico da entrada (textura
-    // "_laugh"), depois volta ao estado em que estava (normal/zangado).
-    // Só dentro de um combate de boss ativo — bossHitPlayer também é
-    // chamada por outras fontes de dano fora daí.
-    if (inBossFight && bossState && bossState.sprite && bossState.sprite.active && !bossState.squishing) {
-      const bb = bossState.sprite;
-      const laughKey = "boss_" + bossState.def.id + "_laugh";
-      if (scene.textures.exists(laughKey)) {
-        const beforeKey = bb.texture.key;
-        bb.setTexture(laughKey);
-        scene.time.delayedCall(550, () => {
-          if (bb.active && bossState && !bossState.squishing && scene.textures.exists(beforeKey)) bb.setTexture(beforeKey);
-        });
-      }
+    // boss consegue acertar no VanBerto's durante o combate, mostra a
+    // reação de riso (showBossLaugh, definida acima junto a squishBoss).
+    // Se o boss ainda estiver a meio da sua própria reação de dor
+    // (squishing), fica marcada como pendente em vez de se perder —
+    // squishBoss mostra-a assim que essa reação acabar.
+    if (inBossFight && bossState && bossState.sprite && bossState.sprite.active) {
+      if (bossState.squishing) bossState.pendingLaugh = true;
+      else showBossLaugh(scene);
     }
     hitFlash.classList.add("active"); setTimeout(()=>hitFlash.classList.remove("active"),200);
     const knockDir = (sourceObj && sourceObj.x < player.x) ? 1 : -1;
@@ -8200,7 +8237,14 @@ window.addEventListener("DOMContentLoaded", () => {
   btnStart.onclick=()=>{
     ensureAudio();
     const diffOverlay = document.getElementById("difficultyOverlay");
-    if (diffOverlay) diffOverlay.classList.remove("hidden");
+    if (diffOverlay) {
+      diffOverlay.classList.remove("hidden");
+      // Foca já o 1º botão (Fácil) — sem isto, quem chegou até aqui só de
+      // teclado (ex.: Enter no nome, ver playerNameInput mais abaixo) ficava
+      // com o foco "perdido" no ecrã anterior, escondido, e tinha de usar o
+      // rato ou andar às apalpadelas com Tab para continuar.
+      document.getElementById("btnDiffFacil")?.focus({ preventScroll: true });
+    }
     else reallyStartNewGame(); // rede de segurança, caso o HTML não tenha o overlay
   };
   const btnDiffFacil = document.getElementById("btnDiffFacil");
