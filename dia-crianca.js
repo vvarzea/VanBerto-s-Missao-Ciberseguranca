@@ -1352,6 +1352,19 @@ window.addEventListener("DOMContentLoaded", () => {
   // mesmos 3 tipos no Difícil, só que mais rápidos E a saltar mais, em vez
   // de trocarem todos para o comportamento "jumper".
   function getVillainJumpIntervalMult() { return difficulty === "dificil" ? 0.6 : 1; }
+  // CORRIGIDO — a versão original desta função reduzia TODOS os itens
+  // menos corações, incluindo estrela (Star Power — a ÚNICA forma de matar
+  // vilões), medalha (escudo) e duplosalto (o único duplo-salto do nível
+  // inteiro nalguns casos). Simulei os 20 níveis: isso deixava 4 níveis
+  // (4, 12, 18, 20) SEM NENHUMA estrela no Difícil — impossível matar
+  // vilões nesses níveis, e ainda por cima com mais vilões (pedido
+  // anterior). Agora só reduz os itens puramente de bónus/pontuação
+  // (balão, brinquedo, balão de festa) — nunca poderes.
+  function isReducibleItemKind(kind) { return kind === "balao" || kind === "brinquedo" || kind === "balaofesta"; }
+  // Quantos itens "reduzíveis" (balão/brinquedo/balão de festa) ficam
+  // visíveis num nível — no Difícil fica só cerca de metade (idx par),
+  // para a recolha a 100% ser mais desafiante sem tocar em nenhum poder.
+  function isItemVisibleInDificil(reducibleIdx) { return reducibleIdx % 2 === 0; }
   // Banco de perguntas a usar, conforme o nível escolhido — cai sempre para
   // o banco base (Fácil) se o avançado ainda não tiver perguntas para aquele
   // tema, para nunca ficar sem quiz nenhum a meio de um combate.
@@ -3261,8 +3274,21 @@ window.addEventListener("DOMContentLoaded", () => {
     if(powerHaloGfx) powerHaloGfx.setVisible(true);
     if(shadowGfx)    shadowGfx.setVisible(true);
     itemsCollected=0;
-    itemsTotal = L.items.filter(it=>it.kind!=="heart").length
-      + (L.pipes||[]).filter(p=>p.room && p.kind!=="heart").length;
+    // itemsTotal — no Difícil conta só os itens "reduzíveis" que ficam
+    // mesmo visíveis (ver isItemVisibleInDificil()/isReducibleItemKind()
+    // acima); corações e poderes (estrela/medalha/duplosalto) nunca saem
+    // da contagem.
+    {
+      let _r = 0;
+      const visibleNonHeart = L.items.filter(it=>{
+        if (it.kind === "heart") return false;
+        if (!isReducibleItemKind(it.kind)) return true;
+        const idxR = _r++;
+        return !(difficulty === "dificil" && !isItemVisibleInDificil(idxR));
+      }).length;
+      itemsTotal = visibleNonHeart
+        + (L.pipes||[]).filter(p=>p.room && p.kind!=="heart").length;
+    }
     extraShieldCounted=false;
     collectedItemIndices=new Set();
     collectedRoomPipes=new Set();
@@ -3396,7 +3422,17 @@ window.addEventListener("DOMContentLoaded", () => {
     };
     // Velocidade de rotação por tipo de item — removida (itens ficam fixos)
     const rotSpeeds={};
+    // No Difícil, cerca de metade dos itens "reduzíveis" (balão/brinquedo/
+    // balão de festa) fica de fora do nível — nunca estrela/medalha/
+    // duplosalto/coração (ver isReducibleItemKind() acima). Usa o MESMO
+    // critério (idx par/ímpar) que o cálculo de itemsTotal logo acima, para
+    // os dois nunca desalinharem.
+    let _rIdx = 0;
     L.items.forEach((it,idx)=>{
+      if (isReducibleItemKind(it.kind)) {
+        const idxR = _rIdx++;
+        if (difficulty === "dificil" && !isItemVisibleInDificil(idxR)) return; // não cria este item
+      }
       const _km=keyMap[it.kind]; const _key=typeof _km==="function"?_km():(_km||"item_estrela");
       const obj=itemsGroup.create(it.x,it.y,_key);
       obj.setDepth(2);
@@ -3411,10 +3447,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const df=difficultyFactor(currentLevel);
     L.malwares.forEach(m=>spawnVilao(scene,m.x,480,m.vx,df,m.pattern||"patrol"));
 
-    // Garantir que os 3 tipos de vilao aparecem SEMPRE em todos os niveis
-    // (no Difícil, todos saem como "jumper" de qualquer forma — ver
-    // spawnVilao — mas os limiares abaixo continuam a controlar QUANTOS
-    // vilões extra aparecem, não o comportamento deles)
+    // Garantir que os 3 tipos de vilao aparecem SEMPRE em todos os niveis —
+    // no Difícil os 3 tipos mantêm-se distintos (ver spawnVilao), só que os
+    // limiares abaixo desbloqueiam bem mais cedo, para haver mais vilões
+    // espalhados pelas plataformas (pedido: "mais vilões nas plataformas").
     if(L.platforms.length>=5) {
       const hardDif = getDifficulty() === "dificil";
       const mid  = L.platforms[Math.floor(L.platforms.length/2)];
@@ -3436,21 +3472,24 @@ window.addEventListener("DOMContentLoaded", () => {
       if(hardDif || currentLevel>=2){
         spawnVilao(scene, q3.x, 480, (currentLevel%2===0)?190:-190, df, "jumper");
       }
-      // Segundo jumper extra a partir do nivel 4 (Difícil: desde o nivel 2)
-      if(hardDif ? currentLevel>=2 : currentLevel>=4){
+      // Segundo jumper extra a partir do nivel 4 (Difícil: já a partir do
+      // nivel 2 — o 1º nivel do Difícil fica só com mid/q1/q3, um pouco
+      // mais calmo como introdução)
+      if(hardDif ? currentLevel>=1 : currentLevel>=4){
         const qEx = L.platforms[Math.floor(L.platforms.length*2/3)];
         spawnVilao(scene, qEx.x, 480, (currentLevel%2===0)?-200:200, df, "jumper");
       }
-      // Terceiro jumper e patrol extra nos ultimos 6 niveis (Difícil: a
-      // partir de meio-jogo, nivel 6)
-      if(hardDif ? currentLevel>=6 : currentLevel>=14){
+      // Terceiro jumper e patrol extra nos ultimos 6 niveis (Difícil: pediu
+      // "mais vilões nas plataformas" — passa a ser bem mais cedo, a
+      // partir do nivel 4)
+      if(hardDif ? currentLevel>=3 : currentLevel>=14){
         const qLate = L.platforms[Math.floor(L.platforms.length*5/6)] || q3;
         spawnVilao(scene, qLate.x, 480, (currentLevel%2===0)?210:-210, df, "jumper");
         spawnVilao(scene, q1.x+200, 480, (currentLevel%2===0)?-160:160, df, "patrol");
       }
       // Ultimo nivel — viloes em todos os quartos (Difícil: a partir do
-      // nivel 10)
-      if(hardDif ? currentLevel>=10 : currentLevel>=19){
+      // nivel 7, em vez de só no fim do jogo)
+      if(hardDif ? currentLevel>=6 : currentLevel>=19){
         spawnVilao(scene, mid.x+300, 480, (currentLevel%2===0)?220:-220, df, "jumper");
         spawnVilao(scene, mid.x-300, 480, (currentLevel%2===0)?-180:180, df, "patrol");
       }
@@ -4897,6 +4936,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const startBossPlatformPhase = () => {
       if (!bossState) return; // segurança: nível pode ter sido reiniciado entretanto
       bossState.phase = "platform";
+      // Zona contaminada cobre agora o chão praticamente todo (pedido: "o
+      // virus verde/lava devia tapar o chão todo" — ver contaminatedArena
+      // em data-bosses.js), incluindo o próprio ponto onde o jogador
+      // aparece (playerStartX). Sem isto, o 1º frame do combate seria um
+      // hit garantido e injusto antes de o jogador sequer ganhar controlo.
+      // 1s de proteção dá tempo de reação para saltar para uma das
+      // plataformas baixas (sempre seguras) antes da zona "morder" a sério.
+      if (def.contaminatedArena) setInvuln(scene, 1000);
       // Sai do riso maléfico da intro (ver spawnBossSprite) assim que o
       // combate a sério começa — volta à cara normal, para a animação idle
       // (doBossIdleArms/doBossIdleBlink) assumir a partir daqui.
@@ -5382,6 +5429,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // 100% aditivo e opt-in via def.contaminatedArena — não afeta bosses normais.
   let bossToxicZones = [];
   let bossMiniViruses = [];
+  let toxicSplashTimer = null;
 
   // Devolve a configuração de zonas de contaminação/poluição correspondente
   // ao nível de fúria ATUAL do boss — usado para voltar a semear as zonas
@@ -5408,10 +5456,36 @@ window.addEventListener("DOMContentLoaded", () => {
       });
       bossToxicZones.push({ x:s.x, y:496, w:s.w, gfx, timer, kind });
     });
+    // Salpicos periódicos (pedido: "por vezes sair salpicos") — pequenos
+    // rebentos de partículas a saltar da zona contaminada, para reforçar
+    // visualmente que aquilo é perigoso mesmo parado (a zona já cobre
+    // praticamente o chão todo — ver zonesBase em data-bosses.js).
+    toxicSplashTimer = scene.time.addEvent({
+      delay: 500 + Math.random()*400, loop: true,
+      callback: () => spawnToxicSplash(scene)
+    });
   }
   function clearToxicZones() {
     bossToxicZones.forEach(z => { try{z.gfx.destroy();}catch{} try{ z.timer && z.timer.remove(false); }catch{} });
     bossToxicZones = [];
+    if (toxicSplashTimer) { try{ toxicSplashTimer.remove(false); }catch{} toxicSplashTimer = null; }
+  }
+  // Rebento de partículas a saltar de uma zona tóxica escolhida ao acaso —
+  // verde/ácido para "acid", laranja/amarelo para "lava", tal como as
+  // próprias cores de _drawHazard.
+  function spawnToxicSplash(scene) {
+    if (!bossToxicZones.length || !scene) return;
+    const zone = bossToxicZones[Math.floor(Math.random()*bossToxicZones.length)];
+    if (!zone || !zone.gfx || !zone.gfx.active) return;
+    const half = zone.w/2;
+    const sx = zone.x - half + Math.random()*zone.w;
+    const sy = zone.y + 6;
+    const tint = zone.kind === "lava" ? [0xff8800,0xffdd00,0xff5500] : [0x44ff44,0x00ff66,0x88ff88];
+    const splash = scene.add.particles(0,0,"spark_item",{
+      x:sx, y:sy, speed:{min:60,max:170}, angle:{min:255,max:285},
+      lifespan:420, quantity:7, scale:{start:0.85,end:0}, gravityY:420, tint
+    });
+    scene.time.delayedCall(380, ()=>{ try{ splash.destroy(); }catch{} });
   }
   // Verifica se o jogador está numa zona tóxica — reaproveita bossHitPlayer
   // (dano seguro dentro da arena de boss) em vez do hitByHazard normal (que
