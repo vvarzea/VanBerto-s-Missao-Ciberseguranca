@@ -3550,10 +3550,33 @@ window.addEventListener("DOMContentLoaded", () => {
       // acima), para patrulhar ali para trás e para a frente em vez de
       // cair lá fora. Só no Difícil — no Fácil o comportamento das
       // plataformas altas mantém-se inalterado (continuam só com itens).
+      //
+      // CORREÇÃO (pedido: "vilões fixos nas plataformas... têm de
+      // patrulhar mas os níveis têm de ser possíveis"): a margem antiga
+      // (`Math.min(40, Math.max(10, p.w/2-10))`) definia os LIMITES onde o
+      // vilão inverte a direção, não uma zona livre — em plataformas
+      // estreitas (a partir de w:110) isso dava um percurso de patrulha tão
+      // pequeno (por vezes só ~20-30px) que o vilão de 48px de largura
+      // ficava sempre a cobrir a plataforma quase toda, parecendo fixo e
+      // sem deixar o VanBerto's passar em segurança em NENHUM momento do
+      // ciclo. Agora calcula-se ao contrário: primeiro garante-se sempre
+      // "clearance" px totalmente livres de vilão em cada ponta da
+      // plataforma (espaço para o VanBerto's — hitbox 44px — pousar e
+      // passar), e só depois se filtram as plataformas largas o suficiente
+      // para sobrar, no meio, uma amplitude de patrulha visível
+      // ("minPatrolRange") — plataformas demasiado estreitas para isso
+      // deixam simplesmente de receber vilão elevado (patrolCount ajusta-se
+      // sozinho), em vez de gerar um vilão praticamente parado a bloquear
+      // tudo.
       if (hardDif) {
         const spawnSafeX = (L.spawn?.x || 0) + 260; // nunca nascer em cima do jogador
+        const villainHalfW = 24;   // metade da largura do vilão "patrol" (48px, ver spawnVilao)
+        const clearance = 70;      // px SEMPRE livres de vilão em cada ponta da plataforma
+        const minPatrolRange = 80; // amplitude mínima de patrulha — nunca deve parecer "fixo"
+        const inset = clearance + villainHalfW; // distância do centro do vilão à borda da plataforma
+        const minPlatformW = inset * 2 + minPatrolRange;
         const elevated = L.platforms
-          .filter(p => p.w >= 110 && p.x > spawnSafeX && Math.abs(p.x - L.doorX) > 140)
+          .filter(p => p.w >= minPlatformW && p.x > spawnSafeX && Math.abs(p.x - L.doorX) > 140)
           .slice()
           .sort((a, b) => a.y - b.y); // menor y primeiro = plataformas mais altas
         const patrolCount = Math.min(4, elevated.length);
@@ -3561,12 +3584,11 @@ window.addEventListener("DOMContentLoaded", () => {
           const p = elevated[i];
           const half = 24; // metade da altura do vilão "patrol" (48px, ver spawnVilao)
           const topY = p.y - p.h / 2 - half - 4; // nasce já assente no topo da plataforma
-          const margin = Math.min(40, Math.max(10, p.w / 2 - 10));
           spawnVilao(
             scene, p.x, topY,
             (i % 2 === 0) ? 140 : -140,
             df, "patrol",
-            { minLeft: p.x - p.w / 2 + margin, minRight: p.x + p.w / 2 - margin }
+            { minLeft: p.x - p.w / 2 + inset, minRight: p.x + p.w / 2 - inset }
           );
         }
       }
@@ -8287,10 +8309,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // Cobre os overlays de um único botão de avançar/fechar — histórico
   // ("Sabias que...?"), conquistas, álbum, estatísticas, opções, certificado,
   // galeria final, etc. — que já seguem a convenção .btn.primary no HTML, e
-  // o popup de "Competência Recuperada", que é o único caso que não segue
-  // essa convenção (usa a classe .show em vez de .hidden, e o botão não tem
-  // .primary). O quiz tem o seu próprio fluxo acima, por isso fica de fora
-  // aqui (evita clicar duas vezes no mesmo botão já focado).
+  // dois casos à parte que NÃO seguem essa convenção (usam a classe .show
+  // em vez de .hidden, e o botão não tem .primary): o popup de "Competência
+  // Recuperada" e o ecrã de "Nível Concluído" (#lcContinue — era este que
+  // ficava sem resposta ao Enter). O quiz tem o seu próprio fluxo acima,
+  // por isso fica de fora aqui (evita clicar duas vezes no mesmo botão já
+  // focado).
   window.addEventListener("keydown", e => {
     if (e.key !== "Enter") return;
     if (e.target && e.target.matches("input, textarea, button")) return;
@@ -8298,6 +8322,18 @@ window.addEventListener("DOMContentLoaded", () => {
     if (reveal && reveal.classList.contains("show")) {
       e.preventDefault();
       document.getElementById("arRevClose")?.click();
+      return;
+    }
+    // NOVO: ecrã "Nível Concluído" (levelCompleteOverlay) — era o motivo do
+    // Enter continuar sem funcionar aqui. É o mesmo caso do
+    // artefactRevealOverlay acima: usa a classe "show" (não "hidden") e o
+    // seu botão #lcContinue tem classe própria "lc-continue-btn", não
+    // ".btn.primary" — por isso ficava sempre fora do querySelector genérico
+    // mais abaixo e só o clique com o rato é que funcionava.
+    const levelComplete = document.getElementById("levelCompleteOverlay");
+    if (levelComplete && levelComplete.classList.contains("show")) {
+      e.preventDefault();
+      document.getElementById("lcContinue")?.click();
       return;
     }
     const primary = document.querySelector(".overlay:not(.hidden) .btn.primary:not(:disabled)");
