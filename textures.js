@@ -2,22 +2,11 @@
 // Extraído de dia-crianca.js. Ficheiro 100% autocontido: cada função só
 // depende do parâmetro `scene` (instância Phaser) e de constantes locais.
 // Não lê nem escreve nenhum estado partilhado do jogo (score, player, etc.).
-// makeTextures(), makePlatformTextureThemed() e makeBossTextures() são
-// chamadas a partir de dia-crianca.js — as restantes (makePlatformTexture,
-// makeDoorTexture, makeVilaosTextures, makeSparkTexture, makeItemTextures,
+// Só makeTextures() e makePlatformTextureThemed() são chamadas a partir de
+// dia-crianca.js — as restantes (makePlatformTexture, makeDoorTexture,
+// makeVilaosTextures, makeBossTextures, makeSparkTexture, makeItemTextures,
 // makeVanBertoTexture, rrPath, rrVan, cVan, cfVan, lVan) são de uso interno
 // deste módulo, por isso não são exportadas.
-//
-// makeBossTextures(scene, bossId) (nova assinatura — antes só recebia
-// `scene` e desenhava os 4 bosses de seguida): desenha agora só o boss
-// pedido em bossId ("monstro_phishing"/"virus_gigante"/"robo_spam"/
-// "espiao_sombras"). Deixou de ser chamada em makeTextures()/create() —
-// é chamada uma única vez por combate, a partir de startBossFight() em
-// dia-crianca.js, mesmo antes de spawnBossSprite(). Poupa o trabalho de
-// canvas dos 4 bosses (~1670 linhas de desenho) no arranque do jogo,
-// quando normalmente só interessa mesmo o boss 1. Cada bloco mantém os
-// seus próprios scene.textures.exists(), por isso repetir o mesmo
-// combate nunca redesenha nada.
 
 // ===== TEXTURAS =====
 
@@ -34,10 +23,7 @@ export function makeTextures(scene){
   makePlatformTexture(scene);
   makeDoorTexture(scene);
   makeVilaosTextures(scene);
-  // makeBossTextures(scene, bossId) já não é chamada aqui — passou a ser
-  // chamada por boss individual, mesmo antes de cada combate (ver
-  // startBossFight() em dia-crianca.js e o comentário completo junto à
-  // definição de makeBossTextures, mais abaixo neste ficheiro).
+  makeBossTextures(scene);
   makeSparkTexture(scene);
   makeItemTextures(scene);
   makeVanBertoTexture(scene,"vanberto_open",false,-1);
@@ -495,7 +481,7 @@ function makeVilaosTextures(scene){
 
 // ── Bosses — silhuetas próprias, uma por boss, para deixarem de ser o
 //    vilão normal aumentado. Cada textura é desenhada uma única vez. ────
-export function makeBossTextures(scene, bossId){
+function makeBossTextures(scene){
   const S = 116, C = 58;
 
   function bossShadow(ctx){
@@ -511,7 +497,6 @@ export function makeBossTextures(scene, bossId){
     ctx.beginPath(); ctx.arc(x-r*0.3,y-r*0.3,r*0.32,0,Math.PI*2); ctx.fill();
   }
 
-  if (bossId === "monstro_phishing") {
   // ── 1) Monstro do Phishing — redesenho "pirata-hacker" (pedido: aproximar
   // a aparência de uma ilustração de referência fornecida pelo Berto) ────
   // Versão anterior: um blob roxo, rechonchuda, com pupilas em "?" — lida
@@ -918,9 +903,7 @@ export function makeBossTextures(scene, bossId){
   // textura "_sentado". Só este boss a tinha (os outros 3 nunca tiveram
   // equivalente) — código morto, removido para não confundir quem mexer
   // aqui a seguir.
-  } // fim bossId === "monstro_phishing"
 
-  if (bossId === "virus_gigante") {
   // ── 2) Vírus Gigante — redesenho "robô-vírus" (pedido: aproximar a
   // aparência de uma imagem de referência fornecida pelo Berto, a mesma
   // leva das referências usadas para os outros 3 bosses) ─────────────────
@@ -1278,9 +1261,7 @@ export function makeBossTextures(scene, bossId){
     drawVirusBody(ctx); drawVirusArms(ctx, "rest"); drawVirusFace(ctx, "sad");
     tex.refresh();
   }
-  } // fim bossId === "virus_gigante"
 
-  if (bossId === "espiao_sombras") {
   // ── 3) Espião das Sombras — redesenho "feiticeiro-espião" (pedido:
   // aproximar a aparência de uma segunda ilustração de referência fornecida
   // pelo Berto, desta vez para o boss final) ──────────────────────────────
@@ -1676,9 +1657,7 @@ export function makeBossTextures(scene, bossId){
     drawGuardiaoBody(ctx); drawGuardiaoArms(ctx, "rest"); drawGuardiaoFace(ctx, "sad");
     tex.refresh();
   }
-  } // fim bossId === "espiao_sombras"
 
-  if (bossId === "robo_spam") {
   // ── 4) Poluidor Mecânico — redesenho (pedido: "esteticamente pode ser
   // muito melhor" + expressões "mais vincadas") ──────────────────────────
   // Antes: um só LED vermelho ao centro mudava de forma ligeiramente entre
@@ -2171,7 +2150,6 @@ export function makeBossTextures(scene, bossId){
     ctx.beginPath(); ctx.arc(bx,by+3,1.1,0,Math.PI*2); ctx.fill();
     tex.refresh();
   }
-  } // fim bossId === "robo_spam"
 }
 
 function makeSparkTexture(scene){

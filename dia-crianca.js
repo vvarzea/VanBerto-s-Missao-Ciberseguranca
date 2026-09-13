@@ -25,7 +25,7 @@ import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js";
 import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js";
 import { playTitleCard, playCinematic } from "./cinematics.js";
 import { loadNamespace, saveNamespace } from "./storage.js";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture, makeBossTextures } from "./textures.js";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js";
 import { initBackground, applyBackground, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
@@ -1460,24 +1460,6 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   function preload() {
-    // Ecrã de carregamento (novo — ver #loadingScreen em index.html e
-    // dia-crianca.css): atualiza a barra/percentagem com o progresso real
-    // deste preload() e esconde-o assim que tudo tiver descarregado. O
-    // ecrã em si já estava visível desde antes disto correr (HTML/CSS
-    // puro, pintado antes do Phaser sequer arrancar) — isto só o liga ao
-    // progresso real e trata de o esconder no fim.
-    this.load.on("progress", (value) => {
-      const fill = document.getElementById("loadingFill");
-      const pct  = document.getElementById("loadingPct");
-      const pctNum = Math.round(value * 100);
-      if (fill) fill.style.width = pctNum + "%";
-      if (pct)  pct.textContent = `A carregar… ${pctNum}%`;
-    });
-    this.load.on("complete", () => {
-      const screen = document.getElementById("loadingScreen");
-      if (screen) screen.classList.add("loading-hidden");
-    });
-
     // PNG externa desativada: a imagem vanberto_voar.png não é quadrada (420×537px)
     // e o jogo força-a num quadrado 72×72, o que a deixa esticada/distorcida.
     // Por isso usamos sempre o robô desenhado em Canvas ("vanberto_open"), que é
@@ -4727,12 +4709,6 @@ window.addEventListener("DOMContentLoaded", () => {
     // este clone para tudo ficar consistente, sem precisar de tocar em mais
     // nenhum sítio do combate.
     const def = getDifficulty() === "dificil" ? { ...rawDef, hp: rawDef.hp + 1 } : rawDef;
-
-    // Desenha as texturas SÓ deste boss, agora mesmo, em vez de todos os 4
-    // logo no arranque do jogo (ver comentário completo em makeBossTextures,
-    // textures.js) — já tem os seus próprios scene.textures.exists() por
-    // dentro, por isso repetir este combate nunca redesenha nada.
-    makeBossTextures(scene, def.id);
 
     inBossFight = true;
     controlsInvertedUntil = 0;
