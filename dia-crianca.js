@@ -3928,6 +3928,39 @@ window.addEventListener("DOMContentLoaded", () => {
     // atenção como ameaça, distinto da flutuação suave do drone bom.
     scene.tweens.add({targets:v, scaleX:{from:1.0,to:1.08}, scaleY:{from:1.0,to:1.08},
       duration:260+Math.random()*120, yoyo:true, repeat:-1, ease:"Sine.easeInOut"});
+    return v;
+  }
+
+  // ---- Reforço do chefe — habilidade exclusiva do Extremo nos combates de
+  // boss (pedido: "algo qualitativamente novo no Extremo, não só +HP/×1.4",
+  // tal como o drone hostil deu algo novo aos níveis normais). Ao chegar ao
+  // último salto por dar (hp===1), SÓ no Extremo, o boss "chama reforços":
+  // reaproveita o mesmíssimo drone hostil dos níveis normais (mesmo
+  // visual/voo/patrulha, ver spawnHostileDrone acima), mas retintado com a
+  // cor própria de cada boss (def.color) para parecer um reforço enviado
+  // por ELE, e marcado isMiniHazard=true para se comportar exatamente como
+  // um vírus pequeno da arena contaminada (dói ao tocar sem Star Power,
+  // esmaga-se com Star Power) — ver handleBossMalwareCollision. 100%
+  // opt-in via def.extremoReinforcement; nos modos Fácil/Difícil esta
+  // função não faz nada. ----
+  let bossExtremoAllies = [];
+  function spawnExtremoReinforcement(scene) {
+    if (!bossState || difficulty !== "extremo" || !bossState.def.extremoReinforcement) return;
+    if (bossState.extremoReinforcementSpawned) return;
+    bossState.extremoReinforcementSpawned = true;
+    const worldW = (bossState.def.arena && bossState.def.arena.worldW) || 960;
+    const v = spawnHostileDrone(scene, worldW / 2, 220, 150);
+    v.setTint(bossState.def.color != null ? bossState.def.color : 0xffffff);
+    v.setData("isMiniHazard", true);
+    v.setData("mini_hitMsg", `🚨 Reforço do ${bossState.def.name}!`);
+    v.setData("mini_destroyMsg", "💥 Reforço eliminado!");
+    bossExtremoAllies.push(v);
+    showFloat(scene, worldW / 2, 180, "🚨 Chamou reforços!", "#ff6a5c");
+    ensureAudio(); beep({ freq: 90, dur: 0.22, type: "square", vol: 0.05, slideTo: 200 });
+  }
+  function clearExtremoAllies() {
+    bossExtremoAllies.forEach(v => { try{ if (v.active) v.destroy(); }catch{} });
+    bossExtremoAllies = [];
   }
 
   function updateHUD(L) {
@@ -4895,6 +4928,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if(bossVignette){ try{bossVignette.destroy();}catch{} bossVignette=null; } // vinheta de fase (ex.: Preconceito)
     clearToxicZones();
     clearMiniViruses();
+    clearPopupHazard(); // reset defensivo — ver comentário igual em clearToxicZones()/clearMiniViruses() aqui ao lado
+    stopPhishingDecoy(); // idem para a isca falsa do Monstro do Phishing
+    clearExtremoAllies(); // idem para o reforço do Extremo (qualquer boss)
     clearBossArenaDecor(); // decoração ambiente temática (ver def.arena.decor)
     if(door){ door.destroy(); door=null; }
 
@@ -5051,6 +5087,12 @@ window.addEventListener("DOMContentLoaded", () => {
       if (baseVirus > 0) spawnMiniViruses(scene, baseVirus);
       const virusTimer = scene.time.addEvent({ delay: 3000, loop: true, callback: () => maintainMiniViruses(scene, bossState.desiredVirusCount) });
       bossTimers.push(virusTimer);
+    }
+    if (def.popupHazard) {
+      // Robô do Spam: janelas de spam a tapar pedaços do ecrã, em vez do
+      // chão contaminado do Vírus Gigante — ver comentário completo junto a
+      // spawnPopupHazard().
+      spawnPopupHazard(scene);
     }
 
     // Entrada com mais impacto — antes o boss só "aparecia" sem drama nenhum.
@@ -5756,6 +5798,101 @@ window.addEventListener("DOMContentLoaded", () => {
     bossMiniViruses = [];
   }
 
+  // ---- Arena com pop-ups (Robô do Spam): janelas de spam que tapam pedaços
+  // do ecrã, em vez do chão contaminado (ácido/lava) que já é a assinatura
+  // do Vírus Gigante. Pedido: dar-lhe uma identidade mecânica diferente —
+  // "janelas de spam/pop-ups que tapam pedaços do ecrã", já que o Robô e o
+  // Vírus partilhavam antes exatamente a mesma mecânica (só a cor do chão
+  // mudava). 100% aditivo e opt-in via def.popupHazard — não toca em nada
+  // dos outros 3 bosses.
+  //
+  // Diferença de fundo em relação a contaminatedArena: os pop-ups NÃO
+  // ferem ao toque — são um obstáculo de VISÃO, não de contacto. Aparecem
+  // sobre pontos fixos da arena (normalmente por cima das plataformas onde
+  // vais aterrar), ficam visíveis por 1.9-2.4s e desaparecem sozinhos,
+  // como pop-ups a fechar — depois voltam a poder abrir noutro sítio.
+  let bossPopups = [];
+  let bossPopupAnchors = [];
+
+  // Configuração de pop-ups correspondente à fúria ATUAL — mesma lógica de
+  // currentContaminationZones(), mas para def.popupHazard.escalations.
+  function currentPopupConfig() {
+    if (!bossState) return null;
+    const ph = bossState.def.popupHazard;
+    if (!ph) return null;
+    const esc = ph.escalations && ph.escalations[bossState.rageLevel];
+    return {
+      anchors: (esc && esc.anchors) ? esc.anchors : ph.anchors,
+      spawnEvery: (esc && esc.spawnEvery != null) ? esc.spawnEvery : ph.spawnEvery,
+      maxOnScreen: (esc && esc.maxOnScreen != null) ? esc.maxOnScreen : (ph.maxOnScreen || 1)
+    };
+  }
+
+  // Desenha uma janela de pop-up (fundo + barra de título vermelha + "✖" +
+  // texto de isco) — tudo com Graphics/Text, sem precisar de texturas novas.
+  function makePopupWindow(scene, x, y, w, h) {
+    const gfx = scene.add.graphics().setDepth(25);
+    gfx.fillStyle(0xf5f5f5, 0.97);
+    gfx.fillRoundedRect(x - w/2, y - h/2, w, h, 8);
+    gfx.fillStyle(0xff3030, 1);
+    gfx.fillRoundedRect(x - w/2, y - h/2, w, 22);
+    gfx.lineStyle(3, 0xff3030, 1);
+    gfx.strokeRoundedRect(x - w/2, y - h/2, w, h, 8);
+    const label = scene.add.text(x, y - h/2 + 11, "📧 SPAM", { fontSize:"12px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
+    const closeX = scene.add.text(x + w/2 - 15, y - h/2 + 11, "✖", { fontSize:"14px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
+    const body = scene.add.text(x, y + 10, "💰 OFERTA!\n👆 CLICA AQUI", { fontSize:"13px", fontStyle:"800", color:"#c72030", align:"center" }).setOrigin(0.5).setDepth(26);
+    return { gfx, label, closeX, body };
+  }
+  function destroyPopupElements(elements) {
+    ["gfx","label","closeX","body"].forEach(k => { try{ elements[k].destroy(); }catch{} });
+  }
+
+  // Liga o temporizador de spawn — chamado ao entrar no combate e sempre que
+  // a "onda" (se algum dia existir para este boss) limpar a arena.
+  function spawnPopupHazard(scene) {
+    clearPopupHazard();
+    const cfg = currentPopupConfig();
+    if (!cfg) return;
+    bossPopupAnchors = cfg.anchors;
+    const timer = scene.time.addEvent({ delay: cfg.spawnEvery, loop: true, callback: () => trySpawnPopup(scene) });
+    bossTimers.push(timer);
+    bossState.popupSpawnTimer = timer;
+    // Primeiro pop-up não espera o intervalo completo — para se sentir a
+    // mecânica logo nos primeiros segundos do combate.
+    scene.time.delayedCall(1200, () => trySpawnPopup(scene));
+  }
+  function clearPopupHazard() {
+    bossPopups.forEach(p => destroyPopupElements(p.elements));
+    bossPopups = [];
+    bossPopupAnchors = [];
+    if (bossState && bossState.popupSpawnTimer) { try{ bossState.popupSpawnTimer.remove(false); }catch{} bossState.popupSpawnTimer = null; }
+  }
+  function trySpawnPopup(scene) {
+    if (!inBossFight || !bossState || bossState.phase !== "platform" || !bossState.def.popupHazard) return;
+    bossPopups = bossPopups.filter(p => p.active);
+    const cfg = currentPopupConfig();
+    if (!cfg || bossPopups.length >= cfg.maxOnScreen) return;
+    const occupied = new Set(bossPopups.map(p => p.anchorIdx));
+    const freeIdx = cfg.anchors.map((_, i) => i).filter(i => !occupied.has(i));
+    if (!freeIdx.length) return;
+    const anchorIdx = freeIdx[Math.floor(Math.random() * freeIdx.length)];
+    const a = cfg.anchors[anchorIdx];
+    const elements = makePopupWindow(scene, a.x, a.y, a.w, a.h);
+    const group = [elements.gfx, elements.label, elements.closeX, elements.body];
+    group.forEach(g => g.setAlpha(0));
+    const popup = { anchorIdx, elements, active: true };
+    bossPopups.push(popup);
+    scene.tweens.add({ targets: group, alpha: 1, duration: 220, ease: "Sine.easeOut" });
+    ensureAudio(); beep({ freq: 700, dur: 0.05, type: "square", vol: 0.04, slideTo: 500 });
+    const lifespan = 1900 + Math.random() * 500;
+    scene.time.delayedCall(lifespan, () => {
+      if (!popup.active) return;
+      scene.tweens.add({
+        targets: group, alpha: 0, duration: 220, ease: "Sine.easeIn",
+        onComplete: () => { popup.active = false; destroyPopupElements(elements); bossPopups = bossPopups.filter(p => p !== popup); }
+      });
+    });
+  }
 
   // ---- Movimento "blink" (Monstro da Ignorância): some e reaparece noutro sítio ----
   function doBossBlink(scene) {
@@ -5941,7 +6078,11 @@ window.addEventListener("DOMContentLoaded", () => {
       scene.physics.add.collider(q, platforms, () => {
         if (hasSplit || !q.active) return;
         hasSplit = true;
-        spawnBossGermSplit(scene, q.x, q.y, def);
+        // Fúria final (nova, ver chaserGermAtMaxRage em data-bosses.js): os
+        // filhos passam a caçar em vez de só se afastar — ver comentário
+        // completo em spawnBossGermSplit.
+        const chase = !!(def.chaserGermAtMaxRage && bossState.rageLevel >= 2);
+        spawnBossGermSplit(scene, q.x, q.y, def, chase);
         q.destroy();
       });
     } else {
@@ -5970,8 +6111,14 @@ window.addEventListener("DOMContentLoaded", () => {
   // Os 2 micróbios-filho de spawnBossGermSplit (ver splitOnBounce acima) —
   // mais pequenos, mais rápidos a espalhar-se, com um tempo de vida mais
   // curto que o micróbio original (não seria justo ficarem tanto tempo em
-  // jogo como o "pai").
-  function spawnBossGermSplit(scene, x, y, def) {
+  // jogo como o "pai"). chase (novo, ver chaserGermAtMaxRage em
+  // data-bosses.js): na fúria final, em vez de só se afastarem um do outro
+  // ao acaso, "puxam" ligeiramente na direção do VanBerto's nos primeiros
+  // instantes de voo — mesma técnica do homingDrift do Espião das Sombras,
+  // mas aplicada aos filhos, não ao projétil original (que continua com a
+  // trajetória normal do Vírus). Dá a este boss uma verdadeira escalada de
+  // ataque na 2ª fúria, em vez de só ficar mais rápido/mais frequente.
+  function spawnBossGermSplit(scene, x, y, def, chase) {
     [-1, 1].forEach(dir => {
       const child = itemsGroup.create(x, y - 4, def.orbTexture || "boss_proj_qmark");
       if (def.orbTint != null) child.setTint(def.orbTint);
@@ -5984,6 +6131,82 @@ window.addEventListener("DOMContentLoaded", () => {
       child.setAngularVelocity(dir * 200);
       scene.physics.add.collider(child, platforms);
       scene.time.delayedCall(2600, () => { if (child.active) child.destroy(); });
+      if (chase) {
+        const homingTimer = scene.time.addEvent({
+          delay: 150, repeat: 3,
+          callback: () => {
+            if (!child.active || !child.body) { try{homingTimer.remove(false);}catch{} return; }
+            const towards = (player.x < child.x) ? -1 : 1;
+            child.body.setVelocityX(Phaser.Math.Clamp(child.body.velocity.x + towards * 22, -170, 170));
+          }
+        });
+        bossTimers.push(homingTimer);
+      }
+    });
+  }
+
+  // ---- Isca falsa do Monstro do Phishing (fúria final — ver
+  // phishingDecoyAtMaxRage em data-bosses.js): uma "oferta grátis" que
+  // parece um bónus mas dói ao tocar, tal como um clique real num link de
+  // phishing. Vive em itemsGroup (não em malwareGroup) e é despachada por
+  // handleBossItemCollect, tal como os livros bons/maus do Monstro da
+  // Ignorância — reaproveita toda essa infraestrutura em vez de inventar
+  // uma nova. 100% opt-in: nenhum dos outros 3 bosses é afetado. ----
+  function startPhishingDecoy(scene) {
+    if (!bossState || bossState.decoySpawnTimer) return; // já ativo — não duplica o temporizador
+    const timer = scene.time.addEvent({ delay: 3200, loop: true, callback: () => spawnPhishingDecoy(scene) });
+    bossTimers.push(timer);
+    bossState.decoySpawnTimer = timer;
+    // A 1ª isca não espera o intervalo completo — para se sentir logo a
+    // mudança ao entrar na fúria final.
+    scene.time.delayedCall(700, () => spawnPhishingDecoy(scene));
+  }
+  function stopPhishingDecoy() {
+    if (bossState && bossState.decoySpawnTimer) { try{ bossState.decoySpawnTimer.remove(false); }catch{} bossState.decoySpawnTimer = null; }
+    if (itemsGroup) itemsGroup.getChildren().slice().forEach(o => {
+      if (o.getData("bossDecoy")) { const l = o.getData("decoyLabel"); try{ l && l.destroy(); }catch{} o.destroy(); }
+    });
+  }
+  function spawnPhishingDecoy(scene) {
+    if (!inBossFight || !bossState || bossState.phase !== "platform" || bossState.rageLevel < 2) return;
+    if (itemsGroup.getChildren().some(o => o.active && o.getData("bossDecoy"))) return; // só 1 de cada vez
+    const arena = bossState.def.arena || {};
+    const plats = (arena.platforms || []).slice(1); // ignora o chão principal (índice 0) — só nas plataformas baixas/altas
+    const plat = plats.length ? plats[Math.floor(Math.random() * plats.length)] : null;
+    const x = plat ? plat[0] : (arena.playerStartX || 400) + (Math.random() < 0.5 ? -150 : 150);
+    const y = plat ? plat[1] - 34 : 380;
+    const it = itemsGroup.create(x, y, "item_estrela");
+    it.setDepth(2).setTint(0xffe066).setData("bossDecoy", true);
+    scene.tweens.add({ targets: it, y: it.y - 8, duration: 520, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+    scene.tweens.add({ targets: it, angle: { from: -8, to: 8 }, duration: 420, yoyo: true, repeat: -1 });
+    const label = scene.add.text(x, y - 28, "🎣 GRÁTIS!", { fontSize: "12px", fontStyle: "900", color: "#ffcf40", stroke: "#5a2d00", strokeThickness: 4 }).setOrigin(0.5).setDepth(3);
+    it.setData("decoyLabel", label);
+    // Desaparece sozinha se não for tocada, para não acumular na arena.
+    scene.time.delayedCall(3600, () => { if (it.active) { try{ label.destroy(); }catch{} it.destroy(); } });
+  }
+
+  // ---- Apagão do Espião das Sombras (fúria final — ver blackoutAtMaxRage
+  // em data-bosses.js): um momento único ao entrar na 2ª fúria, condizente
+  // com o tema "nas sombras, ninguém vê" — a arena escurece nas bordas,
+  // deixando só uma janela central mais estreita que a vinheta normal do
+  // jogo (ver bossVignette/def.phases mais acima), antes de voltar ao
+  // normal sozinha. Puramente visual/atmosférico — não faz dano nem bloqueia
+  // controlos, só torna mais difícil ver o boss/projéteis por instantes. ----
+  function triggerBossBlackout(scene) {
+    if (!bossState) return;
+    const W = 960, H = 540, margin = 220; // janela mais estreita que a vinheta normal — clímax mais intenso
+    const g = scene.add.graphics().setScrollFactor(0).setDepth(40).setAlpha(0);
+    g.fillStyle(0x030008, 0.86);
+    g.fillRect(0, 0, W, margin);
+    g.fillRect(0, H - (margin - 60), W, margin - 60);
+    g.fillRect(0, 0, margin, H);
+    g.fillRect(W - margin, 0, margin, H);
+    scene.tweens.add({ targets: g, alpha: 1, duration: 260, ease: "Sine.easeOut" });
+    const b = bossState.sprite;
+    showFloat(scene, b ? b.x : bossState.baseX, (b ? b.y : bossState.baseY) - 74, "🌑 Não vais ver o que aí vem!", "#c9a0ff");
+    ensureAudio(); beep({ freq: 140, dur: 0.22, type: "sine", vol: 0.05, slideTo: 60 });
+    scene.time.delayedCall(2300, () => {
+      scene.tweens.add({ targets: g, alpha: 0, duration: 400, ease: "Sine.easeIn", onComplete: () => { try{ g.destroy(); }catch{} } });
     });
   }
 
@@ -6421,6 +6644,37 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Escalada dos pop-ups (Robô do Spam) — mais janelas em simultâneo e a
+    // abrir mais depressa a cada fúria; na 2ª fúria a config pode incluir uma
+    // âncora extra perto da altura de patrulha do próprio boss (ver
+    // popupHazard.escalations[2].anchors em data-bosses.js), tapando também
+    // o próprio Robô, não só o chão — a identidade de fúria própria deste
+    // boss, tal como o chão contaminado é a do Vírus Gigante. NÃO fecha os
+    // pop-ups já abertos (pedido explícito) — só afeta os PRÓXIMOS a abrir.
+    if (def.popupHazard) {
+      const cfg = currentPopupConfig();
+      if (cfg) {
+        bossPopupAnchors = cfg.anchors;
+        if (bossState.popupSpawnTimer) bossState.popupSpawnTimer.delay = cfg.spawnEvery;
+        scene.cameras.main.flash(220, 255, 255, 255); // "mais janelas a abrir" — flash branco, distinto do verde/laranja do chão contaminado
+      }
+    }
+
+    // Ataques novos de fúria final (nova — pedido: os 4 bosses só ficavam
+    // "mais rápidos", nunca ganhavam nada qualitativamente diferente ao
+    // chegar à 2ª fúria/desesperado). Cada um dos 3 bosses "normais" (o
+    // Robô do Spam já tem a sua própria identidade de fúria via popups,
+    // acima) ganha agora UM comportamento novo, só seu, só nesta fase —
+    // ver comentário completo de cada def.xxxAtMaxRage em data-bosses.js.
+    if (level === 2) {
+      if (def.phishingDecoyAtMaxRage) startPhishingDecoy(scene);
+      if (def.blackoutAtMaxRage) triggerBossBlackout(scene);
+      // chaserGermAtMaxRage não precisa de disparo aqui — é lido
+      // diretamente em doBossRollQmark/spawnBossGermSplit a partir de
+      // bossState.rageLevel, porque só se aplica ao próximo micróbio a
+      // partir-se, não a um evento único.
+    }
+
     // Teletransporte-surpresa (nova, só Espião das Sombras — def.extraTeleportOnRage):
     // ao entrar em fúria (1ª ou 2ª), o Espião desaparece e reaparece de
     // imediato, além dos seus teletransportes normais por temporizador —
@@ -6472,6 +6726,61 @@ window.addEventListener("DOMContentLoaded", () => {
 
     ensureAudio();
     beep({ freq: level===1?260:200, dur:0.16, type:"sawtooth", vol:0.06, slideTo: level===1?140:90 });
+  }
+
+  // ---- Alívio de fúria: chamado quando o BOSS acerta no VanBerto's (pedido:
+  // "tem de se perceber quando o VanBerto's perde a vida com o Boss" — o
+  // boss "recupera o fôlego" e desce 1 nível de fúria, em vez do combate
+  // simplesmente continuar exactamente tão intenso como estava antes do
+  // toque). Espelha bossEnterRage (mesmas fórmulas de speedMult/timers),
+  // mas ao contrário — e só nos modos Fácil/Difícil: no Extremo, a fúria
+  // já acumulada NUNCA desce, para o combate continuar tão apertado quanto
+  // o jogador o deixou (pedido explícito: "no Extremo mantém-se").
+  //
+  // NÃO toca nas zonas contaminadas do Vírus Gigante/Robô do Spam (pedido
+  // explícito: "não, mantêm-se do tamanho atual") — só a velocidade/cadência
+  // de ataque do boss é que cede; o chão que já ficou mais perigoso continua
+  // exactamente assim até ao fim do combate.
+  function coolBossRageOnPlayerHit(scene) {
+    if (!inBossFight || !bossState || bossState.phase !== "platform") return;
+    if (difficulty === "extremo") return; // fúria acumulada nunca desce no Extremo
+    if (!bossState.rageLevel || bossState.rageLevel <= 0) return;
+    const newLevel = bossState.rageLevel - 1;
+    bossState.rageLevel = newLevel;
+    bossState.speedMult = (newLevel === 0 ? 1 : newLevel === 1 ? 1.35 : 1.7) * (bossState.baseSpeedMult || 1);
+    const def = bossState.def, b = bossState.sprite;
+
+    // Mesmos timers que bossEnterRage ajusta, só que agora a abrandar —
+    // ver esse comentário para a lista completa e a razão de cada um.
+    if (bossState.blinkTimer) bossState.blinkTimer.delay = bossState.blinkBaseDelay / bossState.speedMult;
+    if (bossState.teleTimer)  bossState.teleTimer.delay  = bossState.teleBaseDelay  / bossState.speedMult;
+    if (bossState.bookTimer)  bossState.bookTimer.delay  = bossState.bookBaseDelay  / bossState.speedMult;
+    if (bossState.orbTimer)   bossState.orbTimer.delay   = bossState.orbBaseDelay   / bossState.speedMult;
+    if (bossState.hopTimer)   bossState.hopTimer.delay   = bossState.hopBaseDelay   / bossState.speedMult;
+    if (bossState.qmarkTimer) bossState.qmarkTimer.delay = bossState.qmarkBaseDelay / bossState.speedMult;
+    if (bossState.smokeTimer) bossState.smokeTimer.delay = bossState.smokeBaseDelay / bossState.speedMult;
+
+    // Cara volta ao estado correspondente ao novo nível — normal se
+    // newLevel===0, ainda "zangada" (mas com o tint mais claro da fase 1)
+    // se ainda ficou a meio.
+    if (b && b.active) {
+      if (newLevel === 0) {
+        const normalKey = "boss_" + def.id;
+        if (scene.textures.exists(normalKey)) b.setTexture(normalKey);
+        b.clearTint();
+      } else {
+        const angryKey = "boss_" + def.id + "_angry";
+        if (scene.textures.exists(angryKey)) b.setTexture(angryKey);
+        b.setTint(0xffb0a0);
+      }
+    }
+
+    // Reação mais suave que bossEnterRage (isto é um alívio para o
+    // jogador, não uma escalada) — sem shake/flash de câmara, só uma fala
+    // curta a marcar a mudança.
+    showFloat(scene, b ? b.x : bossState.baseX, (b ? b.y : bossState.baseY) - 74, "😮‍💨 Ufa, ganhei fôlego...", "#9be89b");
+    ensureAudio();
+    beep({ freq: 200, dur: 0.14, type: "sawtooth", vol: 0.05, slideTo: 320 });
   }
 
   // Dano ao boss (1 HP) reutilizável — tanto o toque com Star Power (bosses normais)
@@ -6549,6 +6858,10 @@ window.addEventListener("DOMContentLoaded", () => {
         bossState.finalBurstDone = true;
         startBossFinalStandBurst(scene);
       }
+      // Reforço do chefe (Extremo, ver spawnExtremoReinforcement) — mesmo
+      // gatilho (hp===1), mas totalmente independente do finalStandBurst:
+      // um boss pode ter as duas coisas, só uma, ou nenhuma.
+      if (bossState.hp === 1) spawnExtremoReinforcement(scene);
     } else if (bossState.def.phases) {
       // Bosses com fases próprias não usam a escalada genérica — cada
       // acerto muda de fase com comportamento próprio.
@@ -6618,6 +6931,12 @@ window.addEventListener("DOMContentLoaded", () => {
     if (invuln) return true; // já protegido — ignora este toque, sem reprocessar dano
 
     if (isMini) {
+      // Mensagens configuráveis (nova) — o vírus pequeno da arena
+      // contaminada continua com o texto de sempre por omissão; o reforço
+      // do Extremo (ver spawnExtremoReinforcement) define as suas próprias
+      // via mini_hitMsg/mini_destroyMsg, sem precisar de um ramo à parte.
+      const destroyMsg = malwareObj.getData("mini_destroyMsg") || "💥 Vírus eliminado!";
+      const hitMsg = malwareObj.getData("mini_hitMsg") || "🦠 Cuidado com os vírus!";
       // Vírus pequeno da arena contaminada — com Star Power esmaga-se como um
       // vilão normal (sem afetar o HP do boss principal); sem Star Power, dói
       // como qualquer outro toque, mas o vírus continua vivo (o timer de
@@ -6630,11 +6949,12 @@ window.addEventListener("DOMContentLoaded", () => {
         });
         sceneRef.time.delayedCall(280, () => { try{ex.destroy();}catch{} });
         score += 15; scoreText.setText(`🌟 Pontos: ${score}`);
-        showFloat(sceneRef, malwareObj.x, malwareObj.y-40, "💥 Vírus eliminado!", "#30c060");
+        showFloat(sceneRef, malwareObj.x, malwareObj.y-40, destroyMsg, "#30c060");
         bossMiniViruses = bossMiniViruses.filter(v => v !== malwareObj);
+        bossExtremoAllies = bossExtremoAllies.filter(v => v !== malwareObj);
         malwareObj.destroy();
       } else {
-        bossHitPlayer(sceneRef, malwareObj, "🦠 Cuidado com os vírus!");
+        bossHitPlayer(sceneRef, malwareObj, hitMsg);
       }
       return true;
     }
@@ -6704,6 +7024,10 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     applyHitStop(scene);
     lives -= 1; updateHearts(); livesLostThisLevel++; _hudDirty = true;
+    // Alívio de fúria ao seres atingido (pedido, ver coolBossRageOnPlayerHit)
+    // — só faz sentido enquanto o combate continua, por isso fica antes do
+    // "lives<=0" (nesse caso o combate já vai acabar de qualquer forma).
+    coolBossRageOnPlayerHit(scene);
     // Bug corrigido: ver o mesmo comentário em hitByHazard — sem isto o
     // combate de boss continuava totalmente jogável durante a festa do boss
     // (até 1300ms) antes do ecrã de "Missão Falhada" aparecer.
@@ -6749,6 +7073,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if (bossRageIcon) { try{bossRageIcon.destroy();}catch{} bossRageIcon=null; }
     destroyBossHpBar(); // vida chegou a 0 — a barra já não tem função a partir daqui
     if (bossState.def.contaminatedArena) { clearToxicZones(); clearMiniViruses(); } // arena "cura-se" ao vencer o boss
+    if (bossState.def.popupHazard) clearPopupHazard(); // idem para as janelas de spam do Robô
+    if (bossState.def.phishingDecoyAtMaxRage) stopPhishingDecoy(); // idem para a isca falsa do Monstro
+    clearExtremoAllies(); // idem para o reforço do Extremo, se tiver sido chamado
     itemsGroup.getChildren().slice().forEach(o => { if((o.getData("kind")==="estrela" || o.getData("bossCharge")) && !o.getData("bossCollect")) o.destroy(); });
     const keyMap = { estrela:"item_estrela", heart:"item_heart", medalha:"item_medalha",
                      brinquedo:"item_chip", balao:"item_chave", livro:"item_livro" };
@@ -6805,6 +7132,18 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     if (itemObj.getData("bossCharge")) {
       handleChargeItemCollect(itemObj);
+      return true;
+    }
+    if (itemObj.getData("bossDecoy")) {
+      // Isca falsa do Monstro do Phishing (fúria final) — ver
+      // startPhishingDecoy/spawnPhishingDecoy: parece um bónus, mas dói ao
+      // tocar, tal como um clique real num link de phishing.
+      const label = itemObj.getData("decoyLabel");
+      try{ label && label.destroy(); }catch{}
+      itemObj.destroy();
+      if (invuln) return true; // já protegido — ignora durante os i-frames
+      ensureAudio(); beep({freq:200,dur:0.16,type:"sawtooth",vol:0.06,slideTo:90});
+      bossHitPlayer(sceneRef, null, "🎣 Isso era uma armadilha!");
       return true;
     }
     if (itemObj.getData("bossProjQmark")) {
@@ -6993,6 +7332,9 @@ window.addEventListener("DOMContentLoaded", () => {
       if(bossRageIcon){ try{bossRageIcon.destroy();}catch{} bossRageIcon=null; }
       if(bossVignette){ try{bossVignette.destroy();}catch{} bossVignette=null; }
       clearToxicZones(); clearMiniViruses();
+      clearPopupHazard();
+      stopPhishingDecoy();
+      clearExtremoAllies();
       destroyBossHpBar();
       inBossFight = false; bossState = null;
       // NOTA: bossArenaDecor (livros flutuantes) fica de propósito durante a

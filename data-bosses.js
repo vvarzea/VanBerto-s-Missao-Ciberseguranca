@@ -65,9 +65,25 @@ export const BOSSES = [
     // Dá-lhe uma identidade de escalada própria, tal como o chão contaminado
     // dá ao Vírus/Robô e o teletransporte-surpresa dá ao Espião.
     doubleThrowFromRage1: true,
+    // Isca falsa na fúria final (nova — "ataque novo", não só mais rápido):
+    // ao chegar à 2ª fúria (desesperado), o Monstro passa a semear uma
+    // "oferta grátis" de mentira numa das plataformas baixas; tocar-lhe
+    // dói como um livro mau, tal como um clique real num phishing. Ver
+    // startPhishingDecoy/spawnPhishingDecoy em dia-crianca.js. Só ele tem
+    // isto entre os 4 — dá-lhe uma identidade de fúria final própria, tal
+    // como o Vírus ganha micróbios-caçadores e o Espião ganha o apagão.
+    phishingDecoyAtMaxRage: true,
     // Rótulo temático do contador de saltos no HUD (nova) — antes os 4
     // bosses mostravam sempre "👣 Saltos: X/3", sem ligação ao tema.
     stompLabel: "🎣 Mordidas",
+    // Reforço do chefe — habilidade exclusiva do Extremo (nova, pedido:
+    // "algo qualitativamente novo no Extremo, não só +HP/×1.4", em vez do
+    // Extremo continuar a ser só o mesmo combate mais apertado). Ao chegar
+    // ao último salto por dar, SÓ no Extremo, este boss chama um reforço
+    // (o mesmo drone hostil dos níveis normais, retintado com def.color) —
+    // ver spawnExtremoReinforcement em dia-crianca.js. Os 4 bosses "stomp"
+    // partilham esta habilidade (só a cor do reforço muda, por boss).
+    extremoReinforcement: true,
     movementType: "patrol",  // anda devagar de um lado para o outro — nunca teletransporta, nunca desaparece
     patrolSpeed: 55,
     hopEvery: 2400,          // de vez em quando dá um pequeno salto (só visual)
@@ -189,6 +205,9 @@ export const BOSSES = [
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
     stompLabel: "🦠 Infeções travadas",
+    // Reforço do chefe no Extremo — ver comentário completo junto ao
+    // Monstro do Phishing (data-bosses.js, boss monstro_phishing).
+    extremoReinforcement: true,
     // Arena contaminada reativada (nova) — este boss já teve isto antes da
     // conversão para "boss clássico à Mario" (2 zonas fixas + vírus a
     // flutuar), mas ficou por trazer de volta no redesenho. Só a zona
@@ -260,6 +279,15 @@ export const BOSSES = [
     // em 2 mais pequenos — só este boss faz isto, tal como só ele tem um
     // tema biológico entre os 4.
     splitOnBounce: true,
+    // Micróbios-caçadores na fúria final (nova — "ataque novo", não só mais
+    // rápido): ao chegar à 2ª fúria, os 2 micróbios-filho de
+    // spawnBossGermSplit deixam de só se afastar um do outro e passam a
+    // "puxar" ligeiramente na direção do VanBerto's nos primeiros instantes
+    // de voo (mesma técnica de homingDrift do Espião, ver
+    // spawnBossGermSplit em dia-crianca.js) — sensação de vírus mesmo a
+    // caçar-te, não só a saltitar ao acaso. Só este boss tem isto entre os
+    // 4, tal como o Monstro ganha a isca falsa e o Espião ganha o apagão.
+    chaserGermAtMaxRage: true,
     // orbTint: era rosa (0xe0409a, a condizer com a esfera antiga) — agora
     // vermelho, a condizer com o redesenho "robô-vírus".
     orbTint: 0xff4030,
@@ -369,9 +397,20 @@ export const BOSSES = [
     // está a perder, tal como o Vírus/Robô ganham chão contaminado e o
     // Monstro do Phishing ganha o ataque duplo mais cedo.
     extraTeleportOnRage: true,
+    // Apagão na fúria final (nova — "ataque novo", não só mais rápido/mais
+    // teletransportes): ao chegar à 2ª fúria, a arena escurece por ~2.5s,
+    // deixando só uma janela central iluminada — condizente com o tema de
+    // "nas sombras, ninguém vê" — antes de voltar ao normal. Momento único
+    // por entrada em fúria máxima, ver triggerBossBlackout em
+    // dia-crianca.js. Só este boss tem isto entre os 4, tal como o Monstro
+    // ganha a isca falsa e o Vírus ganha os micróbios-caçadores.
+    blackoutAtMaxRage: true,
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
     stompLabel: "👁️ Exposições",
+    // Reforço do chefe no Extremo — ver comentário completo junto ao
+    // Monstro do Phishing (data-bosses.js, boss monstro_phishing).
+    extremoReinforcement: true,
     // bossY: recalculado com o redesenho "feiticeiro-espião" (ver
     // makeBossTextures em textures.js) — a capa/robe antiga não tinha
     // pernas (bainha a ~43px abaixo do centro); agora tem botas, tal como
@@ -454,22 +493,42 @@ export const BOSSES = [
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
     stompLabel: "📛 Bloqueios",
-    // Arena contaminada reativada (nova) — mesma lógica do Vírus Gigante
-    // (ver esse comentário completo), hazardType "lava" em vez de "acid"
-    // para condizer com a estética mecânica/industrial deste boss (chaminé
-    // + caixa metálica, ver drawPoluidorBody em textures.js) em vez do
-    // verde tóxico do vírus.
-    // CORRIGIDO (pedido: "não era o chão todo para o lado mas sim para
-    // baixo") — larguras/posições voltaram ao layout original; a mudança
-    // real foi na ALTURA da zona pintada (ver comentário completo no Vírus
-    // Gigante).
-    contaminatedArena: {
-      hazardType: "lava",
-      zonesBase: [ {x:200,w:150}, {x:760,w:150} ],
-      virusBase: 0,
+    // Reforço do chefe no Extremo — ver comentário completo junto ao
+    // Monstro do Phishing (data-bosses.js, boss monstro_phishing).
+    extremoReinforcement: true,
+    // Pop-ups de spam (nova — substitui a "arena contaminada" que este boss
+    // partilhava sem necessidade com o Vírus Gigante, ver comentário
+    // completo junto a spawnPopupHazard em dia-crianca.js). Em vez de chão
+    // tóxico, janelas de spam abrem-se por cima das 3 plataformas (a mesma
+    // zona onde precisas de aterrar), tapando temporariamente essa parte do
+    // ecrã — obstáculo de VISÃO, não de contacto, dá-lhe uma identidade
+    // mecânica própria em vez de reaproveitar o hazard do vírus.
+    popupHazard: {
+      // Uma janela por cada plataforma baixa (esquerda/direita, ver
+      // arena.platforms abaixo) + a plataforma central mais alta — cobre a
+      // área de aterragem, não o chão principal (o corredor central do
+      // jogador continua sempre visível).
+      anchors: [
+        { x:200, y:365, w:170, h:100 },  // sobre a plataforma baixa esquerda
+        { x:760, y:365, w:170, h:100 },  // sobre a plataforma baixa direita
+        { x:480, y:320, w:150, h:95 }    // sobre a plataforma central
+      ],
+      spawnEvery: 3200,
+      maxOnScreen: 1,
       escalations: {
-        1: { zones: [ {x:200,w:190}, {x:760,w:190} ] },
-        2: { zones: [ {x:200,w:230}, {x:760,w:230} ] }
+        // 1ª fúria: mais uma janela em simultâneo, a abrir mais depressa.
+        1: { spawnEvery: 2400, maxOnScreen: 2 },
+        // 2ª fúria (desesperado): junta uma 4ª âncora, à altura de patrulha
+        // do próprio Robô (bossY=467) — nesta fase, os pop-ups também tapam
+        // o boss, não só o chão de aterragem, reforçando a identidade
+        // própria de fúria deste boss (tal como o Vírus ganha chão mais
+        // largo e o Monstro do Phishing ganha o ataque duplo mais cedo).
+        2: { spawnEvery: 1700, maxOnScreen: 2, anchors: [
+          { x:200, y:365, w:170, h:100 },
+          { x:760, y:365, w:170, h:100 },
+          { x:480, y:320, w:150, h:95 },
+          { x:480, y:460, w:220, h:110 }
+        ] }
       }
     },
     movementType: "patrol",
