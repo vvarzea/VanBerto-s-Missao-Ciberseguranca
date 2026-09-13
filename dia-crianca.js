@@ -2887,6 +2887,16 @@ window.addEventListener("DOMContentLoaded", () => {
     if (powered) { clearPower(scene); setInvuln(scene, 800); tipText.setText("🛡️ Escudo usado! Cuidado."); return; }
 
     lives -= 1; updateHearts(); livesLostThisLevel++; _hudDirty = true;
+    // Bug corrigido: quando esta é a última vida, travar já aqui o resto do
+    // jogo (jogador continua a mexer-se, hazards e inimigos continuam a
+    // atualizar) — só era travado dentro de showGameOver(), chamada só
+    // depois da animação de knockback/respawn (várias centenas de ms
+    // depois). Resultado: dava para continuar a jogar por um bom bocado
+    // depois de perder a última vida, antes do ecrã de "Missão Falhada"
+    // aparecer. awaitingQuiz é a mesma flag que showGameOver() liga — ao
+    // ligá-la já aqui, a animação de knockback continua (é feita por tweens/
+    // timers, não pelo update()), mas o jogador deixa de conseguir mexer-se.
+    if (lives <= 0) awaitingQuiz = true;
     invuln = true;
     triggerVanBertoSad(scene);
 
@@ -6592,6 +6602,10 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     applyHitStop(scene);
     lives -= 1; updateHearts(); livesLostThisLevel++; _hudDirty = true;
+    // Bug corrigido: ver o mesmo comentário em hitByHazard — sem isto o
+    // combate de boss continuava totalmente jogável durante a festa do boss
+    // (até 1300ms) antes do ecrã de "Missão Falhada" aparecer.
+    if (lives <= 0) awaitingQuiz = true;
     triggerVanBertoSad(scene);
     if (heartsGfx) scene.tweens.add({targets:heartsGfx,x:{from:-4,to:4},duration:60,yoyo:true,repeat:3,ease:"Sine.easeInOut",onComplete:()=>{if(heartsGfx)heartsGfx.x=0;}});
     invuln = true; // bloqueia novos toques já durante o voo de knockback
@@ -7706,6 +7720,11 @@ window.addEventListener("DOMContentLoaded", () => {
     if(powered){clearPower(sceneRef);setInvuln(sceneRef,800);tipText.setText("🛡️ Escudo usado! Cuidado.");return;}
     applyHitStop(sceneRef);
     lives-=1; updateHearts(); livesLostThisLevel++; _hudDirty=true;
+    // Bug corrigido: ver o mesmo comentário em hitByHazard — sem isto o
+    // jogador continuava a conseguir mexer-se e o nível continuava a
+    // atualizar-se durante os ~400ms de animação antes do ecrã de "Missão
+    // Falhada" aparecer.
+    if (lives <= 0) awaitingQuiz = true;
     triggerVanBertoSad(sceneRef);
     if(heartsGfx&&sceneRef) sceneRef.tweens.add({targets:heartsGfx,x:{from:-4,to:4},duration:60,yoyo:true,repeat:3,ease:"Sine.easeInOut",onComplete:()=>{if(heartsGfx)heartsGfx.x=0;}});
     // Marca invuln imediatamente para bloquear hits durante o voo de knockback
