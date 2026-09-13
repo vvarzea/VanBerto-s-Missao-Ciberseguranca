@@ -543,6 +543,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (pctEl) pctEl.textContent = `${pct}%`;
     if (fillEl) fillEl.style.width = `${pct}%`;
     if (starsEl) starsEl.textContent = String(score || 0);
+
+    // Foco automático (pedido: jogar tudo sem rato) — preferir o mundo
+    // "current" (o que o jogador está mesmo a jogar), senão o 1º
+    // desbloqueado. Sem isto, quem chega aqui só de teclado (ex.: Enter no
+    // ecrã de dificuldade) ficava sem nenhum botão focado, e as setas
+    // ↑/↓/←/→ (ver focusAdjacentButton) não tinham onde começar.
+    const focusTarget = grid.querySelector(".map-region--current:not(:disabled)")
+      || grid.querySelector(".map-region:not(:disabled)");
+    focusTarget?.focus({ preventScroll: true });
   }
 
   // Abre o mapa ilustrado de um mundo específico (fundo pintado + níveis
@@ -631,6 +640,14 @@ window.addEventListener("DOMContentLoaded", () => {
       mascot.style.top = currentNodePos.y + "%";
       nodesLayer.appendChild(mascot);
     }
+
+    // Foco automático (pedido: jogar tudo sem rato, entrar nos níveis com
+    // Enter) — preferir o nível "current" (o próximo a jogar), senão o
+    // primeiro nó desbloqueado. Sem foco inicial, as setas ←→↑↓ (ver
+    // focusAdjacentButton) não tinham onde começar dentro deste mapa.
+    const focusTarget = nodesLayer.querySelector(".level-node--current:not(:disabled)")
+      || nodesLayer.querySelector(".level-node:not(:disabled)");
+    focusTarget?.focus({ preventScroll: true });
   }
 
   // Mostra o cartão de entrada de região (ícone + nome + 2 falas do VanBerto's)
@@ -2353,8 +2370,16 @@ window.addEventListener("DOMContentLoaded", () => {
         if (Math.abs(m.body.velocity.x) < 8) { m.setVelocityX(spd * dir); }
         if (!isBoss) m.rotation += 0.012;
       } else {
-        if (m.body.blocked.left)  { m.setVelocityX(spd);  m.setData("dir", 1); }
-        if (m.body.blocked.right) { m.setVelocityX(-spd); m.setData("dir", -1); }
+        // minLeft/minRight (opcional, ver spawnVilao) — prende "patrol"/
+        // "jumper" à largura de uma plataforma específica, exatamente como
+        // o "mini" já faz por omissão com o seu ±120. Sem bounds definidos,
+        // comportamento inalterado (só inverte nos limites do mundo).
+        const minL = m.getData("minLeft");
+        const minR = m.getData("minRight");
+        if (minL != null && (m.x <= minL || m.body.blocked.left))       { m.setVelocityX(spd);  m.setData("dir", 1); }
+        else if (m.body.blocked.left)  { m.setVelocityX(spd);  m.setData("dir", 1); }
+        if (minR != null && (m.x >= minR || m.body.blocked.right))      { m.setVelocityX(-spd); m.setData("dir", -1); }
+        else if (m.body.blocked.right) { m.setVelocityX(-spd); m.setData("dir", -1); }
         if (door && m.x > door.x - 220 && m.body.velocity.x > 0) { m.setVelocityX(-spd); m.setData("dir", -1); }
         // Impede vilões de cair em zonas de perigo (lava/ácido/abismo) — inverte na borda da plataforma
         // Só ativa em níveis com hazards, para não afetar o comportamento normal
@@ -3511,6 +3536,40 @@ window.addEventListener("DOMContentLoaded", () => {
         spawnVilao(scene, mid.x+300, 480, (currentLevel%2===0)?220:-220, df, "jumper");
         spawnVilao(scene, mid.x-300, 480, (currentLevel%2===0)?-180:180, df, "patrol");
       }
+
+      // ===== Difícil: vilões extra a patrulhar as plataformas elevadas =====
+      // Pedido do Berto: "no nível difícil quero que os vilões patrulhem
+      // mais as plataformas, principalmente as superiores". Todos os spawns
+      // acima nascem sempre a y:480 (chão) só alinhados em X com uma
+      // plataforma — por gravidade, acabam quase sempre a cair para o chão
+      // ou para a plataforma mais baixa por baixo, nunca ficando mesmo "em
+      // cima" de uma plataforma alta no ar. Aqui escolhem-se as plataformas
+      // mais altas do nível (menor y = mais alto no ecrã) e um vilão
+      // "patrol" nasce já pousado em cada uma, com o percurso limitado à
+      // própria largura da plataforma (bounds — ver spawnVilao/updateMalware
+      // acima), para patrulhar ali para trás e para a frente em vez de
+      // cair lá fora. Só no Difícil — no Fácil o comportamento das
+      // plataformas altas mantém-se inalterado (continuam só com itens).
+      if (hardDif) {
+        const spawnSafeX = (L.spawn?.x || 0) + 260; // nunca nascer em cima do jogador
+        const elevated = L.platforms
+          .filter(p => p.w >= 110 && p.x > spawnSafeX && Math.abs(p.x - L.doorX) > 140)
+          .slice()
+          .sort((a, b) => a.y - b.y); // menor y primeiro = plataformas mais altas
+        const patrolCount = Math.min(4, elevated.length);
+        for (let i = 0; i < patrolCount; i++) {
+          const p = elevated[i];
+          const half = 24; // metade da altura do vilão "patrol" (48px, ver spawnVilao)
+          const topY = p.y - p.h / 2 - half - 4; // nasce já assente no topo da plataforma
+          const margin = Math.min(40, Math.max(10, p.w / 2 - 10));
+          spawnVilao(
+            scene, p.x, topY,
+            (i % 2 === 0) ? 140 : -140,
+            df, "patrol",
+            { minLeft: p.x - p.w / 2 + margin, minRight: p.x + p.w / 2 - margin }
+          );
+        }
+      }
     }
 
     spawnBalloons(scene,L.worldW);
@@ -3591,7 +3650,14 @@ window.addEventListener("DOMContentLoaded", () => {
    * rápidos e saltam mais (mini passa também a saltar) — ver
    * getVillainSpeedMult()/getVillainJumpIntervalMult() acima.
    */
-  function spawnVilao(scene, x, y, vx, df, pattern="patrol") {
+  // bounds (opcional) — {minLeft,minRight}: limita a patrulha a uma zona
+  // fixa em x (tal como o padrão "mini" já faz por omissão), usado para
+  // prender um vilão "patrol"/"jumper" à largura exata de UMA plataforma —
+  // ver bloco "Difícil: vilões extra a patrulhar as plataformas elevadas"
+  // em loadLevel(). Sem isto, um vilão nascido em cima de uma plataforma no
+  // ar só inverte direção nos limites do MUNDO (ver updateMalware()),
+  // acabando por caminhar para fora da plataforma e cair.
+  function spawnVilao(scene, x, y, vx, df, pattern="patrol", bounds=null) {
     const keyMap = { mini:"vilao_round", patrol:"vilao_spike", jumper:"vilao_bug" };
     const keys = ["vilao_round","vilao_spike","vilao_bug"];
     const key = keyMap[pattern] || keys[Math.floor(Math.random()*keys.length)];
@@ -3632,6 +3698,13 @@ window.addEventListener("DOMContentLoaded", () => {
       v.setVelocityX(vx >= 0 ? spd : -spd);
       v.setData("speed", spd);
       v.setData("dir", vx >= 0 ? 1 : -1);
+    }
+
+    // bounds explícitos (patrulha presa a UMA plataforma) têm sempre
+    // prioridade sobre o ±120 por omissão do "mini" definido acima.
+    if (bounds) {
+      v.setData("minLeft", bounds.minLeft);
+      v.setData("minRight", bounds.minRight);
     }
 
     // Saltos periódicos — patrol e jumper sempre; no Difícil o Trapalhão
@@ -8174,6 +8247,40 @@ window.addEventListener("DOMContentLoaded", () => {
     idx = idx === -1 ? 0 : idx + (e.key === "ArrowDown" ? 1 : -1);
     idx = ((idx % btns.length) + btns.length) % btns.length;
     btns[idx].focus({ preventScroll: true });
+  });
+
+  // ===== Navegação por teclado no Mapa/Mundos — setas escolhem, Enter entra =====
+  // Pedido do Berto: "entrar nos níveis também deve ser permitido com a
+  // tecla enter, mudar de mundos com as setas e depois tecla enter" — dar
+  // para jogar tudo como se não houvesse rato. Tal como no quiz acima, usa-se
+  // o focus() real dos botões (todos são <button> — carregar Enter num botão
+  // focado já dispara o "click" nativamente, não é preciso lógica extra para
+  // isso); só falta mesmo mover o foco com as setas. mapOverlay tem os
+  // mundos (grelha .map-region), worldMapOverlay tem os níveis desse mundo
+  // (nós .level-node espalhados pelo mapa ilustrado) — a mesma função serve
+  // aos dois, seguindo sempre a ordem em que os botões aparecem no HTML
+  // (que já corresponde à ordem lógica de progressão em ambos os casos).
+  function focusAdjacentButton(container, forward) {
+    const btns = Array.from(container.querySelectorAll("button:not(:disabled)"));
+    if (!btns.length) return;
+    let idx = btns.indexOf(document.activeElement);
+    idx = idx === -1 ? 0 : idx + (forward ? 1 : -1);
+    idx = ((idx % btns.length) + btns.length) % btns.length;
+    btns[idx].focus({ preventScroll: true });
+  }
+  window.addEventListener("keydown", e => {
+    if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) return;
+    if (e.target && e.target.matches("input, textarea")) return;
+    const forward = (e.key === "ArrowRight" || e.key === "ArrowDown");
+    const mapOverlayEl = document.getElementById("mapOverlay");
+    const worldMapOverlayEl = document.getElementById("worldMapOverlay");
+    if (worldMapOverlayEl && !worldMapOverlayEl.classList.contains("hidden")) {
+      const layer = document.getElementById("worldMapNodes");
+      if (layer) { e.preventDefault(); focusAdjacentButton(layer, forward); }
+    } else if (mapOverlayEl && !mapOverlayEl.classList.contains("hidden")) {
+      const grid = document.getElementById("mapRegionsGrid");
+      if (grid) { e.preventDefault(); focusAdjacentButton(grid, forward); }
+    }
   });
 
   // ===== Enter = clicar no botão principal ("OK"/"Continuar ▶") do ecrã aberto =====
