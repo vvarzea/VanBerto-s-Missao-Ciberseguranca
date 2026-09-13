@@ -27,7 +27,11 @@ export const REGION_INTRO = {
 // ficava errado no modo Difícil (onde o boss aguenta 4 saltos).
 export const BOSS_OBJECTIVE = {
   virus_gigante: "Desvia-te dos micróbios digitais 🦠 que o Vírus Gigante atira e salta-lhe em cima {N} vezes para o vencer!",
-  monstro_phishing: "Desvia-te das bolas ❓ que ele atira e salta-lhe em cima {N} vezes para o vencer!",
+  // CORRIGIDO — este texto ainda descrevia a bola "?" roxa genérica de
+  // antes do redesenho "pirata-hacker" (ver orbTexture:"boss_proj_hook" e
+  // hookDrift em data-bosses.js): o ataque deste boss já tinha passado a
+  // ser um anzol lançado na horizontal, mas o letreiro nunca foi atualizado.
+  monstro_phishing: "Desvia-te dos anzóis 🪝 que ele lança e salta-lhe em cima {N} vezes para o vencer!",
   robo_spam: "Ele patrulha depressa a espalhar spam — apanha o ritmo e salta-lhe em cima {N} vezes para o vencer!",
   espiao_sombras: "Ele teleporta-se e atira orbes sombrios 🔮! Salta-lhe em cima {N} vezes assim que ele reaparecer."
 };

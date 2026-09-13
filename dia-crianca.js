@@ -3147,6 +3147,15 @@ window.addEventListener("DOMContentLoaded", () => {
     if (currentSign) {
       try{ currentSign.obj?.destroy(); }catch{}
       try{ currentSign.badge?.destroy(); }catch{}
+      // CORRIGIDO — faltava destruir o próprio balão de texto (activeLbl),
+      // o que já era feito em clearSecretSigns/clearPipeHintSign mas ficou
+      // esquecido aqui. Se o jogador estivesse perto do letreiro (balão
+      // visível) no exato instante em que um boss arranca ou um novo nível
+      // carrega, o balão antigo ficava "fantasma" para sempre no ecrã —
+      // sem nenhum código a vigiá-lo depois de currentSign ser substituído —
+      // e sobrepunha-se visualmente ao letreiro seguinte, dando a impressão
+      // de dois textos de bosses diferentes empilhados um por cima do outro.
+      try{ currentSign.activeLbl?.destroy(); }catch{}
     }
     currentSign = null;
   }
@@ -5454,6 +5463,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const x = fromLeft ? -20 : worldW + 20;
       const shadow = itemsGroup.create(x, y, def.orbTexture || "boss_proj_shadow");
       if (def.orbTint != null) shadow.setTint(def.orbTint);
+      if (def.orbScale) shadow.setScale(def.orbScale); // ver comentário em doBossRollQmark
       shadow.setDepth(2).setData("bossFinalBurst", true).setAngle(fromLeft ? -12 : 12);
       shadow.body.setAllowGravity(false);
       shadow.setVelocityX(fromLeft ? 260 : -260);
@@ -5830,17 +5840,22 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Desenha uma janela de pop-up (fundo + barra de título vermelha + "✖" +
   // texto de isco) — tudo com Graphics/Text, sem precisar de texturas novas.
+  // CORRIGIDO (pedido: "as imagens dos spams são demasiado grandes") — barra
+  // de título, cantos e tipo de letra reduzidos junto com os anchors (ver
+  // popupHazard em data-bosses.js, agora ~25% mais pequenos), para a janela
+  // continuar proporcionada em vez de ficar com texto grande a mais dentro
+  // de uma caixa mais pequena.
   function makePopupWindow(scene, x, y, w, h) {
     const gfx = scene.add.graphics().setDepth(25);
     gfx.fillStyle(0xf5f5f5, 0.97);
-    gfx.fillRoundedRect(x - w/2, y - h/2, w, h, 8);
+    gfx.fillRoundedRect(x - w/2, y - h/2, w, h, 6);
     gfx.fillStyle(0xff3030, 1);
-    gfx.fillRoundedRect(x - w/2, y - h/2, w, 22);
+    gfx.fillRoundedRect(x - w/2, y - h/2, w, 17);
     gfx.lineStyle(3, 0xff3030, 1);
-    gfx.strokeRoundedRect(x - w/2, y - h/2, w, h, 8);
-    const label = scene.add.text(x, y - h/2 + 11, "📧 SPAM", { fontSize:"12px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
-    const closeX = scene.add.text(x + w/2 - 15, y - h/2 + 11, "✖", { fontSize:"14px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
-    const body = scene.add.text(x, y + 10, "💰 OFERTA!\n👆 CLICA AQUI", { fontSize:"13px", fontStyle:"800", color:"#c72030", align:"center" }).setOrigin(0.5).setDepth(26);
+    gfx.strokeRoundedRect(x - w/2, y - h/2, w, h, 6);
+    const label = scene.add.text(x, y - h/2 + 9, "📧 SPAM", { fontSize:"10px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
+    const closeX = scene.add.text(x + w/2 - 12, y - h/2 + 9, "✖", { fontSize:"12px", fontStyle:"900", color:"#ffffff" }).setOrigin(0.5).setDepth(26);
+    const body = scene.add.text(x, y + 8, "💰 OFERTA!\n👆 CLICA AQUI", { fontSize:"11px", fontStyle:"800", color:"#c72030", align:"center" }).setOrigin(0.5).setDepth(26);
     return { gfx, label, closeX, body };
   }
   function destroyPopupElements(elements) {
@@ -6015,6 +6030,13 @@ window.addEventListener("DOMContentLoaded", () => {
       : (player.x < b.x ? -1 : 1);
     const q = itemsGroup.create(b.x, b.y - 10, def.orbTexture || "boss_proj_qmark");
     if (def.orbTint != null) q.setTint(def.orbTint);
+    // orbScale (opt-in, nova — pedido: "as imagens dos spams são demasiado
+    // grandes"): o Robô do Spam atira sempre a pares e com o intervalo mais
+    // curto dos 4 bosses (qmarkEvery 1750ms + alwaysDoubleThrow), por isso
+    // vários envelopes ficam facilmente em ecrã ao mesmo tempo — reduzir só
+    // este projétil (sem mexer nos outros 3 bosses) alivia a sensação de
+    // amontoado. Omisso = 1 (tamanho normal), como sempre.
+    if (def.orbScale) q.setScale(def.orbScale);
     q.setDepth(2).setData("bossProjQmark", true);
     q.body.setAllowGravity(true);
     q.body.setGravityY(480);

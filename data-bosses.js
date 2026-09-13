@@ -508,10 +508,13 @@ export const BOSSES = [
       // arena.platforms abaixo) + a plataforma central mais alta — cobre a
       // área de aterragem, não o chão principal (o corredor central do
       // jogador continua sempre visível).
+      // CORRIGIDO (pedido: "as imagens dos spams são demasiado grandes") —
+      // todas as janelas ~25% mais pequenas (ver makePopupWindow em
+      // dia-crianca.js, cuja tipografia interna foi reduzida a condizer).
       anchors: [
-        { x:200, y:365, w:170, h:100 },  // sobre a plataforma baixa esquerda
-        { x:760, y:365, w:170, h:100 },  // sobre a plataforma baixa direita
-        { x:480, y:320, w:150, h:95 }    // sobre a plataforma central
+        { x:200, y:365, w:128, h:76 },  // sobre a plataforma baixa esquerda
+        { x:760, y:365, w:128, h:76 },  // sobre a plataforma baixa direita
+        { x:480, y:320, w:112, h:72 }   // sobre a plataforma central
       ],
       spawnEvery: 3200,
       maxOnScreen: 1,
@@ -524,10 +527,10 @@ export const BOSSES = [
         // própria de fúria deste boss (tal como o Vírus ganha chão mais
         // largo e o Monstro do Phishing ganha o ataque duplo mais cedo).
         2: { spawnEvery: 1700, maxOnScreen: 2, anchors: [
-          { x:200, y:365, w:170, h:100 },
-          { x:760, y:365, w:170, h:100 },
-          { x:480, y:320, w:150, h:95 },
-          { x:480, y:460, w:220, h:110 }
+          { x:200, y:365, w:128, h:76 },
+          { x:760, y:365, w:128, h:76 },
+          { x:480, y:320, w:112, h:72 },
+          { x:480, y:460, w:168, h:84 }
         ] }
       }
     },
@@ -537,6 +540,14 @@ export const BOSSES = [
     qmarkEvery: 1750,        // 2000→1750: pedido "demoram muito a atirar" — corte mais pequeno que os outros 2, porque este já atira sempre a pares (alwaysDoubleThrow), logo já é o mais denso dos 4
     orbTexture: "boss_proj_spam", // envelope de spam com selo de aviso vermelho — o robô atira correio, não parafusos
     orbTint: 0xffffff,       // sem tint — o envelope já tem as suas próprias cores (branco/vermelho)
+    // CORRIGIDO (pedido: "as imagens dos spams são demasiado grandes") —
+    // este boss é o único a atirar sempre a pares e com o intervalo mais
+    // curto dos 4 (qmarkEvery 1750ms), por isso os envelopes acumulavam-se
+    // em ecrã (alguns ainda a ressaltar de um lançamento anterior quando o
+    // par seguinte já tinha saído) e pareciam ocupar espaço a mais. orbScale
+    // (novo, opt-in — ver doBossRollQmark/startBossFinalStandBurst em
+    // dia-crianca.js) encolhe só este projétil, sem tocar nos outros 3 bosses.
+    orbScale: 0.7,
     // Personalidade do arremesso (ver doBossRollQmark em dia-crianca.js):
     // este boss atira sempre aos pares, não só na 2ª fúria como os outros
     // 3 (doubleThrowAtMaxRage, mantido também aqui para o par ficar ainda
