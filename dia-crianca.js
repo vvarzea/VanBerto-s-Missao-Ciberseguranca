@@ -8484,8 +8484,20 @@ window.addEventListener("DOMContentLoaded", () => {
   function openOverlay(id, beforeOpen) {
     closeAllSecondaryOverlays();
     pauseForOverlay();
-    beforeOpen?.();
+    // CORREÇÃO (pedido: "toco no enter e não entra no jogo"): beforeOpen()
+    // é quem preenche o mapa/nível E dá foco automático ao botão certo
+    // (renderMap/renderWorldMap — ver os seus focusTarget?.focus() no
+    // fim). Antes, beforeOpen() corria ANTES de tirar a classe "hidden"
+    // deste overlay — ou seja, o botão a focar ainda estava dentro de um
+    // elemento com display:none. Um elemento invisível não pode receber
+    // foco (o browser ignora .focus() nesse caso em silêncio), por isso o
+    // foco automático falhava sempre, o Enter não tinha em que "clicar", e
+    // só as setas (que focam o 1º botão mesmo sem foco prévio válido)
+    // resolviam por acaso. Agora o overlay fica visível PRIMEIRO, para que
+    // o .focus() chamado dentro de beforeOpen() já incida num botão real e
+    // visível.
     document.getElementById(id)?.classList.remove("hidden");
+    beforeOpen?.();
   }
 
   // Fecha um overlay secundário e retoma a física
