@@ -4925,7 +4925,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Mantém awaitingQuiz=true (já estava) durante a cinemática — assim update()
     // não avança o boss/timers/vilões enquanto o diálogo decorre.
-    const objective = BOSS_OBJECTIVE[def.id] || "Foge dele até apanhares uma estrela ⭐ para o atingires!";
+    const objective = (BOSS_OBJECTIVE[def.id] || "Foge dele até apanhares uma estrela ⭐ para o atingires!")
+      .replace("{N}", def.hp); // def.hp já reflete o modo Difícil (+1) — ver clone de rawDef acima
     // A explicação do objetivo já não vai no diálogo (passava depressa demais) —
     // passa a ser um letreiro, tal como nos níveis normais: o jogador aproxima-se
     // e "lê-o" ao seu ritmo. Só a apresentação dramática (VanBerto's + boss) fica no diálogo.
@@ -6101,8 +6102,22 @@ window.addEventListener("DOMContentLoaded", () => {
       const margin = Math.min(250, worldW * 0.26);
       if (b.x < margin) b.setVelocityX(speed);
       if (b.x > worldW - margin) b.setVelocityX(-speed);
+    } else if (mt === "teleport") {
+      // NOVO (pedido: "os bosses precisam de mais movimento") — antes disto,
+      // este era o único dos 4 bosses SEM nenhum movimento contínuo: entre
+      // teletransportes (geridos à parte por doBossTeleport, que continua a
+      // definir b.x/b.y diretamente nos seus pontos fixos) ficava
+      // completamente parado, só com a troca de braços/piscar de olhos do
+      // idle. Um balanço vertical leve dá sensação de estar a pairar/flutuar
+      // nas sombras em vez de "colado" ao sítio. Mesma técnica do "wave"
+      // acima (posição direta + body.reset, já que este boss não usa
+      // velocity) — amplitude pequena (8px) de propósito, para não mudar a
+      // altura a que é preciso saltar-lhe em cima.
+      const baseY = bossState.def.bossY != null ? bossState.def.bossY : bossState.baseY;
+      b.y = baseY + Math.sin(scene.time.now * 0.0022) * 8;
+      if (b.body) b.body.reset(b.x, b.y);
     }
-    // "blink" e "teleport" são geridos pelos timers próprios (doBossBlink/doBossTeleport)
+    // "blink" continua a ser gerido pelo seu próprio timer (doBossBlink)
 
     drawBossHpBar();
 

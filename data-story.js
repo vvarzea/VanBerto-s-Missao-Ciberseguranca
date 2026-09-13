@@ -20,11 +20,16 @@ export const REGION_INTRO = {
   }
 };
 
+// "{N}" é substituído pelo número real de saltos necessários (def.hp, já
+// com o +1 do modo Difícil aplicado) no momento em que o texto é mostrado —
+// ver startBossFight() em dia-crianca.js. Nunca escrever o número aqui
+// diretamente: antes disto, os 4 textos tinham sempre "3 vezes" fixo, o que
+// ficava errado no modo Difícil (onde o boss aguenta 4 saltos).
 export const BOSS_OBJECTIVE = {
-  virus_gigante: "Desvia-te dos micróbios digitais 🦠 que o Vírus Gigante atira e salta-lhe em cima 3 vezes para o vencer!",
-  monstro_phishing: "Desvia-te das bolas ❓ que ele atira e salta-lhe em cima 3 vezes para o vencer!",
-  robo_spam: "Ele patrulha depressa a espalhar spam — apanha o ritmo e salta-lhe em cima 3 vezes para o vencer!",
-  espiao_sombras: "Ele teleporta-se e atira orbes sombrios 🔮! Salta-lhe em cima 3 vezes assim que ele reaparecer."
+  virus_gigante: "Desvia-te dos micróbios digitais 🦠 que o Vírus Gigante atira e salta-lhe em cima {N} vezes para o vencer!",
+  monstro_phishing: "Desvia-te das bolas ❓ que ele atira e salta-lhe em cima {N} vezes para o vencer!",
+  robo_spam: "Ele patrulha depressa a espalhar spam — apanha o ritmo e salta-lhe em cima {N} vezes para o vencer!",
+  espiao_sombras: "Ele teleporta-se e atira orbes sombrios 🔮! Salta-lhe em cima {N} vezes assim que ele reaparecer."
 };
 
 // Diálogo de boss, por boss.
