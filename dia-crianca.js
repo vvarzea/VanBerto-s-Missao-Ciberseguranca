@@ -4884,6 +4884,21 @@ window.addEventListener("DOMContentLoaded", () => {
   function startBossFight(scene, levelJustCompleted, onComplete) {
     const rawDef = BOSS_BY_LEVEL[levelJustCompleted];
     if (!rawDef) { onComplete(); return; } // sem boss neste ponto — segue o fluxo normal
+    // NOVO (rede de segurança, pedido: "o boss não pode começar antes do
+    // quiz do final do nível") — por construção, showQuiz() só chama
+    // nextLevel()/startBossFight() dentro do seu "done(true)", já depois de
+    // esconder o quizOverlay; mas startBossFight() TEM um segundo ponto de
+    // entrada — btnRetry, para recomeçar só a arena depois de perder todas
+    // as vidas A MEIO de um combate — que nunca passa pelo quiz. Se por
+    // qualquer motivo (ex.: um overlay antigo nunca escondido) o quizOverlay
+    // ainda estivesse visível nesse instante, a cinemática de entrada do
+    // boss começava a aparecer por baixo/ao lado dele. Esconder aqui,
+    // incondicionalmente, garante que os dois nunca ficam visíveis ao
+    // mesmo tempo, independentemente de qual dos dois pontos de entrada
+    // trouxe o código até aqui.
+    if (quizOverlay && !quizOverlay.classList.contains("hidden")) {
+      quizOverlay.classList.add("hidden");
+    }
     // No Difícil/Extremo o boss aguenta +2 saltos na cabeça (ver
     // getBossExtraHp — nunca mexe no objeto original de data-bosses.js,
     // partilhado por todas as partidas — clona-se só aqui). def.hp é o único
