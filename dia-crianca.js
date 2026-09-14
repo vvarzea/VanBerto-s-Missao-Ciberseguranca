@@ -3562,12 +3562,20 @@ window.addEventListener("DOMContentLoaded", () => {
     const df=difficultyFactor(currentLevel);
     L.malwares.forEach(m=>spawnVilao(scene,m.x,480,m.vx,df,m.pattern||"patrol"));
 
-    // Drone hostil — exclusivo do Extremo (pedido: "drones maus"). Nº cresce
-    // lentamente com o nível (2 a partir do Nível 1, +1 a cada 5 níveis, até
-    // um máximo de 5), sempre na banda alta do céu, afastados do spawn (para
-    // não emboscar logo à entrada) e da porta (para não bloquear a saída).
-    if (difficulty === "extremo") {
-      const droneCount = Math.min(5, 2 + Math.floor(currentLevel / 5));
+    // Drone hostil — antes exclusivo do Extremo, agora também no Difícil
+    // (pedido: "podemos colocar os drones maus no Difícil?"), mas com menos
+    // intensidade — mantém a escalada gradual já usada no resto do jogo
+    // (Fácil 0 → Difícil menos que Extremo → Extremo o máximo, ver
+    // getBossSpeedMult/getBossExtraHp/getVillainSpeedMult acima, todos com o
+    // mesmo padrão de 3 degraus). Extremo mantém a fórmula original (2 a
+    // partir do Nível 1, +1 a cada 5 níveis, até 5); Difícil começa mais
+    // fraco e sobe mais devagar (1 a partir do Nível 1, +1 a cada 6 níveis,
+    // até 3) — sempre na banda alta do céu, afastados do spawn (para não
+    // emboscar logo à entrada) e da porta (para não bloquear a saída).
+    if (difficulty === "extremo" || difficulty === "dificil") {
+      const droneCount = difficulty === "extremo"
+        ? Math.min(5, 2 + Math.floor(currentLevel / 5))
+        : Math.min(3, 1 + Math.floor(currentLevel / 6));
       const startX = (L.spawn?.x ?? 0) + 500;
       const spanX = Math.max(200, L.worldW - startX - 300);
       for (let i = 0; i < droneCount; i++) {
@@ -3904,14 +3912,16 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Drone hostil — inimigo aéreo exclusivo do Extremo =====
-  // Pedido: "drones maus" no Extremo, mas SEM mexer nos drones apanháveis
-  // normais (esses continuam a existir, ver spawnCritters/item_drone) —
-  // este é um tipo de inimigo à parte, com o seu próprio visual
-  // (drone_hostil, ver textures.js), para nunca se confundir com o drone
-  // bom. Entra no MESMO malwareGroup que os vilões normais, por isso já
-  // herda de graça toda a colisão/dano/knockback/atropelamento por Star
-  // Power de onHitMalware() — não foi preciso tocar nessa função.
+  // ===== Drone hostil — inimigo aéreo do Difícil/Extremo =====
+  // Pedido original: "drones maus" no Extremo; depois estendido também ao
+  // Difícil (com menos intensidade — ver contagem em loadLevel), mas SEM
+  // mexer nos drones apanháveis normais (esses continuam a existir em
+  // TODOS os níveis, ver spawnCritters/item_drone) — este é um tipo de
+  // inimigo à parte, com o seu próprio visual (drone_hostil, ver
+  // textures.js), para nunca se confundir com o drone bom. Entra no MESMO
+  // malwareGroup que os vilões normais, por isso já herda de graça toda a
+  // colisão/dano/knockback/atropelamento por Star Power de onHitMalware() —
+  // não foi preciso tocar nessa função.
   // patrolHalfWidth: distância (px) para cada lado de x que o drone
   // patrulha, em voo, sem depender de plataformas nem de gravidade.
   function spawnHostileDrone(scene, x, y, patrolHalfWidth = 140) {
@@ -4553,6 +4563,25 @@ window.addEventListener("DOMContentLoaded", () => {
     scene.time.delayedCall(560, () => {
       if(!awaitingQuiz) return; // segurança: só mostrar se ainda estamos à espera
       _doorAnimRunning = false; // reset para próxima porta
+      // NOVO (pedido: "não pode aparecer pergunta quando entra o boss") — um
+      // nível que antecede um boss (BOSS_BY_LEVEL) usa sempre o MESMO tema de
+      // quiz do próprio boss (ver comentários "tem de bater com o Nível X" em
+      // data-bosses.js) porque o combate já termina com a sua própria pergunta
+      // (startBossQuizPhase). Mostrar aqui também era literalmente a mesma
+      // pergunta pedida duas vezes seguidas, uma mesmo à entrada do boss. Para
+      // estes níveis salta-se o quiz de porta e vai-se direto à conclusão do
+      // nível — o boss fica como o único "teste" antes do mundo seguinte.
+      if (BOSS_BY_LEVEL[currentLevel]) {
+        ensureAudio();
+        finalizeLevelStars(currentLevel, livesLostThisLevel, itemsCollected, itemsTotal);
+        markLevelCompleted(currentLevel);
+        checkAchievements(mapProgress.levelsCompleted.length);
+        showLevelCompleteCelebration(currentLevel, () => {
+          showRightRecovered(currentLevel);
+          nextLevel(scene);
+        });
+        return;
+      }
       lastQuizTheme = LEVELS[currentLevel].quizTheme;
       showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
         if(ok){
