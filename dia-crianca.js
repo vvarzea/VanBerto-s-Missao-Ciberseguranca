@@ -4899,6 +4899,20 @@ window.addEventListener("DOMContentLoaded", () => {
     if (quizOverlay && !quizOverlay.classList.contains("hidden")) {
       quizOverlay.classList.add("hidden");
     }
+    // NOVO (pedido: "quando morro tenho de morrer logo e não dar para
+    // apanhar nada... e se apanho uma estrela, ao iniciar o nível estou
+    // com o power" — bug reproduzido: só acontecia num combate de boss) —
+    // "Tentar outra vez" a meio de um combate chama startBossFight() direto
+    // (ver btnRetry, sem passar por loadLevel()), e loadLevel() é o único
+    // sítio que já limpava Escudo/Star Power/Duplo Salto ao (re)começar um
+    // nível. Um Star Power apanhado mesmo antes de perder a última vida
+    // (as recompensas em si já ficam bem bloqueadas por awaitingQuiz — ver
+    // onCollectItem — mas o efeito de uma apanhada ANTES do golpe fatal
+    // continuava ativo) sobrevivia ao "recomeço" da arena. Limpar aqui,
+    // incondicionalmente, cobre os dois pontos de entrada de uma vez
+    // (entrada normal e "Tentar outra vez"), tal como loadLevel() já fazia
+    // para os níveis normais.
+    clearPower(scene); clearStarPower(scene); clearDoubleJump(scene);
     // No Difícil/Extremo o boss aguenta +2 saltos na cabeça (ver
     // getBossExtraHp — nunca mexe no objeto original de data-bosses.js,
     // partilhado por todas as partidas — clona-se só aqui). def.hp é o único
@@ -7126,20 +7140,27 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     scene.time.delayedCall(400, () => {
       if (!player || !inBossFight) return;
-      // NOVO (pedido: "1 sítio seguro para retomar sempre que perde a
-      // vida") — antes disto o VanBerto's ficava exactamente onde o
-      // empurrão do golpe o tivesse deixado (por vezes perto de outro
-      // ataque/pop-up, ou a meio do ar), o que tornava difícil perceber
-      // que uma vida se tinha mesmo perdido. Repõe-se sempre no mesmo
-      // ponto onde o combate começou (bossState.spawnX, ver
-      // startBossFight) — o mesmo sítio, sempre, para o reset ficar óbvio
-      // e nunca calhar em cima de um perigo novo. Só faz sentido se ainda
-      // houver boss (não interfere com a arena "collect"/"quiz", já sem
-      // perigos ativos).
+      // NOVO (pedido inicial: "1 sítio seguro para retomar sempre que perde
+      // a vida"; refinado a seguir: "o boss não pode conseguir apanhar logo
+      // outra vez ali") — antes disto o VanBerto's ficava exactamente onde
+      // o empurrão do golpe o tivesse deixado. A 1ª versão repunha sempre
+      // no MESMO ponto onde o combate começou (bossState.spawnX) — mas esse
+      // ponto podia calhar mesmo ao lado do boss, se ele já lá tivesse
+      // andado entretanto. Agora escolhe-se, entre esse ponto e o seu
+      // espelho do outro lado da arena (mesma distância ao centro, lado
+      // oposto — a arena tem sempre chão contínuo de ponta a ponta, ver
+      // arenaPlatforms/worldW por omissão em startBossFight, por isso o
+      // espelho está sempre em chão válido), o que estiver mais longe da
+      // posição ATUAL do boss. Só faz sentido se ainda houver boss (não
+      // interfere com a arena "collect"/"quiz", já sem perigos ativos).
       if (bossState && bossState.spawnX != null && (bossState.phase === "platform" || bossState.phase === "intro")) {
+        const worldW = bossState.def.arena?.worldW || 1600;
+        const altX = worldW - bossState.spawnX;
+        const bossX = (bossState.sprite && bossState.sprite.active) ? bossState.sprite.x : bossState.spawnX;
+        const safeX = Math.abs(bossX - bossState.spawnX) >= Math.abs(bossX - altX) ? bossState.spawnX : altX;
         player.setVelocity(0, 0);
-        player.setPosition(bossState.spawnX, 200);
-        if (player.body) player.body.reset(bossState.spawnX, 200);
+        player.setPosition(safeX, 200);
+        if (player.body) player.body.reset(safeX, 200);
         snapPlayerToGround();
       }
       setInvuln(scene, 1400);
@@ -7974,6 +7995,22 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function showQuiz(quiz,done,attemptNum){
+    // NOVO (rede de segurança, pedido: "o boss não pode começar antes do
+    // quiz do nível" — voltou a acontecer mesmo depois da proteção em
+    // startBossFight()) — essa proteção só cobre o instante em que o boss
+    // ARRANCA; não ajuda se o quiz for aberto depois disso, seja qual for
+    // o caminho exato que o causa. Aqui, no único sítio por onde QUALQUER
+    // quiz tem de passar, adia-se a abertura em vez de a mostrar por cima
+    // da cinemática de entrada/vitória do boss (#cineDialog, ver
+    // cinematics.js) — repete-se a cada 250ms até essa caixa fechar, e só
+    // aí mostra o quiz. Nunca dispara em jogo normal (a caixa está fechada
+    // a maior parte do tempo) e garante que os dois nunca ficam visíveis
+    // ao mesmo tempo, independentemente da causa exata do timing.
+    const cineDialog = document.getElementById("cineDialog");
+    if (cineDialog && cineDialog.classList.contains("cine-show")) {
+      setTimeout(() => showQuiz(quiz, done, attemptNum), 250);
+      return;
+    }
     // CORRIGIDO — isRetry era um booleano fixo: a partir da 2ª pergunta ficava
     // sempre "true" para sempre, por isso o rótulo dizia sempre "Segunda
     // tentativa!" mesmo na 3ª, 4ª, 5ª tentativa. Agora attemptNum conta mesmo
