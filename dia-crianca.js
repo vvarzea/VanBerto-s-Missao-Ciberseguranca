@@ -5052,6 +5052,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const playerStartX = def.arena?.playerStartX != null ? def.arena.playerStartX : 120;
     player.setPosition(playerStartX,200); player.setVelocity(0,0);
     if(player.body) player.body.reset(playerStartX,200);
+    // Guardado em bossState (novo) — bossHitPlayer() usa isto para saber
+    // para onde repor o VanBerto's sempre que perde uma vida a meio do
+    // combate (ver comentário lá, pedido: "1 sítio seguro para retomar").
+    bossState.spawnX = playerStartX;
     // Alinhar já ao chão da arena (mesmo cálculo usado no arranque de nível
     // normal, via snapPlayerToGround) — e só tornar o VanBerto's visível
     // DEPOIS disto (setAlpha(1) só aqui, não antes de setPosition/snap).
@@ -7122,6 +7126,22 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     scene.time.delayedCall(400, () => {
       if (!player || !inBossFight) return;
+      // NOVO (pedido: "1 sítio seguro para retomar sempre que perde a
+      // vida") — antes disto o VanBerto's ficava exactamente onde o
+      // empurrão do golpe o tivesse deixado (por vezes perto de outro
+      // ataque/pop-up, ou a meio do ar), o que tornava difícil perceber
+      // que uma vida se tinha mesmo perdido. Repõe-se sempre no mesmo
+      // ponto onde o combate começou (bossState.spawnX, ver
+      // startBossFight) — o mesmo sítio, sempre, para o reset ficar óbvio
+      // e nunca calhar em cima de um perigo novo. Só faz sentido se ainda
+      // houver boss (não interfere com a arena "collect"/"quiz", já sem
+      // perigos ativos).
+      if (bossState && bossState.spawnX != null && (bossState.phase === "platform" || bossState.phase === "intro")) {
+        player.setVelocity(0, 0);
+        player.setPosition(bossState.spawnX, 200);
+        if (player.body) player.body.reset(bossState.spawnX, 200);
+        snapPlayerToGround();
+      }
       setInvuln(scene, 1400);
       tipText.setText("⚡ Protegido por instantes!");
     });
@@ -8839,7 +8859,18 @@ window.addEventListener("DOMContentLoaded", () => {
     const forward = (e.key === "ArrowRight" || e.key === "ArrowDown");
     const mapOverlayEl = document.getElementById("mapOverlay");
     const worldMapOverlayEl = document.getElementById("worldMapOverlay");
-    if (worldMapOverlayEl && !worldMapOverlayEl.classList.contains("hidden")) {
+    // NOVO (pedido: "não consigo escolher pelo teclado" no ecrã de
+    // dificuldade) — este ecrã já focava automaticamente "Fácil" ao abrir
+    // (ver reallyStartNewGame), mas faltava mesmo isto: mover esse foco com
+    // as setas entre as 3 fichas, tal como já acontece no Mapa/Mundos logo
+    // abaixo. Sem isto, Tab ainda funcionava (são <button> reais) mas as
+    // setas — o que se espera depois de as usar em todos os outros ecrãs
+    // deste jogo — não faziam nada.
+    const difficultyOverlayEl = document.getElementById("difficultyOverlay");
+    if (difficultyOverlayEl && !difficultyOverlayEl.classList.contains("hidden")) {
+      const opts = difficultyOverlayEl.querySelector(".difficulty-options");
+      if (opts) { e.preventDefault(); focusAdjacentButton(opts, forward); }
+    } else if (worldMapOverlayEl && !worldMapOverlayEl.classList.contains("hidden")) {
       const layer = document.getElementById("worldMapNodes");
       if (layer) { e.preventDefault(); focusAdjacentButton(layer, forward); }
     } else if (mapOverlayEl && !mapOverlayEl.classList.contains("hidden")) {
