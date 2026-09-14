@@ -1395,6 +1395,32 @@ body.hc-mode .menu-tile span { color: #ffff00 !important; }
 body.hc-mode .difficulty-tile { border-color: #fff !important; }
 body.hc-mode .difficulty-tile span { color: #ffff00 !important; }
 
+/* CORRIGIDO/NOVO (pedido: "verde no fácil, laranja difícil, vermelho no
+   extremo") — as 3 fichas usavam todas a mesma borda/sombra laranja do
+   .btn base, sem nenhuma pista visual da escala de dificuldade sem ler o
+   texto. Cor "semáforo" nas 3, mesmo fundo roxo do resto do jogo (só a
+   borda, a sombra interior e a cor da legenda mudam) — o modo alto
+   contraste continua a sobrepor tudo isto a branco/amarelo, como já
+   acontecia antes (ver regras body.hc-mode acima, mantidas sem alterações).
+   Difícil já era laranja por herdar a borda default do .btn — a classe
+   diff-dificil só o torna explícito, para as 3 ficarem definidas ao lado
+   umas das outras em vez de 2 com classe própria e 1 "por omissão". */
+.difficulty-tile.diff-facil {
+  border-color: #4caf50;
+  box-shadow: 4px 4px 0 #0a0520, inset 0 1px 0 rgba(140,255,140,0.18);
+}
+.difficulty-tile.diff-facil span { color: #b8ffb8; }
+.difficulty-tile.diff-dificil {
+  border-color: #ff6b35;
+  box-shadow: 4px 4px 0 #0a0520, inset 0 1px 0 rgba(255,180,80,0.18);
+}
+.difficulty-tile.diff-dificil span { color: #ffd700; }
+.difficulty-tile.diff-extremo {
+  border-color: #ff3b3b;
+  box-shadow: 4px 4px 0 #0a0520, inset 0 1px 0 rgba(255,120,120,0.18);
+}
+.difficulty-tile.diff-extremo span { color: #ffb0b0; }
+
 /* =====================================================
    MAPA DA AVENTURA (FASE 1)
    ===================================================== */

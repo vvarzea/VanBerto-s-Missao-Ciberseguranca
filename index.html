@@ -78,9 +78,9 @@
       <h1>🎯 Escolhe o nível</h1>
       <p class="desc">Isto ajusta as perguntas do quiz e o desafio dos vilões/chefes.</p>
       <div class="difficulty-options">
-        <button id="btnDiffFacil" class="btn difficulty-tile">😊<span>Fácil</span></button>
-        <button id="btnDiffDificil" class="btn difficulty-tile">🎓<span>Difícil</span></button>
-        <button id="btnDiffExtremo" class="btn difficulty-tile">🔥<span>Extremo</span></button>
+        <button id="btnDiffFacil" class="btn difficulty-tile diff-facil">😊<span>Fácil</span></button>
+        <button id="btnDiffDificil" class="btn difficulty-tile diff-dificil">🎓<span>Difícil</span></button>
+        <button id="btnDiffExtremo" class="btn difficulty-tile diff-extremo">🔥<span>Extremo</span></button>
       </div>
       <p class="tiny">😊 Fácil — ritmo habitual.<br>🎓 Difícil — perguntas mais aprofundadas, vilões/chefes mais rápidos e menos vidas.<br>🔥 Extremo — só 1 vida, vilões/chefes ainda mais rápidos, quase sem Star Power.</p>
     </div>
@@ -330,6 +330,26 @@
       <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 4px;">🎯 Objetivo</p>
       <p style="font-size:12px;color:#ffe0d0;margin:0 0 10px;line-height:1.6;">
         Chega ao <strong>portal ✨</strong> no fim de cada nível. Quando chegares, aparece uma <strong>pergunta</strong> sobre Cibersegurança — responde corretamente para avançar! O jogo tem <strong>20 níveis</strong>.
+      </p>
+
+      <!-- DIFICULDADE -->
+      <p style="font-weight:700;font-size:13px;color:#ff6b35;margin:8px 0 6px;">🎯 Nível de Dificuldade</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        <div style="background:rgba(0,160,0,0.12);border:1px solid rgba(80,200,80,0.3);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          😊 <strong>Fácil</strong><br>
+          <span style="color:#b8ffb8;">Ritmo habitual — a experiência original do jogo.</span>
+        </div>
+        <div style="background:rgba(255,107,53,0.14);border:1px solid rgba(255,150,80,0.3);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          🎓 <strong>Difícil</strong><br>
+          <span style="color:#ffd700;">Perguntas mais aprofundadas, vilões/chefes mais rápidos, menos vidas.</span>
+        </div>
+        <div style="background:rgba(255,30,30,0.14);border:1px solid rgba(255,80,80,0.35);border-radius:8px;padding:7px 10px;font-size:12px;color:#ffe0d0;line-height:1.5;">
+          🔥 <strong>Extremo</strong><br>
+          <span style="color:#ffb0b0;">Só 1 vida, vilões/chefes ainda mais rápidos, quase sem Star Power.</span>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#ffd070;margin:0 0 10px;font-style:italic;">
+        💡 Podes escolher ou mudar isto a qualquer momento em Opções.
       </p>
 
       <!-- VILÕES -->
@@ -741,6 +761,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
-  <script type="module" src="dia-crianca.js?v=20260912chaoprofundidade"></script>
+  <script type="module" src="dia-crianca.js?v=20260914quizbossordem"></script>
 </body>
 </html>

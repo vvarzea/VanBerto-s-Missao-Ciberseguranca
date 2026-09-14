@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js";
-import { THEMES, LEVELS } from "./data-levels.js";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260914quizbossordem";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260914quizbossordem";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260914quizbossordem";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260914quizbossordem";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260914quizbossordem";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord } from "./stars.js";
+         resetAllStars, getStarRecord } from "./stars.js?v=20260914quizbossordem";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js";
-import { playTitleCard, playCinematic } from "./cinematics.js";
-import { loadNamespace, saveNamespace } from "./storage.js";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260914quizbossordem";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260914quizbossordem";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260914quizbossordem";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260914quizbossordem";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260914quizbossordem";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260914quizbossordem";
 import { initBackground, applyBackground, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260914quizbossordem";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -1369,7 +1369,13 @@ window.addEventListener("DOMContentLoaded", () => {
   function getMaxLives() { return difficulty === "extremo" ? 3 : 5; }
   // Multiplicador de velocidade/ritmo de ataque dos BOSSES — ver
   // bossState.speedMult/baseSpeedMult em spawnBossFight e bossEnterRage.
-  function getBossSpeedMult() { return difficulty === "extremo" ? 1.4 : difficulty === "dificil" ? 1.2 : 1; }
+  // CORRIGIDO (pedido: "colocar a dificuldade dos bosses do Extremo no
+  // Difícil") — Difícil passa a usar o MESMO ×1.4 do Extremo, em vez do
+  // ×1.2 anterior. Vidas (getStartLives acima), quiz avançado, drones maus
+  // e as restantes diferenças não-boss do Difícil mantêm-se como estavam —
+  // só o desafio dos PRÓPRIOS bosses (velocidade e HP extra, já abaixo) é
+  // que passa a ser idêntico ao do Extremo.
+  function getBossSpeedMult() { return (difficulty === "extremo" || difficulty === "dificil") ? 1.4 : 1; }
   // Multiplicador de velocidade dos VILÕES normais (Trapalhão/Saltitão/
   // Perseguilão) — aplicado dentro de difficultyFactor(), a única função que
   // já controlava a velocidade deles consoante o nível.
@@ -1380,9 +1386,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // os mesmos 3 tipos, só que mais rápidos E a saltar mais, em vez de
   // trocarem todos para o comportamento "jumper".
   function getVillainJumpIntervalMult() { return difficulty === "extremo" ? 0.4 : difficulty === "dificil" ? 0.6 : 1; }
-  // HP extra dos bosses (stomps a levar para derrotar) — +1 no Difícil,
-  // +2 no Extremo.
-  function getBossExtraHp() { return difficulty === "extremo" ? 2 : difficulty === "dificil" ? 1 : 0; }
+  // HP extra dos bosses (stomps a levar para derrotar) — antes +1 no
+  // Difícil, +2 no Extremo; agora ambos +2 (mesmo pedido acima, ver
+  // getBossSpeedMult).
+  function getBossExtraHp() { return (difficulty === "extremo" || difficulty === "dificil") ? 2 : 0; }
   // CORRIGIDO — a versão original desta função reduzia TODOS os itens
   // menos corações, incluindo estrela (Star Power — a ÚNICA forma de matar
   // vilões), medalha (escudo) e duplosalto (o único duplo-salto do nível
@@ -4559,29 +4566,22 @@ window.addEventListener("DOMContentLoaded", () => {
   // da animação da porta, como num "fallback" de segurança se a animação
   // falhar a meio (ver bug "trava no boss 3" — mesma família de problema
   // pode acontecer na porta normal se `door` deixar de ser válida a meio).
+  //
+  // CORRIGIDO (revertido) — uma versão anterior desta função saltava esta
+  // pergunta por completo nos níveis antes de um boss (5, 9, 15, 20), por
+  // interpretar mal o pedido "não pode aparecer pergunta quando entra o
+  // boss": Berto esclareceu que a lógica certa é a ORDEM, não a ausência —
+  // a pergunta do NÍVEL tem sempre de aparecer e ser respondida ANTES do
+  // boss entrar em cena; só depois de o vencer é que aparece a pergunta
+  // PRÓPRIA do boss (startBossQuizPhase). Como showQuiz() só chama
+  // nextLevel()/startBossFight() dentro do "done(true)" — ou seja, depois
+  // de a pergunta já estar resolvida — esta ordem já é garantida pela
+  // própria estrutura da função; nunca houve aqui uma corrida entre a
+  // pergunta e a entrada do boss.
   function showQuizAfterDoorAnimation(scene){
     scene.time.delayedCall(560, () => {
       if(!awaitingQuiz) return; // segurança: só mostrar se ainda estamos à espera
       _doorAnimRunning = false; // reset para próxima porta
-      // NOVO (pedido: "não pode aparecer pergunta quando entra o boss") — um
-      // nível que antecede um boss (BOSS_BY_LEVEL) usa sempre o MESMO tema de
-      // quiz do próprio boss (ver comentários "tem de bater com o Nível X" em
-      // data-bosses.js) porque o combate já termina com a sua própria pergunta
-      // (startBossQuizPhase). Mostrar aqui também era literalmente a mesma
-      // pergunta pedida duas vezes seguidas, uma mesmo à entrada do boss. Para
-      // estes níveis salta-se o quiz de porta e vai-se direto à conclusão do
-      // nível — o boss fica como o único "teste" antes do mundo seguinte.
-      if (BOSS_BY_LEVEL[currentLevel]) {
-        ensureAudio();
-        finalizeLevelStars(currentLevel, livesLostThisLevel, itemsCollected, itemsTotal);
-        markLevelCompleted(currentLevel);
-        checkAchievements(mapProgress.levelsCompleted.length);
-        showLevelCompleteCelebration(currentLevel, () => {
-          showRightRecovered(currentLevel);
-          nextLevel(scene);
-        });
-        return;
-      }
       lastQuizTheme = LEVELS[currentLevel].quizTheme;
       showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
         if(ok){
@@ -4884,12 +4884,12 @@ window.addEventListener("DOMContentLoaded", () => {
   function startBossFight(scene, levelJustCompleted, onComplete) {
     const rawDef = BOSS_BY_LEVEL[levelJustCompleted];
     if (!rawDef) { onComplete(); return; } // sem boss neste ponto — segue o fluxo normal
-    // No Difícil o boss aguenta +1 salto na cabeça, no Extremo +2 (nunca mexe
-    // no objeto original de data-bosses.js, partilhado por todas as
-    // partidas — clona-se só aqui). def.hp é o único valor lido daqui para a
-    // frente (pela barra de vida, pelo HUD "saltos: X/Y" e pelos taunts),
-    // por isso basta este clone para tudo ficar consistente, sem precisar
-    // de tocar em mais nenhum sítio do combate.
+    // No Difícil/Extremo o boss aguenta +2 saltos na cabeça (ver
+    // getBossExtraHp — nunca mexe no objeto original de data-bosses.js,
+    // partilhado por todas as partidas — clona-se só aqui). def.hp é o único
+    // valor lido daqui para a frente (pela barra de vida, pelo HUD "saltos:
+    // X/Y" e pelos taunts), por isso basta este clone para tudo ficar
+    // consistente, sem precisar de tocar em mais nenhum sítio do combate.
     const _bossExtraHp = getBossExtraHp();
     const def = _bossExtraHp > 0 ? { ...rawDef, hp: rawDef.hp + _bossExtraHp } : rawDef;
 
