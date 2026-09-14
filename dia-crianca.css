@@ -220,6 +220,22 @@ canvas { width: 100% !important; height: 100% !important; display: block; touch-
 #quizAnswers .btn {
   width: 100%; text-align: center; font-size: 13px;
   transition: background 0.18s, border-color 0.18s, opacity 0.18s, transform 0.08s;
+  /* NOVO (pedido: "quase sempre a resposta certa é a resposta maior") —
+     confirmado no banco de perguntas: a opção correta é, em média, bem mais
+     comprida do que as erradas (é normal em perguntas de definição — a
+     resposta certa explica um conceito, as erradas são só um nome/data
+     errados) em ~93% das perguntas normais e ~99% das avançadas. Sem
+     min-height, isso dava-se logo a ver: a opção certa ocupava
+     visivelmente mais linhas/altura do que as outras, mesmo antes de ler
+     uma palavra. min-height + flex/centrar o texto verticalmente garante
+     que as 3 opções ocupam sempre uma altura parecida — uma resposta curta
+     fica com mais espaço vazio à volta em vez de um botão mais pequeno.
+     Não resolve tudo (uma criança que LEIA as 3 opções com atenção ainda
+     nota que uma tem mais frases), mas tira o "adivinhar pelo tamanho da
+     caixa" à primeira vista, que era o mais fácil de explorar sem saber a
+     resposta. */
+  min-height: 54px;
+  display: flex; align-items: center; justify-content: center;
   /* Sem isto, um toque com um pequeno tremor (normal em crianças) pode ser
      interpretado pelo telemóvel como o início de um gesto de deslizar/scroll
      do #quizAnswers (que às vezes tem overflow em ecrãs baixos), gerando um
@@ -710,7 +726,7 @@ canvas { width: 100% !important; height: 100% !important; display: block; touch-
   #quizOverlay .card-seal { width: 30px; height: 30px; font-size: 13px; }
   .q { font-size: 14px; line-height: 1.4; margin-bottom: 6px; }
   .answers { gap: 6px; margin-bottom: 6px; }
-  #quizAnswers .btn { font-size: 12.5px; padding: 7px 10px; }
+  #quizAnswers .btn { font-size: 12.5px; padding: 7px 10px; min-height: 46px; }
   .feedback { font-size: 12px; min-height: 17px; }
   .explanation { font-size: 11px; line-height: 1.4; padding: 5px 8px; margin-top: 5px; }
   #btnCloseQuiz { margin-top: 6px; padding: 7px 16px; font-size: 12.5px; }
@@ -778,7 +794,7 @@ canvas { width: 100% !important; height: 100% !important; display: block; touch-
   #quizOverlay .card-seal { width: 22px; height: 22px; font-size: 10px; }
   .q { font-size: 13.5px; line-height: 1.3; margin-bottom: 4px; }
   .answers { gap: 4px; margin-bottom: 4px; }
-  #quizAnswers .btn { font-size: 12px; padding: 5px 8px; }
+  #quizAnswers .btn { font-size: 12px; padding: 5px 8px; min-height: 40px; }
   .feedback { font-size: 11px; min-height: 14px; }
   .explanation { font-size: 10px; line-height: 1.3; padding: 4px 7px; margin-top: 4px; }
   #btnCloseQuiz { margin-top: 5px; padding: 5px 14px; font-size: 11px; }

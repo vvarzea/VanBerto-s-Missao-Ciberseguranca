@@ -5068,8 +5068,26 @@ window.addEventListener("DOMContentLoaded", () => {
     if(player.body) player.body.reset(playerStartX,200);
     // Guardado em bossState (novo) — bossHitPlayer() usa isto para saber
     // para onde repor o VanBerto's sempre que perde uma vida a meio do
-    // combate (ver comentário lá, pedido: "1 sítio seguro para retomar").
-    bossState.spawnX = playerStartX;
+    // combate. Pedido específico: "a ponta esquerda da plataforma
+    // esquerda" — não o ponto de entrada da arena (esse é playerStartX,
+    // guardado à parte só para a entrada em si). Calculado a partir das
+    // MESMAS arenaPlatforms de cada boss (linha acima), não de valores
+    // fixos, para continuar certo mesmo que um boss use uma arena
+    // diferente da disposição por omissão (chão + 2 plataformas).
+    // "Plataforma esquerda" = a de x mais pequeno, excluindo o próprio chão
+    // (identificado por ser a mais larga — mais de 60% da arena; nunca faz
+    // sentido chamar-lhe "esquerda" ou "direita" a essa). Se um boss não
+    // tiver nenhuma plataforma elevada, cai-se de volta em playerStartX.
+    const _nonGroundPlats = arenaPlatforms.filter(p => p[2] < worldW * 0.6);
+    if (_nonGroundPlats.length) {
+      const _leftPlat = _nonGroundPlats.reduce((a, b) => a[0] < b[0] ? a : b);
+      // +26 (margem) para não ficar pendurado mesmo na borda, a cair.
+      bossState.spawnX = _leftPlat[0] - _leftPlat[2] / 2 + 26;
+      bossState.spawnY = _leftPlat[1] - 40; // um pouco acima da própria plataforma
+    } else {
+      bossState.spawnX = playerStartX;
+      bossState.spawnY = 200;
+    }
     // Alinhar já ao chão da arena (mesmo cálculo usado no arranque de nível
     // normal, via snapPlayerToGround) — e só tornar o VanBerto's visível
     // DEPOIS disto (setAlpha(1) só aqui, não antes de setPosition/snap).
@@ -7141,26 +7159,22 @@ window.addEventListener("DOMContentLoaded", () => {
     scene.time.delayedCall(400, () => {
       if (!player || !inBossFight) return;
       // NOVO (pedido inicial: "1 sítio seguro para retomar sempre que perde
-      // a vida"; refinado a seguir: "o boss não pode conseguir apanhar logo
-      // outra vez ali") — antes disto o VanBerto's ficava exactamente onde
-      // o empurrão do golpe o tivesse deixado. A 1ª versão repunha sempre
-      // no MESMO ponto onde o combate começou (bossState.spawnX) — mas esse
-      // ponto podia calhar mesmo ao lado do boss, se ele já lá tivesse
-      // andado entretanto. Agora escolhe-se, entre esse ponto e o seu
-      // espelho do outro lado da arena (mesma distância ao centro, lado
-      // oposto — a arena tem sempre chão contínuo de ponta a ponta, ver
-      // arenaPlatforms/worldW por omissão em startBossFight, por isso o
-      // espelho está sempre em chão válido), o que estiver mais longe da
-      // posição ATUAL do boss. Só faz sentido se ainda houver boss (não
-      // interfere com a arena "collect"/"quiz", já sem perigos ativos).
+      // a vida"; refinado depois para "fique na ponta esquerda da
+      // plataforma esquerda para voltar a jogar") — antes disto o
+      // VanBerto's ficava exactamente onde o empurrão do golpe o tivesse
+      // deixado. Passou por uma versão intermédia (v49, que escolhia entre
+      // o ponto de entrada e o seu espelho, o que estivesse mais longe do
+      // boss); agora é sempre o mesmo sítio FIXO pedido — calculado em
+      // startBossFight() a partir das plataformas reais desta arena
+      // (bossState.spawnX/spawnY, ver ali "ponta esquerda da plataforma
+      // esquerda"), não da posição do boss. Só faz sentido se ainda houver
+      // boss (não interfere com a arena "collect"/"quiz", já sem perigos
+      // ativos).
       if (bossState && bossState.spawnX != null && (bossState.phase === "platform" || bossState.phase === "intro")) {
-        const worldW = bossState.def.arena?.worldW || 1600;
-        const altX = worldW - bossState.spawnX;
-        const bossX = (bossState.sprite && bossState.sprite.active) ? bossState.sprite.x : bossState.spawnX;
-        const safeX = Math.abs(bossX - bossState.spawnX) >= Math.abs(bossX - altX) ? bossState.spawnX : altX;
+        const safeY = bossState.spawnY != null ? bossState.spawnY : 200;
         player.setVelocity(0, 0);
-        player.setPosition(safeX, 200);
-        if (player.body) player.body.reset(safeX, 200);
+        player.setPosition(bossState.spawnX, safeY);
+        if (player.body) player.body.reset(bossState.spawnX, safeY);
         snapPlayerToGround();
       }
       setInvuln(scene, 1400);
@@ -8007,7 +8021,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // a maior parte do tempo) e garante que os dois nunca ficam visíveis
     // ao mesmo tempo, independentemente da causa exata do timing.
     const cineDialog = document.getElementById("cineDialog");
-    if (cineDialog && cineDialog.classList.contains("cine-show")) {
+    // bossState.phase==="intro" (definido de forma síncrona, sem qualquer
+    // atraso, logo na 1ª linha de startBossFight) cobre a janela mínima
+    // entre o boss começar e a classe "cine-show" ser aplicada — ver o
+    // setTimeout(0) em playCinematic/cinematics.js.
+    if ((cineDialog && cineDialog.classList.contains("cine-show")) || (inBossFight && bossState && bossState.phase === "intro")) {
       setTimeout(() => showQuiz(quiz, done, attemptNum), 250);
       return;
     }
