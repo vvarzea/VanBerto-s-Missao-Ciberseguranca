@@ -7206,7 +7206,17 @@ window.addEventListener("DOMContentLoaded", () => {
   // mesma sensação de onHitMalware. warnMsg é o aviso mostrado por cima da
   // perda de vida (varia consoante veio de um toque ou de um projétil).
   function bossHitPlayer(scene, sourceObj, warnMsg) {
-    if (invuln || lives <= 0) return;
+    // CORRIGIDO (bug reportado: "aparece pergunta nova a meio da luta do
+    // boss, e depois disso é que ficam vidas perdidas") — esta função era a
+    // única fonte de dano do combate de boss que NÃO verificava awaitingQuiz,
+    // ao contrário de handleBossItemCollect/handleBossMalwareCollision (que
+    // já absorvem qualquer toque em silêncio fora da fase "platform"). Sem
+    // isto, se por qualquer via bossHitPlayer() for chamada enquanto o quiz
+    // está visível (overlay do quiz aberto, awaitingQuiz=true) e o jogador não
+    // estiver invulnerável nesse instante, a vida era mesma assim descontada
+    // por baixo do ecrã do quiz — a criança via a pergunta aparecer e, sem
+    // perceber porquê, ia ficando sem vidas até "Missão Falhada".
+    if (invuln || lives <= 0 || awaitingQuiz) return;
     ensureAudio(); SFX.hit();
     // Combate Perfeito (novo, ver "flawless" na vitória em startBossQuizPhase):
     // marca que este combate já não é "sem perder uma vida", assim que o
@@ -8356,8 +8366,15 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function onHitMalware(playerObj, malwareObj){
-    if (handleBossMalwareCollision(malwareObj)) return;
+    // Reordenado (mesma família do bug corrigido em bossHitPlayer, acima):
+    // handleBossMalwareCollision() era chamada ANTES desta verificação, por
+    // isso qualquer caminho de dano lá dentro corria mesmo com o quiz aberto.
+    // scene.physics.pause() já devia impedir este overlap de disparar de
+    // todo enquanto o quiz está visível, mas verificar aqui primeiro
+    // também garante que nenhum toque é processado nesse intervalo, seja
+    // qual for a causa exata.
     if(invuln||awaitingQuiz||_overlayPaused||pausedByTeacher) return;
+    if (handleBossMalwareCollision(malwareObj)) return;
 
     // ── STAR POWER: atropela o vilão ─────────────────────────────
     if(starPower && malwareObj && malwareObj.active){
