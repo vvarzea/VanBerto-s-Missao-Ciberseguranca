@@ -617,7 +617,15 @@ window.addEventListener("DOMContentLoaded", () => {
           for (let s = 0; s < 3; s++) {
             starsHTML += `<span class="level-node-star${s < stars ? " level-node-star--on" : " level-node-star--off"}">★</span>`;
           }
-          btn.innerHTML = `✓<span class="level-node-stars">${starsHTML}</span>`;
+          // CORRIGIDO (pedido: "não deveria aparecer dentro da bolinha
+          // verde o número do nível?") — antes só mostrava "✓", sem
+          // nenhuma forma de saber a que nível cada bolinha concluída
+          // correspondia sem tocar/ler o aria-label. O número passa a ser
+          // o conteúdo principal (mesmo estilo dos nós "a jogar a
+          // seguir"), com o "✓" como um pequeno crachá no canto — o mapa
+          // continua a mostrar de relance quais estão concluídos, mas
+          // agora também QUAL nível é cada um.
+          btn.innerHTML = `<span class="level-node-num">${levelNum}</span><span class="level-node-check">✓</span><span class="level-node-stars">${starsHTML}</span>`;
           btn.setAttribute("aria-label", `Nível ${levelNum} — concluído, ${stars} estrelas. Toca para repetir.`);
         } else {
           btn.innerHTML = String(levelNum);
@@ -678,6 +686,28 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("mapOverlay")?.classList.add("hidden");
     document.getElementById("worldMapOverlay")?.classList.add("hidden");
     startOverlay.classList.add("hidden");
+    document.getElementById("winOverlay")?.classList.add("hidden");
+    document.getElementById("confetti")?.classList.add("hidden");
+    // Repõe já aqui — sem isto, se o utilizador tivesse chegado a este mapa
+    // pelos botões "Mapa"/"Conquistas" do ecrã de vitória (ver
+    // _winOverlaySubOpen), ficava a pensar que ainda tinha de "voltar" a
+    // esse ecrã, e o winOverlay reaparecia por cima do PRÓXIMO overlay
+    // secundário que fosse fechado, mesmo já a meio deste nível novo.
+    _winOverlaySubOpen = false;
+    // CORRIGIDO (pedido: ecrã em branco a repetir um nível depois de
+    // terminar o jogo todo) — showVictoryScreen() esconde o próprio canvas
+    // (#game, visibility:hidden) para revelar a Galeria de Artefactos por
+    // cima; só ficava visível de novo através dos botões "Jogar de novo" do
+    // ecrã de vitória/certificado. Mas o ecrã de vitória também tem botões
+    // "Mapa"/"Conquistas" (ver _winOverlaySubOpen) que levam aqui — a um
+    // nível escolhido para REPETIR, não a recomeçar tudo — e este caminho
+    // nunca repunha a visibilidade. O jogo continuava mesmo a correr por
+    // baixo (por isso ainda se ouviam/liam reações como "perdeste uma
+    // vida") — só o canvas é que ficava invisível para sempre.
+    const _gameDiv = document.getElementById("game");
+    if (_gameDiv) _gameDiv.style.visibility = "";
+    if (powerHaloGfx) { powerHaloGfx.clear(); powerHaloGfx.setVisible(true); }
+    if (shadowGfx) shadowGfx.setVisible(true);
     // Sem isto, _overlayPaused ficava preso a "true" (só closeOverlay() o repõe),
     // e o update() do jogo trava a velocidade do robot a 0 para sempre a partir
     // daqui — era por isso que o robot deixava de se mexer ao entrar num nível
@@ -6155,6 +6185,16 @@ window.addEventListener("DOMContentLoaded", () => {
       // primeiros ~600ms de voo (pequenos empurrões, sempre com um teto de
       // velocidade) — não é perseguição perfeita, só o suficiente para
       // parecer que o boss está mesmo a mirar, em vez de atirar às cegas.
+      // CORRIGIDO (pedido: "fico aqui sem me mexer e ganho, ele nunca me
+      // atinge") — só puxava em X; a subida inicial (-100, com gravidade
+      // 480) mal passa 10px acima da altura de lançamento, por isso
+      // qualquer plataforma elevada (ambas a 391/421, ver arena.platforms)
+      // ficava permanentemente fora de alcance — bastava lá ficar para
+      // nunca mais ser atingido. Agora também puxa em Y na direção do
+      // VanBerto's (só nos primeiros ticks, antes da gravidade dominar, tal
+      // como já era em X) — se estiver numa plataforma, a orbe ganha
+      // impulso extra para lá chegar; se estiver no chão, o puxão em Y é
+      // mínimo ou nulo e a trajetória sente-se quase igual a antes.
       q.setVelocity(towardPlayer * 55, -100);
       const homingTimer = scene.time.addEvent({
         delay: 150, repeat: 3,
@@ -6162,6 +6202,8 @@ window.addEventListener("DOMContentLoaded", () => {
           if (!q.active || !q.body) { try{homingTimer.remove(false);}catch{} return; }
           const dir = (player.x < q.x) ? -1 : 1;
           q.body.setVelocityX(Phaser.Math.Clamp(q.body.velocity.x + dir * 18, -110, 110));
+          const dirY = (player.y < q.y) ? -1 : 1;
+          q.body.setVelocityY(Phaser.Math.Clamp(q.body.velocity.y + dirY * 45, -260, 160));
         }
       });
       bossTimers.push(homingTimer);
@@ -9148,6 +9190,18 @@ window.addEventListener("DOMContentLoaded", () => {
     if (sceneRef && startOverlay.classList.contains("hidden")) {
       _overlayPaused = true;
       sceneRef.physics.pause();
+      // NOVO (pedido: abrir o Mapa da Aventura durante a animação do
+      // portal do fim de boss deixava o ecrã "estranho" ao fechar) — só se
+      // pausava a física; os tweens (a dança do VanBerto's, o portal a
+      // girar/"sugar", e a transição de nível a seguir) continuavam a
+      // correr por baixo do overlay, escondidos, e podiam chegar ao fim —
+      // incluindo a mudança de nível/mundo em si — sem o jogador ver nada
+      // disso, ficando com o ecrã e o overlay dessincronizados um do
+      // outro ao fechar. Pausar os tweens também garante que QUALQUER
+      // cinemática (entrada/vitória de boss, animação da porta, etc.)
+      // fica mesmo parada enquanto um menu estiver aberto, tal como a
+      // física já ficava.
+      sceneRef.tweens.pauseAll();
     }
   }
   function resumeAfterOverlay() {
@@ -9158,6 +9212,7 @@ window.addEventListener("DOMContentLoaded", () => {
         && quizOverlay.classList.contains("hidden")
         && historyOverlay.classList.contains("hidden")) {
       sceneRef.physics.resume();
+      sceneRef.tweens.resumeAll();
     }
   }
 

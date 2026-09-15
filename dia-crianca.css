@@ -1717,6 +1717,22 @@ body.hc-mode .map-progress-fill { background: #ffff00 !important; }
   position: absolute; top: -2px; left: 50%; transform: translateX(-50%);
   font-size: clamp(6px,1.4vw,9px); white-space: nowrap;
 }
+/* NOVO — número do nível como conteúdo principal do nó concluído (ver
+   comentário em dia-crianca.js), com o "✓" reduzido a um crachá pequeno no
+   canto inferior direito em vez de ocupar o centro todo. */
+.level-node-num { line-height: 1; }
+.level-node-check {
+  position: absolute; right: -3px; bottom: -3px;
+  width: 44%; height: 44%; min-width: 14px; min-height: 14px;
+  border-radius: 50%;
+  background: #0f6b34;
+  border: 2px solid #fff6e8;
+  color: #baffcf;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 65%; font-weight: 900;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+body.hc-mode .level-node-check { background: #000; border-color: #ffff00; color: #ffff00; }
 /* Estrela ganha: dourada e com brilho. Estrela não-ganha: mesmo glifo "★",
    mas apagada/cinzenta e sem brilho — assim as duas ficam claramente
    diferentes mesmo neste tamanho minúsculo (ver correção acima em dia-crianca.js). */
