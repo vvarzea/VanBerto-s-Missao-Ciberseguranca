@@ -2041,7 +2041,30 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Wrapper de segurança: chama o update "real" (updateGameFrame) dentro de
+  // um try/catch. Sem isto, QUALQUER erro não previsto lançado a meio de um
+  // frame (em qualquer sub-sistema: canos, balões, vilões, drones, etc.)
+  // interrompe a própria função update() do Phaser antes de esta terminar —
+  // como o motor de jogo volta a chamar update() através do seu próprio
+  // requestAnimationFrame recursivo, uma exceção a meio impede esse
+  // reagendamento e o jogo congela por completo, para sempre, exactamente
+  // como reportado (ecrã parado, sem resposta a nada). Isto explica também
+  // vários bugs de "travamento" já corrigidos antes (cada um por sua causa
+  // própria) — o padrão é sempre o mesmo: uma exceção nova e ainda não
+  // encontrada em qualquer parte do update() trava tudo. Este wrapper não
+  // corrige a causa de nenhum erro específico, mas impede que qualquer erro
+  // futuro — já identificado ou não — volte a travar o jogo por completo:
+  // o erro fica registado na consola (F12) em vez de silenciosamente
+  // parar tudo, e o jogo continua a correr no frame seguinte.
   function update() {
+    try {
+      updateGameFrame();
+    } catch (err) {
+      console.error("[VanBerto] Erro no update() — frame ignorado para não travar o jogo:", err);
+    }
+  }
+
+  function updateGameFrame() {
     const _updOverlay = awaitingQuiz || awaitingStory
       || !startOverlay.classList.contains('hidden')
       || !historyOverlay.classList.contains('hidden')
@@ -3125,7 +3148,11 @@ window.addEventListener("DOMContentLoaded", () => {
       scene.time.delayedCall(380,()=>burst.destroy());
 
       // ── Item bónus ─────────────────────────────────────────────
-      const keyMap = { estrela:"item_estrela", medalha:"item_medalha", heart:"item_heart", brinquedo:"item_chip", duplosalto:"item_duplosalto", balao:"item_cadeado_0" };
+      // balao -> item_chave (não item_cadeado_0): a "Chave de Acesso" já
+      // usa este ícone em todo o resto do jogo (ver ITEM_LABELS/keyMap
+      // principais) — aqui ainda apontava para o cadeado antigo, mostrando
+      // um ícone diferente do rótulo "🔑 Chave de Acesso +10".
+      const keyMap = { estrela:"item_estrela", medalha:"item_medalha", heart:"item_heart", brinquedo:"item_chip", duplosalto:"item_duplosalto", balao:"item_chave" };
       const it = itemsGroup.create(s.x, s.y-40, keyMap[s.kind]||"item_estrela");
       it.setDepth(3);
       it.setData("kind", s.kind);
