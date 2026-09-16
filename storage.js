@@ -36,15 +36,38 @@ export function loadNamespace(ns, fallback = {}) {
   return (r[ns] && typeof r[ns] === "object") ? r[ns] : fallback;
 }
 
+// CORRIGIDO — bug de perda de progresso reportado: saveNamespace()/clearNamespace()
+// escreviam sempre a cópia de "root" em memória (carregada uma vez, no arranque
+// da página) por cima de TODA a chave no localStorage. Se o jogo estivesse aberto
+// em 2 separadores (ex.: um separador antigo esquecido em 2º plano), o separador
+// antigo tinha em memória uma versão mais velha de "root" — e ao fechar (ou
+// simplesmente ao disparar o "beforeunload", que grava o tempo jogado), reescrevia
+// a chave inteira com esses dados velhos, apagando mapa/conquistas/artefactos que o
+// separador mais recente tinha acabado de guardar. Agora relê sempre o localStorage
+// atual mesmo antes de gravar, e só depois funde a alteração — cada gravação parte
+// sempre do estado mais recente em disco, nunca de uma cópia em memória potencialmente
+// desatualizada.
+function readFreshRoot() {
+  try {
+    const raw = localStorage.getItem(ROOT_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return (parsed && typeof parsed === "object") ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 export function saveNamespace(ns, data) {
-  const r = loadRoot();
+  const r = readFreshRoot();
   r[ns] = data;
+  root = r; // manter a cache em sincronia para leituras seguintes nesta sessão
   persistRoot();
 }
 
 export function clearNamespace(ns, fallback = {}) {
-  const r = loadRoot();
+  const r = readFreshRoot();
   r[ns] = fallback;
+  root = r;
   persistRoot();
 }
 
