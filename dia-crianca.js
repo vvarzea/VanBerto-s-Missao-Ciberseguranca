@@ -4734,6 +4734,15 @@ window.addEventListener("DOMContentLoaded", () => {
       duration: 120, yoyo: true, repeat: 3,
       ease: "Sine.easeInOut",
       onComplete: () => {
+        // CORRIGIDO — bug reportado (crash "Cannot set properties of null
+        // (setting 'x')" logo ao aparecer o boss): ao contrário das restantes
+        // fases desta animação (FASE 2/3/4, ver abaixo), esta FASE 1 nunca
+        // verificava se "door" ainda existia antes de lhe mexer. Se a arena do
+        // boss arrancasse entretanto e destruísse "door" (door=null, ver
+        // limpeza no arranque da arena), este onComplete — que dispara mais
+        // tarde, quando o Tween Manager finalmente processa a fase pendente —
+        // rebentava aqui. Mesma guarda defensiva já usada mais abaixo.
+        if (!door || !door.active) { showQuizAfterDoorAnimation(scene); return; }
         door.x = doorOrigX;
         door.setScale(1);
 
