@@ -739,8 +739,18 @@ window.addEventListener("DOMContentLoaded", () => {
     // escolhido no mapa (ex.: nível 6, logo a seguir a completar o Mundo 1).
     _overlayPaused = false;
     document.body.classList.add("game-started");
+    // CORRIGIDO — entrar por aqui como primeiríssima ação da sessão (ex.: botão
+    // "Mapa" do menu principal, sem passar por "Nova Aventura") arrancava sempre
+    // o Phaser do zero (window.__dc_game ainda não existe) mas nunca aplicava
+    // getStartLives(): "lives" ficava presa ao valor por omissão da declaração
+    // (3), ignorando a dificuldade guardada ("difícil"=2, "extremo"=1). Só se
+    // aplica nesta primeira entrada da sessão — navegar pelo mapa a meio de uma
+    // partida já em curso (Phaser já inicializado) continua a preservar as
+    // vidas restantes, como seria de esperar ao escolher outro nível a meio-jogo.
+    const isFreshSessionEntry = !window.__dc_game;
     const begin = () => {
       currentLevel = idx;
+      if (isFreshSessionEntry) lives = getStartLives();
       const startTransition = () => playLevelTransition(sceneRef, idx,
         () => { loadLevel(sceneRef, idx); saveGame(); },
         () => { showHistory(idx, () => {
