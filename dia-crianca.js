@@ -5188,22 +5188,27 @@ window.addEventListener("DOMContentLoaded", () => {
     if(player.body) player.body.reset(playerStartX,200);
     // Guardado em bossState (novo) — bossHitPlayer() usa isto para saber
     // para onde repor o VanBerto's sempre que perde uma vida a meio do
-    // combate. Pedido específico: "a ponta esquerda da plataforma
-    // esquerda" — não o ponto de entrada da arena (esse é playerStartX,
-    // guardado à parte só para a entrada em si). Calculado a partir das
-    // MESMAS arenaPlatforms de cada boss (linha acima), não de valores
-    // fixos, para continuar certo mesmo que um boss use uma arena
-    // diferente da disposição por omissão (chão + 2 plataformas).
-    // "Plataforma esquerda" = a de x mais pequeno, excluindo o próprio chão
-    // (identificado por ser a mais larga — mais de 60% da arena; nunca faz
-    // sentido chamar-lhe "esquerda" ou "direita" a essa). Se um boss não
-    // tiver nenhuma plataforma elevada, cai-se de volta em playerStartX.
+    // combate. CORRIGIDO (pedido: "para começar a vida quando perde pode
+    // ser na plataforma mais alta?") — antes escolhia a plataforma mais à
+    // esquerda; agora escolhe a plataforma ELEVADA MAIS ALTA da arena (a
+    // de y mais pequeno, já que y é o centro vertical e cresce para baixo
+    // — "mais alta no ecrã" = menor y). Calculado a partir das MESMAS
+    // arenaPlatforms de cada boss (linha acima), não de valores fixos,
+    // para continuar certo mesmo que um boss use uma arena diferente da
+    // disposição por omissão (chão + 3 plataformas).
+    // "Plataforma elevada" = qualquer uma que não seja o chão principal
+    // (identificado por ser o mais largo — mais de 60% da arena; nunca faz
+    // sentido reaparecer "no alto" desse). Se um boss não tiver nenhuma
+    // plataforma elevada, cai-se de volta em playerStartX.
     const _nonGroundPlats = arenaPlatforms.filter(p => p[2] < worldW * 0.6);
     if (_nonGroundPlats.length) {
-      const _leftPlat = _nonGroundPlats.reduce((a, b) => a[0] < b[0] ? a : b);
-      // +26 (margem) para não ficar pendurado mesmo na borda, a cair.
-      bossState.spawnX = _leftPlat[0] - _leftPlat[2] / 2 + 26;
-      bossState.spawnY = _leftPlat[1] - 40; // um pouco acima da própria plataforma
+      const _highPlat = _nonGroundPlats.reduce((a, b) => a[1] < b[1] ? a : b);
+      // Centro da própria plataforma (em vez da borda esquerda) — as
+      // plataformas mais altas são normalmente mais estreitas, por isso
+      // aparecer no centro evita cair logo por estar demasiado perto de
+      // uma borda.
+      bossState.spawnX = _highPlat[0];
+      bossState.spawnY = _highPlat[1] - 40; // um pouco acima da própria plataforma
     } else {
       bossState.spawnX = playerStartX;
       bossState.spawnY = 200;
@@ -7302,14 +7307,14 @@ window.addEventListener("DOMContentLoaded", () => {
       if (!player || !inBossFight) return;
       // NOVO (pedido inicial: "1 sítio seguro para retomar sempre que perde
       // a vida"; refinado depois para "fique na ponta esquerda da
-      // plataforma esquerda para voltar a jogar") — antes disto o
-      // VanBerto's ficava exactamente onde o empurrão do golpe o tivesse
-      // deixado. Passou por uma versão intermédia (v49, que escolhia entre
-      // o ponto de entrada e o seu espelho, o que estivesse mais longe do
-      // boss); agora é sempre o mesmo sítio FIXO pedido — calculado em
-      // startBossFight() a partir das plataformas reais desta arena
-      // (bossState.spawnX/spawnY, ver ali "ponta esquerda da plataforma
-      // esquerda"), não da posição do boss. Só faz sentido se ainda houver
+      // plataforma esquerda"; e agora para "a plataforma mais alta") —
+      // antes disto o VanBerto's ficava exactamente onde o empurrão do
+      // golpe o tivesse deixado. Passou por uma versão intermédia (v49, que
+      // escolhia entre o ponto de entrada e o seu espelho, o que estivesse
+      // mais longe do boss); agora é sempre o mesmo sítio FIXO pedido —
+      // calculado em startBossFight() a partir das plataformas reais desta
+      // arena (bossState.spawnX/spawnY, ver ali "plataforma elevada mais
+      // alta"), não da posição do boss. Só faz sentido se ainda houver
       // boss (não interfere com a arena "collect"/"quiz", já sem perigos
       // ativos).
       if (bossState && bossState.spawnX != null && (bossState.phase === "platform" || bossState.phase === "intro")) {

@@ -414,15 +414,13 @@ export const BOSSES = [
     // extraTeleportOnRage removido (ver comentário completo junto a
     // movementType, acima) — dependia do teletransporte que fazia este
     // boss desaparecer; sem ele, a fúria só fica mais difícil pela
-    // velocidade de patrulha e pelo apagão abaixo (blackoutAtMaxRage).
-    // Apagão na fúria final (nova — "ataque novo", não só mais rápido/mais
-    // teletransportes): ao chegar à 2ª fúria, a arena escurece por ~2.5s,
-    // deixando só uma janela central iluminada — condizente com o tema de
-    // "nas sombras, ninguém vê" — antes de voltar ao normal. Momento único
-    // por entrada em fúria máxima, ver triggerBossBlackout em
-    // dia-crianca.js. Só este boss tem isto entre os 4, tal como o Monstro
-    // ganha a isca falsa e o Vírus ganha os micróbios-caçadores.
-    blackoutAtMaxRage: true,
+    // velocidade de patrulha.
+    // blackoutAtMaxRage REMOVIDO (pedido: "estou a falar de o ecrã ficar
+    // escuro e só 1 retângulo a cores" — o apagão que escurecia a arena
+    // por ~2.5s na 2ª fúria, deixando só uma janela central iluminada, ver
+    // triggerBossBlackout em dia-crianca.js). Sem substituto: a fúria
+    // final deste boss fica só pela velocidade de patrulha, tal como os
+    // outros bosses "stomp" não têm nenhum efeito de ecrã na sua fúria.
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
     stompLabel: "👁️ Exposições",

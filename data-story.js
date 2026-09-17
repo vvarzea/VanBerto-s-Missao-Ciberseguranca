@@ -33,7 +33,13 @@ export const BOSS_OBJECTIVE = {
   // ser um anzol lançado na horizontal, mas o letreiro nunca foi atualizado.
   monstro_phishing: "Desvia-te dos anzóis 🪝 que ele lança e salta-lhe em cima {N} vezes para o vencer!",
   robo_spam: "Ele patrulha depressa a espalhar spam — apanha o ritmo e salta-lhe em cima {N} vezes para o vencer!",
-  espiao_sombras: "Ele teleporta-se e atira orbes sombrios 🔮! Salta-lhe em cima {N} vezes assim que ele reaparecer."
+  // CORRIGIDO (pedido: "no nível do último boss faz isto, não quero nada
+  // disto") — este texto ainda descrevia o teletransporte antigo ("ele
+  // teleporta-se... assim que ele reaparecer"), que já foi removido (ver
+  // movementType em data-bosses.js: passou de "teleport" para "patrol",
+  // mais rápido que todos os outros 3, mas nunca desaparece do ecrã). O
+  // texto ficava a prometer um comportamento que já não existe.
+  espiao_sombras: "Ele anda muito depressa a atirar orbes sombrios 🔮! Salta-lhe em cima {N} vezes para o vencer!"
 };
 
 // Diálogo de boss, por boss.
