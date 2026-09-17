@@ -3056,8 +3056,19 @@ window.addEventListener("DOMContentLoaded", () => {
     // Aviso claro de perda de vida — mesmo motivo do onHitMalware (ver ali).
     showFloat(scene, player.x, player.y - 90, "💥 -1 Vida!", "#ff5050");
 
+    // BUG CORRIGIDO: guardar o nível em que este toque aconteceu. Se o
+    // jogador estiver perto da porta quando isto acontece, consegue às
+    // vezes chegar à porta e terminar o nível ANTES destes 420ms passarem
+    // — currentLevel já seria o do nível SEGUINTE (já carregado por
+    // loadLevel()) quando este temporizador disparasse, e ele reposicionava
+    // o jogador (e podia mesmo mostrar "Missão Falhada" com base numa vida
+    // perdida no nível anterior) por cima de um nível que a criança acabou
+    // de começar a jogar — dava a sensação de "perder uma vida"/"saltar o
+    // nível" mesmo ao terminar um nível normalmente. bossHitPlayer() já
+    // tinha uma proteção equivalente (verifica inBossFight); faltava aqui.
+    const _levelAtHazardHit = currentLevel;
     scene.time.delayedCall(420, () => {
-      if (!player) return;
+      if (!player || currentLevel !== _levelAtHazardHit) return;
       const L = LEVELS[currentLevel];
       touch.left = touch.right = touch.jump = touch.crouch = false;
       player.setVelocity(0, 0);
@@ -7886,7 +7897,22 @@ window.addEventListener("DOMContentLoaded", () => {
     if (sceneRef) sceneRef.physics.resume();
   }
 
+  // BUG CORRIGIDO: nextLevel() não tinha nenhuma proteção contra ser chamada
+  // duas vezes seguidas para a MESMA conclusão de nível (ex.: o botão
+  // "Continuar" do ecrã de Nível Concluído a ser acionado tanto por um
+  // clique/toque como pelo atalho de teclado Enter praticamente ao mesmo
+  // tempo — btnContinue.onclick chama nextLevel() sem qualquer flag a
+  // impedir reentrada). Duas chamadas seguidas liam o MESMO currentLevel
+  // (ainda não avançado, isso só acontece dentro de loadLevel(), lá
+  // adiante) e agendavam duas transições independentes — a 2ª, ao disparar
+  // 750ms depois, podia calcular "justFinished"/o próximo nível já com o
+  // jogador a meio do nível seguinte (currentLevel entretanto mudado),
+  // reabrindo o mapa/mundo por cima do nível que a criança tinha acabado de
+  // começar a jogar — dava a sensação de "saltou um nível sem jogar".
+  let _nextLevelGuard = false;
   function nextLevel(scene){
+    if (_nextLevelGuard) return;
+    _nextLevelGuard = true;
     const next=currentLevel+1;
     // Cancelar timers da porta antes da transição — evita watchdog disparar no nível seguinte
     if(_doorWatchdogTimer){ try{_doorWatchdogTimer.remove(false);}catch{} _doorWatchdogTimer=null; }
@@ -7926,6 +7952,9 @@ window.addEventListener("DOMContentLoaded", () => {
     livesLostThisLevel=0;
 
     setTimeout(()=>{
+      // A partir daqui uma nova chamada a nextLevel() já corresponde a uma
+      // conclusão de nível seguinte, genuína — pode repor a flag.
+      _nextLevelGuard = false;
       score+=100; scoreText.setText(`🌟 Pontos: ${score}`); _hudDirty=true;
 
       const goToNextLevel = () => {
@@ -8481,9 +8510,18 @@ window.addEventListener("DOMContentLoaded", () => {
     // (bossHitPlayer), por isso num toque normal de vilão a perda de vida
     // passava despercebida (só o coração no HUD mudava, pequeno e discreto).
     showFloat(sceneRef, playerObj.x, playerObj.y-90, "💥 -1 Vida!", "#ff5050");
+    // BUG CORRIGIDO (mesma família do já corrigido em hitByHazard, ver ali)
+    // — se este toque acontecer perto da porta, o jogador pode terminar o
+    // nível antes destes 400ms passarem; sem guardar em que nível o toque
+    // aconteceu, este temporizador ia reposicionar o jogador (e a sua
+    // itemsCollected/heartIndices) usando LEVELS[currentLevel] já apontado
+    // para o nível SEGUINTE, entretanto carregado por loadLevel() — dava a
+    // sensação de "perder uma vida"/estado trocado mesmo ao terminar um
+    // nível normalmente.
+    const _levelAtMalwareHit = currentLevel;
     // Após o voo de knockback, teletransportar e iniciar 2s de proteção completa
     sceneRef.time.delayedCall(400, () => {
-      if(!player) return;
+      if(!player || currentLevel !== _levelAtMalwareHit) return;
       const L=LEVELS[currentLevel];
       touch.left=touch.right=touch.jump=touch.crouch=false;
       player.setVelocity(0,0); player.setPosition(L.spawn.x,L.spawn.y); snapPlayerToGround();
