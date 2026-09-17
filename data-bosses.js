@@ -137,7 +137,8 @@ export const BOSSES = [
     // mesmo tema/imagem do nível anterior, como todos os outros ecrãs.
     rightRecovered: { emoji: "🕵️", name: "Alerta Anti-Phishing" },
     // Arena simples: do tamanho da janela (960x540, sem scroll), chão
-    // principal + só 2 plataformas baixas para dar alguma variedade ao salto.
+    // principal + 3 plataformas (pedido: os 4 bosses com 3 plataformas
+    // cada, tal como o Robô do Spam já tinha).
     arena: {
       worldW: 960,
       // 514 = mesmo limite físico usado por omissão pelos níveis normais e
@@ -150,11 +151,14 @@ export const BOSSES = [
       // mesma forma: chão + 2 plataformas simétricas à mesma altura). Só
       // o Y da plataforma direita mudou (391, 30px mais alta que a
       // esquerda) — o X mantém-se exactamente igual, por isso signX (mais
-      // abaixo) continua válido sem recálculo.
+      // abaixo) continua válido sem recálculo. Mais uma 3ª plataforma
+      // central, mais alta ainda — mesmo "degrau" a meio da arena que o
+      // Robô do Spam já tinha.
       platforms: [
         [480,521,960,30],   // chão principal, de ponta a ponta — topo em y=506, igual aos níveis normais
         [230,421,150,20],   // plataforma baixa esquerda (deslocada 21px para baixo, junto com o chão)
-        [730,391,150,20]    // plataforma direita — 30px mais alta que a esquerda (nova, dá um salto extra)
+        [730,391,150,20],   // plataforma direita — 30px mais alta que a esquerda (nova, dá um salto extra)
+        [480,351,120,20]    // plataforma central, mais alta (nova)
       ],
       // Pedido: o VanBerto's começava sempre bem junto à margem esquerda
       // (120px, o valor por omissão). 400px fica bem mais ao centro da arena
@@ -318,16 +322,21 @@ export const BOSSES = [
     // themeIdx próprio removido — ver comentário igual no boss do phishing.
     rightRecovered: { emoji: "🛡️", name: "Dispositivo Protegido" },
     // Arena do tamanho do ecrã (960x540, sem scroll) — chão principal +
-    // 2 plataformas baixas, tal como o Monstro do Phishing.
+    // 3 plataformas, tal como os outros 3 bosses (pedido: os 4 bosses com
+    // 3 plataformas cada, para dar a mesma variedade de salto em todos).
     arena: {
       worldW: 960,
       worldH: 514,
-      // Variedade de silhueta (nova, ver mesmo comentário no Monstro do
-      // Phishing) — plataforma direita 30px mais alta; X inalterado.
+      // Variedade de silhueta (ver mesmo comentário no Monstro do Phishing)
+      // — plataforma direita 30px mais alta que a esquerda; mais uma 3ª
+      // plataforma central, mais alta ainda (mesmo "degrau" do Robô do
+      // Spam) — x=480 fica centrado, fora do alcance das duas plataformas
+      // baixas, dando um salto extra a meio da arena.
       platforms: [
         [480,521,960,30],   // chão principal, de ponta a ponta — topo em y=506
         [200,421,140,20],   // plataforma baixa esquerda
-        [760,391,140,20]    // plataforma direita — 30px mais alta que a esquerda
+        [760,391,140,20],   // plataforma direita — 30px mais alta que a esquerda
+        [480,351,120,20]    // plataforma central, mais alta (nova)
       ],
       // Mesma lógica do Monstro do Phishing: o VanBerto's deve começar
       // sempre no mesmo sítio em todos os bosses, em vez do 120 por omissão
@@ -370,8 +379,20 @@ export const BOSSES = [
     entranceMaterialize: true,
     epicDefeat: true,
     doubleThrowAtMaxRage: true,
-    movementType: "teleport",
-    teleportDelay: 1700,       // mais rápido que o valor por omissão (2400) — mais difícil de prever
+    // CORRIGIDO (pedido: "não quero o último boss a desaparecer, só ser
+    // mais rápido") — antes movementType:"teleport" fazia este boss saltar
+    // instantaneamente entre 3 pontos fixos (doBossTeleport em
+    // dia-crianca.js: aviso de 320ms + salto de posição + flash de câmara),
+    // o que a criança lia como "desaparecer". Passa a "patrol", tal como
+    // os outros 3 bosses (anda visivelmente de um lado para o outro, nunca
+    // sai do ecrã) — patrolSpeed acima de TODOS os outros (o Robô do Spam,
+    // o mais rápido até agora, tinha 150) para manter este boss como o
+    // mais difícil de apanhar dos 4, agora só pela velocidade, não por
+    // desaparecer. hopEvery (novo) dá-lhe o mesmo salto periódico visual
+    // que o Monstro do Phishing e o Robô do Spam já tinham.
+    movementType: "patrol",
+    patrolSpeed: 190,
+    hopEvery: 2200,
     qmarkEvery: 1600,          // 2000→1600: pedido "demoram muito a atirar" (ver mesmo ajuste nos outros 2 bosses "normais", em monstro_phishing e robo_spam)
     orbTexture: "boss_proj_shadow", // orbe sombrio próprio — antes reutilizava a bola "?" do Monstro só retintada, sem sentido temático para um guardião das sombras
     orbTint: 0x6a3fb5,
@@ -390,13 +411,10 @@ export const BOSSES = [
     // Falas próprias de fúria (nova) — ver comentário completo no Monstro
     // do Phishing (data-bosses.js, boss monstro_phishing).
     rageLines: { angry: "As sombras ficam mais fundas!", desperate: "A tua privacidade... está a vencer-me!" },
-    // Teletransporte-surpresa na fúria (nova, ver bossEnterRage em
-    // dia-crianca.js) — este boss já teletransporta sozinho por temporizador
-    // (teleportDelay); isto acrescenta UM extra exactamente ao entrar em
-    // cada fúria, tornando-o ainda mais difícil de apanhar mesmo quando já
-    // está a perder, tal como o Vírus/Robô ganham chão contaminado e o
-    // Monstro do Phishing ganha o ataque duplo mais cedo.
-    extraTeleportOnRage: true,
+    // extraTeleportOnRage removido (ver comentário completo junto a
+    // movementType, acima) — dependia do teletransporte que fazia este
+    // boss desaparecer; sem ele, a fúria só fica mais difícil pela
+    // velocidade de patrulha e pelo apagão abaixo (blackoutAtMaxRage).
     // Apagão na fúria final (nova — "ataque novo", não só mais rápido/mais
     // teletransportes): ao chegar à 2ª fúria, a arena escurece por ~2.5s,
     // deixando só uma janela central iluminada — condizente com o tema de
@@ -437,25 +455,27 @@ export const BOSSES = [
     hp: 3,                     // 4→3: agora são sempre 3 saltos na cabeça
     // themeIdx próprio removido — ver comentário igual no boss do phishing.
     rightRecovered: { emoji: "🔐", name: "Privacidade Protegida" },
-    // Arena do tamanho do ecrã, tal como o Monstro — 3 pontos de teletransporte
-    // (spawnSpots) ajustados à nova largura de 960px em vez de 1600px.
+    // Arena do tamanho do ecrã, tal como o Monstro — agora com 3
+    // plataformas e movimento de patrulha (ver comentário completo junto
+    // a movementType, acima), em vez do teletransporte antigo.
     arena: {
       worldW: 960,
       worldH: 514,
-      // Variedade de silhueta (nova, ver mesmo comentário no Monstro do
-      // Phishing) — plataforma direita 30px mais alta; X inalterado, por
-      // isso spawnSpots (mais abaixo) continua válido sem recálculo.
+      // Variedade de silhueta (ver mesmo comentário no Monstro do
+      // Phishing) — plataforma direita 30px mais alta; mais uma 3ª
+      // plataforma central, mais alta ainda (mesmo "degrau" do Robô do
+      // Spam) — pedido: os 4 bosses com 3 plataformas cada.
       platforms: [
         [480,521,960,30],   // chão principal, de ponta a ponta — topo em y=506
         [220,421,120,20],   // plataforma baixa esquerda
-        [740,391,120,20]    // plataforma direita — 30px mais alta que a esquerda
+        [740,391,120,20],   // plataforma direita — 30px mais alta que a esquerda
+        [480,351,120,20]    // plataforma central, mais alta (nova)
       ],
       // Mesma lógica do Monstro do Phishing: o VanBerto's deve começar
       // sempre no mesmo sítio em todos os bosses, em vez do 120 por omissão
       // — 400 fica fora do alcance das duas plataformas baixas (160-280 e
       // 680-800), continuando a aterrar no chão principal.
       playerStartX: 400,
-      spawnSpots: [220, 480, 740],
       // Decor adicionado (pedido: aproximar da ilustração de referência,
       // que mostra várias orbes sombrias com um olho a brilhar, a flutuar à
       // volta do feiticeiro) — era o único dos 4 bosses sem nenhum decor na
