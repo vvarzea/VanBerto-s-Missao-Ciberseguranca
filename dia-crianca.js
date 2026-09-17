@@ -861,6 +861,7 @@ window.addEventListener("DOMContentLoaded", () => {
       globalStats.starsCollectedTotal = 0;
       globalStats.levelsCompleted = 0;
       globalStats.gamesPlayed = 0;
+      globalStats.totalScoreEarned = 0;
       if (typeof saveGlobalStats === "function") saveGlobalStats();
     }
     // Preferência de som — mantém o comportamento anterior (reset também a apaga,
@@ -1647,8 +1648,11 @@ window.addEventListener("DOMContentLoaded", () => {
     powerIndicator = this.add.text(960-14, 52, "", { fontSize:"14px", fontStyle:"900", color:"#ffd700", stroke:"#200040", strokeThickness:4 }).setScrollFactor(0).setDepth(102).setOrigin(1,0);
 
     // Crachá fixo da dificuldade atual (Fácil/Difícil/Extremo) — sempre
-    // visível, canto superior direito, por cima do powerIndicator.
-    difficultyBadge = this.add.text(960-14, 10, "", { fontSize:"13px", fontStyle:"900", color:"#8affc1", stroke:"#200040", strokeThickness:3 }).setScrollFactor(0).setDepth(102).setOrigin(1,0);
+    // visível, canto superior direito, por baixo do powerIndicator (y=52),
+    // que é a mesma zona onde o "⭐ STAR POWER" já fica sempre bem visível,
+    // sem ser tapado pelo botão HTML "☰ Menu" (fixo no verdadeiro canto do
+    // ecrã, fora do canvas — y=10 ficava por baixo dele, reportado com print).
+    difficultyBadge = this.add.text(960-14, 76, "", { fontSize:"13px", fontStyle:"900", color:"#8affc1", stroke:"#200040", strokeThickness:3 }).setScrollFactor(0).setDepth(102).setOrigin(1,0);
     updateDifficultyBadge();
 
     // ── HUD de orbes dos artefactos ────────────────────────────────
@@ -1772,7 +1776,7 @@ window.addEventListener("DOMContentLoaded", () => {
       gameOverOverlay.classList.add("hidden");
       winOverlay.classList.add("hidden"); document.getElementById("confetti")?.classList.add("hidden");
       closeAllSecondaryOverlays();
-      lives = getStartLives(); score = 0; resetQuizStats(); livesLostThisLevel = 0;
+      lives = getStartLives(); flushScoreToStats(); score = 0; resetQuizStats(); livesLostThisLevel = 0;
       startOverlay.classList.remove("hidden");
       saveGame();
     }
@@ -1788,7 +1792,7 @@ window.addEventListener("DOMContentLoaded", () => {
         resetPipeWarpState();
         _doorAnimRunning = false;
         touch.left=touch.right=touch.jump=touch.crouch=false;
-        score=0; lives=getStartLives(); livesLostThisLevel=0;
+        flushScoreToStats(); score=0; lives=getStartLives(); livesLostThisLevel=0;
         resetQuizStats(); Object.keys(usedQuizByLevel).forEach(k=>usedQuizByLevel[k].clear()); Object.keys(usedQuizByTheme).forEach(k=>usedQuizByTheme[k].clear());
         scoreText.setText(`🌟 Pontos: ${score}`); updateHearts();
         loadLevel(sceneRef,0);
@@ -9270,7 +9274,21 @@ window.addEventListener("DOMContentLoaded", () => {
     curiositiesRead: 0,
     starsCollectedTotal: 0,
     levelsCompleted: 0,
-    gamesPlayed: 0
+    gamesPlayed: 0,
+    // BUG CORRIGIDO (Certificado Oficial): "score" é só da sessão/tentativa
+    // atual — zerado sempre que se sai para o Menu, se tenta de novo depois
+    // de "Game Over", ou se recomeça o nível/jogo a meio (ver os vários
+    // "score=0" espalhados pelo código). O certificado, pelo contrário,
+    // certifica a aventura TODA (as mesmas Estrelas e % de Acertos aqui já
+    // são persistentes, ao contrário de "Pontos" até agora) — um jogador
+    // que tivesse saído para o menu ou tentado de novo alguma vez a meio do
+    // percurso via o certificado com "20/20 estrelas, 95% acertos" mas
+    // "340 pontos", claramente incoerente. totalScoreEarned acumula tudo o
+    // que "score" já tiver ganho, sempre imediatamente antes de "score" ser
+    // reposto a 0 (ver flushScoreToStats(), chamada nesses mesmos sítios) —
+    // exceto quando o reset é parte de um recomeço TOTAL (resetAllProgress,
+    // que zera este campo também), onde não faria sentido preservá-lo.
+    totalScoreEarned: 0
   };
   let _statsSessionStart = Date.now();
 
@@ -9282,6 +9300,13 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   function saveGlobalStats() {
     saveNamespace("globalStats", globalStats);
+  }
+  // Ver comentário em globalStats.totalScoreEarned acima.
+  function flushScoreToStats() {
+    if (score > 0) {
+      globalStats.totalScoreEarned += score;
+      saveGlobalStats();
+    }
   }
   function updatePlayTime() {
     const elapsed = Math.floor((Date.now() - _statsSessionStart) / 1000);
@@ -9631,8 +9656,13 @@ window.addEventListener("DOMContentLoaded", () => {
     if (certName) certName.textContent = playerName || "Ciber-Herói";
 
     // Pontuação
+    // BUG CORRIGIDO: "score" só reflete a tentativa/sessão atual (ver
+    // comentário em globalStats.totalScoreEarned) — somado aqui com o total
+    // já acumulado de tentativas anteriores, para o certificado mostrar
+    // sempre os pontos da aventura toda, tal como já acontece com Estrelas
+    // e Acertos.
     const certScore = document.getElementById("certScore");
-    if (certScore) certScore.textContent = score;
+    if (certScore) certScore.textContent = globalStats.totalScoreEarned + score;
 
     // Estrelas — fonte de verdade (persistente) para tudo o resto abaixo
     const earned = totalStarsEarned();
@@ -9767,7 +9797,7 @@ window.addEventListener("DOMContentLoaded", () => {
       saveGame();
       return;
     }
-    score=0;resetQuizStats();
+    flushScoreToStats(); score=0;resetQuizStats();
     Object.keys(usedQuizByLevel).forEach(k=>usedQuizByLevel[k].clear());
     Object.keys(usedQuizByTheme).forEach(k=>usedQuizByTheme[k].clear());
     scoreText.setText(`🌟 Pontos: ${score}`);
@@ -9778,7 +9808,7 @@ window.addEventListener("DOMContentLoaded", () => {
   };
   if(btnExit) btnExit.onclick=()=>{
     gameOverOverlay.classList.add("hidden");try{sceneRef.physics.pause();}catch{}
-    lives=getStartLives();score=0;resetQuizStats();livesLostThisLevel=0;
+    lives=getStartLives();flushScoreToStats();score=0;resetQuizStats();livesLostThisLevel=0;
     startOverlay.classList.remove("hidden");
   };
 
