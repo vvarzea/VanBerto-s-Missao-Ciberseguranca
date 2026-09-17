@@ -5184,35 +5184,41 @@ window.addEventListener("DOMContentLoaded", () => {
     // mesmo nas mais largas — pedido para começar mais ao centro. Bosses
     // sem este campo mantêm exactamente o comportamento de sempre (120).
     const playerStartX = def.arena?.playerStartX != null ? def.arena.playerStartX : 120;
-    player.setPosition(playerStartX,200); player.setVelocity(0,0);
-    if(player.body) player.body.reset(playerStartX,200);
-    // Guardado em bossState (novo) — bossHitPlayer() usa isto para saber
-    // para onde repor o VanBerto's sempre que perde uma vida a meio do
-    // combate. CORRIGIDO (pedido: "para começar a vida quando perde pode
-    // ser na plataforma mais alta?") — antes escolhia a plataforma mais à
-    // esquerda; agora escolhe a plataforma ELEVADA MAIS ALTA da arena (a
-    // de y mais pequeno, já que y é o centro vertical e cresce para baixo
-    // — "mais alta no ecrã" = menor y). Calculado a partir das MESMAS
-    // arenaPlatforms de cada boss (linha acima), não de valores fixos,
-    // para continuar certo mesmo que um boss use uma arena diferente da
-    // disposição por omissão (chão + 3 plataformas).
+    // CORRIGIDO (pedido: "quando morre no nível boss continua a não ficar
+    // em cima da plataforma mais alta") — este cálculo já existia, mas só
+    // corria DEPOIS de colocar o VanBerto's em playerStartX/200 (linhas
+    // acima, na versão anterior), por isso só valia para o regresso
+    // depois de perder uma vida A MEIO do combate (bossHitPlayer). Ao
+    // "morrer" de facto (todas as vidas, ecrã de "Missão Falhada" →
+    // "Tentar de novo"), btnRetry chama loadLevel() do zero, que entra de
+    // novo AQUI, em playerStartX/200 — a plataforma mais alta nunca era
+    // usada nesse caminho. Adiantar o cálculo para antes de posicionar o
+    // VanBerto's, e usá-lo já na entrada inicial (mais abaixo), cobre os
+    // dois casos com o mesmo código: primeira entrada no boss, regresso a
+    // meio do combate, E "Tentar de novo" depois de morrer — os 3 caem
+    // sempre no mesmo sítio seguro.
     // "Plataforma elevada" = qualquer uma que não seja o chão principal
-    // (identificado por ser o mais largo — mais de 60% da arena; nunca faz
-    // sentido reaparecer "no alto" desse). Se um boss não tiver nenhuma
-    // plataforma elevada, cai-se de volta em playerStartX.
+    // (identificado por ser a mais larga — mais de 60% da arena; nunca faz
+    // sentido começar "no alto" desse). Se um boss não tiver nenhuma
+    // plataforma elevada, mantém-se o comportamento de sempre (playerStartX/200).
     const _nonGroundPlats = arenaPlatforms.filter(p => p[2] < worldW * 0.6);
+    let _entryX = playerStartX, _entryY = 200;
     if (_nonGroundPlats.length) {
       const _highPlat = _nonGroundPlats.reduce((a, b) => a[1] < b[1] ? a : b);
       // Centro da própria plataforma (em vez da borda esquerda) — as
       // plataformas mais altas são normalmente mais estreitas, por isso
       // aparecer no centro evita cair logo por estar demasiado perto de
       // uma borda.
-      bossState.spawnX = _highPlat[0];
-      bossState.spawnY = _highPlat[1] - 40; // um pouco acima da própria plataforma
-    } else {
-      bossState.spawnX = playerStartX;
-      bossState.spawnY = 200;
+      _entryX = _highPlat[0];
+      _entryY = _highPlat[1] - 40; // um pouco acima da própria plataforma
     }
+    player.setPosition(_entryX,_entryY); player.setVelocity(0,0);
+    if(player.body) player.body.reset(_entryX,_entryY);
+    // Guardado em bossState — bossHitPlayer() usa isto para saber para
+    // onde repor o VanBerto's sempre que perde uma vida a meio do combate
+    // (mesmo ponto agora usado na entrada, acima).
+    bossState.spawnX = _entryX;
+    bossState.spawnY = _entryY;
     // Alinhar já ao chão da arena (mesmo cálculo usado no arranque de nível
     // normal, via snapPlayerToGround) — e só tornar o VanBerto's visível
     // DEPOIS disto (setAlpha(1) só aqui, não antes de setPosition/snap).
