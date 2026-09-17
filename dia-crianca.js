@@ -1403,7 +1403,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let cursors, keySpace, keyS;
   let isCrouching = false; // ===== Agachar — nova funcionalidade =====
   let hudText, scoreText, heartsGfx, tipText, itemCountText;
-  let progressBg, progressFill, powerIndicator, playerNameHUD;
+  let progressBg, progressFill, powerIndicator, playerNameHUD, difficultyBadge;
   let pauseOverlayGfx, pauseVanImg, pauseLabel;
   let transitionGfx, transitionLabel;
   let score=0, lives=3, livesLostThisLevel=0;
@@ -1425,6 +1425,17 @@ window.addEventListener("DOMContentLoaded", () => {
     const s = loadNamespace("settings", {});
     s.difficulty = difficulty;
     saveNamespace("settings", s);
+    updateDifficultyBadge();
+  }
+  // Pedido do Berto: mostrar sempre, escrito e bem visível durante o jogo
+  // (não só escondido em Opções), em que dificuldade se está a jogar —
+  // canto superior direito do HUD, com uma cor diferente por nível para dar
+  // para perceber de relance.
+  function updateDifficultyBadge() {
+    if (!difficultyBadge) return;
+    const label = difficulty === "extremo" ? "🔥 Extremo" : difficulty === "dificil" ? "🎓 Difícil" : "😊 Fácil";
+    const color = difficulty === "extremo" ? "#ff4d4d" : difficulty === "dificil" ? "#ffb703" : "#8affc1";
+    difficultyBadge.setText(label).setColor(color);
   }
   // Vidas iniciais — 3 no Fácil (como sempre foi), 2 no Difícil, 1 no
   // Extremo (pedido: "jogo mais desafiante... menos vidas").
@@ -1634,6 +1645,11 @@ window.addEventListener("DOMContentLoaded", () => {
     progressBg.fillRoundedRect(8, 110, 230, 10, 5);
 
     powerIndicator = this.add.text(960-14, 52, "", { fontSize:"14px", fontStyle:"900", color:"#ffd700", stroke:"#200040", strokeThickness:4 }).setScrollFactor(0).setDepth(102).setOrigin(1,0);
+
+    // Crachá fixo da dificuldade atual (Fácil/Difícil/Extremo) — sempre
+    // visível, canto superior direito, por cima do powerIndicator.
+    difficultyBadge = this.add.text(960-14, 10, "", { fontSize:"13px", fontStyle:"900", color:"#8affc1", stroke:"#200040", strokeThickness:3 }).setScrollFactor(0).setDepth(102).setOrigin(1,0);
+    updateDifficultyBadge();
 
     // ── HUD de orbes dos artefactos ────────────────────────────────
     createArtOrbs(this);
