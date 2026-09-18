@@ -17,7 +17,7 @@ import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_
          VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260914quizbossordem";
 import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260914quizbossordem";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord } from "./stars.js?v=20260914quizbossordem";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260914quizbossordem";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
          resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260914quizbossordem";
@@ -8095,16 +8095,28 @@ window.addEventListener("DOMContentLoaded", () => {
       // loadGlobalStats/saveGlobalStats), por isso é essa que deve mandar
       // aqui — e é também a que o Certificado usa, para os dois ecrãs
       // nunca se contradizerem entre si.
+      //
+      // BUG CORRIGIDO (2ª ronda — mesma correção aplicada ao Certificado,
+      // ver showCertificate(): print do Berto mostrou 48/60 estrelas mas
+      // 100% de acertos, mesmo tendo repetido uma pergunta — prova de que
+      // globalStats.quizTotal/quizCorrect podem divergir da realidade nalgum
+      // caminho ainda não isolado. Este ecrã de Vitória usava exatamente o
+      // mesmo cálculo, por isso tinha o mesmo risco — agora cruza-se também
+      // aqui com levelStars (firstTry por nível), usando sempre o valor mais
+      // baixo, para os dois ecrãs continuarem a nunca se contradizer.
       const _allStars = totalStarsEarned() === LEVELS.length * 3;
       const gTotal = globalStats.quizTotal, gCorrect = globalStats.quizCorrect;
-      const pct = _allStars ? 100 : (gTotal ? Math.round((gCorrect / gTotal) * 100) : 0);
+      const _firstTryLevels = Object.keys(levelStars).filter(k => levelStars[k]?.firstTry).length;
+      const _pctFromStars = Math.round((_firstTryLevels / LEVELS.length) * 100);
+      const _pctFromGlobalStats = gTotal > 0 ? Math.round((gCorrect / gTotal) * 100) : 100;
+      const pct = _allStars ? 100 : Math.min(_pctFromStars, _pctFromGlobalStats);
       let medal="🥉 Bronze — missão concluída!";
       if(pct>=70) medal="🥈 Prata — muito bem!";
       if(pct>=90) medal="🥇 Ouro — excelente!";
-      const master=(_allStars||(gTotal>0&&gCorrect===gTotal))?" 🌟 Defensor Perfeito da Cibersegurança!":"";
+      const master=(pct>=100)?" 🌟 Defensor Perfeito da Cibersegurança!":"";
       document.getElementById("winPlayerName").textContent=playerName||"Ciber-Herói";
       document.getElementById("winScore").textContent=score;
-      document.getElementById("winPct").textContent=_allStars?`${gTotal}/${gTotal} (100%)`:`${gCorrect}/${gTotal} (${pct}%)`;
+      document.getElementById("winPct").textContent=(gTotal>0)?`${gCorrect}/${gTotal} (${pct}%)`:`${pct}%`;
       document.getElementById("winMedal").textContent=medal+master;
 
       // ── Tabela de temas com erros — aparece logo se existirem ───────
@@ -9686,9 +9698,26 @@ window.addEventListener("DOMContentLoaded", () => {
     // sessões), por isso é essa que deve ser usada aqui. Além disso, se
     // todos os níveis já têm 3 estrelas, o certificado garante sempre
     // 100% / Perfeito — nunca deve contradizer esse resultado.
-    const pct = allThreeStarsEverywhere
-      ? 100
-      : (globalStats.quizTotal > 0 ? Math.round((globalStats.quizCorrect / globalStats.quizTotal) * 100) : 0);
+    //
+    // BUG CORRIGIDO (2ª ronda, print do Berto: "48/60 estrelas" mas na
+    // mesma "100% acertos", mesmo tendo repetido uma pergunta): mesmo com a
+    // correção acima, globalStats.quizTotal/quizCorrect podem ainda
+    // divergir da realidade nalgum caso raro que não foi possível
+    // reproduzir aqui (ex.: showQuiz() só regista no globalStats na
+    // PRIMEIRA tentativa de cada nível — não deveria haver forma de um erro
+    // passar ao lado, mas o print mostra que, nalgum caminho, passa). Em
+    // vez de continuar a confiar cegamente nesse único contador, cruza-se
+    // agora com levelStars (stars.js) — a mesma fonte, já persistente e já
+    // comprovadamente correta (é dela que vem o "48/60"), que guarda por
+    // nível se a pergunta da porta foi acertada à primeira (rec.firstTry).
+    // Usa-se sempre o valor MAIS BAIXO dos dois — nunca mostra 100% a não
+    // ser que AMBAS as fontes concordem que não houve nenhum erro.
+    const firstTryLevels = Object.keys(levelStars).filter(k => levelStars[k]?.firstTry).length;
+    const pctFromStars = Math.round((firstTryLevels / LEVELS.length) * 100);
+    const pctFromGlobalStats = globalStats.quizTotal > 0
+      ? Math.round((globalStats.quizCorrect / globalStats.quizTotal) * 100)
+      : 100;
+    const pct = allThreeStarsEverywhere ? 100 : Math.min(pctFromStars, pctFromGlobalStats);
     const certCorrect = document.getElementById("certCorrect");
     if (certCorrect) certCorrect.textContent = `${pct}%`;
 
