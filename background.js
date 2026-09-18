@@ -970,10 +970,16 @@ export function applyBackground(scene,themeIdx,worldW,hazardDefs=[],bgImageKey=n
   }
 
   // ── FLORES no chão ─────────────────────────────────────────────
+  // BUG CORRIGIDO (pedido do Berto, com print): o chão normal (y=520,
+  // h=28) tem o topo em y=506, mas as flores eram desenhadas com o centro
+  // em y=507-509 e pétalas até y+4 — ou seja, a maior parte de cada flor
+  // (tudo abaixo de y=506) ficava por baixo da plataforma sólida, só a
+  // pontinha de cima aparecia. Subidas ~10px (centro agora em 496-498) para
+  // ficarem inteiras por cima do chão, como um canteiro à beira da relva.
   decorGraphics.clear();
   const fc=[0xff6b35,0xffd700,0xff80c0,0x80d0ff,0xa0ff80,0xffffff];
   for(let fi=0;fi<Math.floor(worldW/38);fi++){
-    const fx=18+fi*38+(fi%4)*5, fy=507+(fi%2)*2;
+    const fx=18+fi*38+(fi%4)*5, fy=496+(fi%2)*2;
     if(inHazard(fx, 8)) continue; // não colocar flores sobre zonas de lava/ácido/abismo
     const cc=fc[fi%fc.length];
     // Pétalas

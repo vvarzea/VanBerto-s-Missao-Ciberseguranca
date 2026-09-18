@@ -666,7 +666,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
     if (currentNodePos) {
       const mascot = document.createElement("img");
-      mascot.src = "vanberto_voar.png";
+      mascot.src = "vanberto_real.png";
       mascot.alt = "";
       mascot.className = "world-map-mascot";
       mascot.style.left = currentNodePos.x + "%";
@@ -1565,11 +1565,15 @@ window.addEventListener("DOMContentLoaded", () => {
   };
 
   function preload() {
-    // PNG externa desativada: a imagem vanberto_voar.png não é quadrada (420×537px)
-    // e o jogo força-a num quadrado 72×72, o que a deixa esticada/distorcida.
-    // Por isso usamos sempre o robô desenhado em Canvas ("vanberto_open"), que é
-    // o que aparece corretamente tanto localmente como online.
-    // this.load.image("vanberto_png", "vanberto_voar.png");
+    // PNG externa desativada: a imagem vanberto_real.png não é quadrada
+    // (555×788px) e o jogo força-a num quadrado 72×72, o que a deixa
+    // esticada/distorcida. Por isso usamos sempre o robô desenhado em
+    // Canvas ("vanberto_open"), que é o que aparece corretamente tanto
+    // localmente como online — e, desde a v67, é também a MESMA imagem
+    // (vanberto_real.png, gerada a partir deste desenho em Canvas) usada nos
+    // ecrãs fora do jogo (certificado, vitória, derrota, pausa, etc.), para
+    // o robô ter sempre o mesmo aspeto em todo o lado (pedido do Berto).
+    // this.load.image("vanberto_png", "vanberto_real.png");
 
     // Ilustrações dos 4 mundos (as mesmas usadas no mapa) — servem de fundo
     // fixo (não faz scroll) durante o próprio nível, para o jogo "estar"
