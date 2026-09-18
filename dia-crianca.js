@@ -5054,6 +5054,14 @@ window.addEventListener("DOMContentLoaded", () => {
     if (quizOverlay && !quizOverlay.classList.contains("hidden")) {
       quizOverlay.classList.add("hidden");
     }
+    // Ver comentário completo junto a "bossState.quizPhaseTimer =" (mais
+    // abaixo, no fim da sequência de derrota "stomp"): cancela aqui um
+    // temporizador esquecido de uma tentativa anterior deste ou de outro
+    // combate, antes de bossState ser substituído por um novo — nunca deve
+    // sobreviver de uma entrada no combate para a seguinte.
+    if (bossState && bossState.quizPhaseTimer) {
+      try { bossState.quizPhaseTimer.remove(false); } catch {}
+    }
     // NOVO (pedido: "quando morro tenho de morrer logo e não dar para
     // apanhar nada... e se apanho uma estrela, ao iniciar o nível estou
     // com o power" — bug reproduzido: só acontecia num combate de boss) —
@@ -6645,7 +6653,21 @@ window.addEventListener("DOMContentLoaded", () => {
     // >=0 (em vez de >0) inclui o frame exato no topo do arco do salto, em
     // que a velocidade vertical ainda não passou a positiva mas o jogador já
     // está claramente a começar a cair sobre o boss.
-    const isFalling = pBody.velocity.y >= 0;
+    //
+    // BUG CORRIGIDO (pedido do Berto: "a plataforma do meio está muito alta
+    // ... ao estar nesta plataforma, sem me mexer, eu mato o boss"): isFalling
+    // só olhava para a velocidade vertical (>=0), que é exactamente a mesma
+    // ao CAIR e ao estar PARADO, especamente no chão (a gravidade empurra
+    // para baixo, a plataforma trava a queda, mas a velocidade fica em 0 —
+    // igual a "a começar a cair"). Numa plataforma alta o suficiente para o
+    // boss (que flutua em onda) lhe passar por baixo dentro de
+    // STOMP_TOLERANCE, isto contava como "salto certeiro" repetidamente, só
+    // por estar ali parado, sem saltar nem se mexer. Basta exigir também que
+    // o jogador não esteja apoiado em chão sólido (!blocked.down, a mesma
+    // verificação já usada em todo o resto do jogo para "onGround") — só
+    // conta como stomp quando está mesmo no ar a cair, nunca parado numa
+    // plataforma.
+    const isFalling = pBody.velocity.y >= 0 && !pBody.blocked.down;
     // Tolerância do golpe "certeiro" — ligeiramente mais generosa (22->30px)
     // para não recusar saltos que pareciam visualmente bons só por 1-2 frames
     // de física.
@@ -6766,7 +6788,20 @@ window.addEventListener("DOMContentLoaded", () => {
       sceneRef.tweens.add({ targets:b, alpha:0, duration:350,
         onComplete: () => { try{ if (b.body) b.body.setEnable(false); }catch{} } });
     });
-    sceneRef.time.delayedCall(2350, () => { if (bossState && bossState.phase === "defeat") startBossQuizPhase(); });
+    // BUG POTENCIAL CORRIGIDO (reportado: "ao ir enfrentar o Boss apareceu-me
+    // novamente a pergunta do quiz" — não foi possível reproduzir o gatilho
+    // exato apesar de revisão extensa a toda a transição nível→boss, mas
+    // este temporizador (o único que decide sozinho, 2.35s depois, se deve
+    // abrir o quiz de fim de combate) nunca ficava registado em bossTimers[]
+    // — ao contrário de quase tudo o resto num combate de boss, não era
+    // cancelado ao repetir/reentrar num combate (btnRetry a meio de um
+    // combate, ou uma 2ª tentativa rápida do mesmo boss). A verificação
+    // "bossState.phase==='defeat'" já devia impedi-lo de disparar cedo
+    // demais, mas guardá-lo aqui e cancelá-lo explicitamente em
+    // startBossFight() (ver ali) elimina por completo qualquer hipótese de
+    // um temporizador esquecido de uma tentativa anterior interferir com uma
+    // nova entrada no combate.
+    bossState.quizPhaseTimer = sceneRef.time.delayedCall(2350, () => { if (bossState && bossState.phase === "defeat") startBossQuizPhase(); });
   }
 
   // ---- Festa do VanBerto's ao perderes todas as vidas durante um combate de
