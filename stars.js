@@ -63,8 +63,23 @@ export function finalizeLevelStars(idx, livesLostThisLevel, itemsCollected, item
   // só ACRESCENTAVA flags a "true", nunca as repunha — por isso, assim que um
   // nível ganhava as 3 estrelas uma única vez, ficava preso em 3/3 para
   // sempre, mesmo que uma repetição perdesse vidas, não apanhasse todos os
-  // itens ou errasse a pergunta à primeira. Agora cada finalização reflete
-  // só a tentativa que acabou de terminar.
+  // itens ou errasse a pergunta à primeira. Foi mudado para cada finalização
+  // refletir só a tentativa que acabou de terminar.
+  //
+  // BUG CORRIGIDO (2ª ronda — pedido do Berto: quer poder voltar a um nível
+  // onde só teve 2 estrelas e melhorar para 3, o que a correção acima
+  // impedia na prática): sem NENHUMA memória do que já tinha sido
+  // conseguido antes, tentar melhorar um nível era um risco — bastava
+  // perder uma vida por azar nessa repetição para a repetição ficar PIOR do
+  // que já estava, mesmo tendo conseguido as 3 estrelas numa tentativa
+  // anterior. A solução correta é usar o melhor dos dois em CADA critério
+  // individualmente (allItems/noDamage/firstTry cada um por si, não o
+  // conjunto todo escolhido de uma vez) — uma repetição pode ganhar uma
+  // estrela que faltava e perder outra que já tinha (ex.: desta vez sem
+  // perder vidas, mas sem apanhar todos os itens); o resultado guardado deve
+  // ficar com as duas, nunca escolher entre uma tentativa ou a outra. Assim,
+  // uma repetição só pode subir ou manter, nunca descer.
+  const prev = levelStars[idx] || { allItems:false, noDamage:false, firstTry:false };
   const rec = { allItems:false, noDamage:false, firstTry:false };
   // Se o nível não tem itens (itemsTotal===0), a 1ª estrela é concedida
   // automaticamente ao concluir — mesma lógica que já existia para "sem segredos".
@@ -72,7 +87,11 @@ export function finalizeLevelStars(idx, livesLostThisLevel, itemsCollected, item
   else if (itemsCollected >= itemsTotal) rec.allItems = true;
   if (livesLostThisLevel === 0) rec.noDamage = true;
   if (quizFirstTryThisLevel) rec.firstTry = true;
-  levelStars[idx] = rec;
+  levelStars[idx] = {
+    allItems:  prev.allItems  || rec.allItems,
+    noDamage:  prev.noDamage  || rec.noDamage,
+    firstTry:  prev.firstTry  || rec.firstTry,
+  };
   saveStars();
 }
 

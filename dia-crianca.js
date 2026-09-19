@@ -363,6 +363,13 @@ window.addEventListener("DOMContentLoaded", () => {
   // e closeOverlay()). Sem isto, o overlay novo abria por trás do ecrã de vitória (mesmo
   // z-index, mas o winOverlay vem depois no HTML) e ficava invisível/impossível de usar.
   let _winOverlaySubOpen = false;
+  // Pedido do Berto: o certificado só era acessível na hora, logo a seguir a
+  // terminar o jogo — se fosse ver o Mapa/Conquistas a seguir (ou fechasse o
+  // jogo), perdia o acesso por completo. Agora também pode ser aberto a
+  // partir de Estatísticas (menu principal), a qualquer momento depois de
+  // terminar o jogo pelo menos uma vez — esta flag lembra por onde foi
+  // aberto, para "Voltar" no certificado saber para onde regressar.
+  let _certificateOpenedFrom = "win";
 
   function showHistory(levelIndex, onDone) {
     // HISTORY[] está alinhado com os 20 níveis "de direitos" (0-19), não com a
@@ -9591,6 +9598,26 @@ window.addEventListener("DOMContentLoaded", () => {
         { label:"❌ Erradas",     val: globalStats.quizWrong,   color:"#ff5555" },
       ])}
     `;
+
+    // Pedido do Berto: o certificado só era acessível logo a seguir a
+    // terminar o jogo — ver comentário completo em _certificateOpenedFrom.
+    // Só faz sentido mostrar este botão depois de ter terminado o jogo pelo
+    // menos uma vez (os 20 níveis), tal como o próprio certificado exige.
+    const oldCertBtn = document.getElementById("btnStatsCertificate");
+    if (oldCertBtn) oldCertBtn.remove();
+    if (levelsComp >= levelsTotal) {
+      const certBtn = document.createElement("button");
+      certBtn.id = "btnStatsCertificate";
+      certBtn.className = "btn";
+      certBtn.style.cssText = "display:block;margin:14px auto 0;";
+      certBtn.textContent = "🏅 Ver Certificado";
+      certBtn.onclick = () => {
+        document.getElementById("statsOverlay")?.classList.add("hidden");
+        _certificateOpenedFrom = "stats";
+        showCertificate();
+      };
+      el.appendChild(certBtn);
+    }
   }
 
   function openStatsScreen() {
@@ -9781,13 +9808,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btnWinCertificate")?.addEventListener("click", () => {
     document.getElementById("winOverlay")?.classList.add("hidden");
+    _certificateOpenedFrom = "win";
     showCertificate();
   });
 
-  // "Voltar" — fecha certificado e volta ao ecrã de vitória
+  // "Voltar" — fecha certificado e regressa a quem o abriu (ecrã de vitória
+  // ou Estatísticas, ver _certificateOpenedFrom).
   document.getElementById("btnCertBack")?.addEventListener("click", () => {
     document.getElementById("certificateOverlay")?.classList.add("hidden");
-    document.getElementById("winOverlay")?.classList.remove("hidden");
+    if (_certificateOpenedFrom === "stats") {
+      openOverlay("statsOverlay", renderStats);
+    } else {
+      document.getElementById("winOverlay")?.classList.remove("hidden");
+    }
   });
 
   // "Jogar de novo" — fecha tudo e recomeça
