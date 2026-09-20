@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260914quizbossordem";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260914quizbossordem";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260914quizbossordem";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260920v76";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260920v76";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260920v76";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260914quizbossordem";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260914quizbossordem";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260920v76";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260920v76";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260914quizbossordem";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260920v76";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260914quizbossordem";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260914quizbossordem";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260914quizbossordem";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260914quizbossordem";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260914quizbossordem";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260914quizbossordem";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260920v76";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260920v76";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260920v76";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260920v76";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260920v76";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260920v76";
 import { initBackground, applyBackground, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260914quizbossordem";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260920v76";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -1615,6 +1615,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function initPhaser() {
     if (window.__dc_game) return;
+    // Texturas em canvas (ex.: "PORTAL!" em textures.js) usam o Baloo 2 700: pede-o já,
+    // para estar carregado quando o preload das imagens terminar e as texturas forem geradas.
+    try { document.fonts && document.fonts.load("700 11px 'Baloo 2'"); } catch (e) {}
     const game = new Phaser.Game(config);
     window.__dc_game = game;
   }
@@ -8329,9 +8332,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const correct=quiz.a.filter(x=>x.ok), wrong=quiz.a.filter(x=>!x.ok);
     for(let i=wrong.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wrong[i],wrong[j]]=[wrong[j],wrong[i]];}
-    const opts=[...correct.slice(0,1),...wrong.slice(0,2)];
+    // Fácil: 3 opções (1 certa + 2 erradas). Difícil e Extremo: 4 opções (1 certa + 3 erradas);
+    // se a pergunta só tiver 2 distratores (ex.: tema sem banco avançado), ficam 3 opções.
+    const nWrong = getDifficulty()==="facil" ? 2 : 3;
+    const opts=[...correct.slice(0,1),...wrong.slice(0,nWrong)];
     for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
 
+    quizAnswers.classList.toggle("answers--four", opts.length>=4); // 2×2 em ecrãs largos (ver CSS)
     let answered=false;
     opts.forEach(ans=>{
       const b=document.createElement("button");
