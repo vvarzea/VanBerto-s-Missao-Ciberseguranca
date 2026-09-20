@@ -32,6 +32,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `dia-crianca.css` | Estilos e declaração (`@font-face`) dos tipos de letra |
 | `fonts/` | Baloo 2 (400, 600, 700, 800) e Nunito (400, 600, 700 e 400 itálico), `woff2` latino, com as licenças OFL |
 | `phaser.min.js` | Phaser **3.90.0** minificado, servido localmente (sem CDN) |
+| `LICENSE-Phaser.txt` | Licença MIT do Phaser (obrigatória ao distribuir o `phaser.min.js`) |
 | `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 126 perguntas, 4 opções) —, curiosidades e artigos |
 | `data-levels.js` | `THEMES` e `LEVELS` (definição dos 20 níveis) |
 | `data-bosses.js` | Definição dos bosses e das suas arenas |
@@ -62,7 +63,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260920v76`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260920v77`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas.
 Ao publicar uma versão nova, trocar a string **em todos os sítios de uma só vez**
 (`index.html`, `dia-crianca.js`, `achievements.js`, `background.js`, `stars.js`), senão os
@@ -73,3 +74,19 @@ browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e n
 O Phaser e os tipos de letra vêm todos do próprio pacote: o jogo não faz pedidos a CDNs nem a
 serviços de terceiros. O Baloo 2 só existe até ao peso 800, por isso os `font-weight: 900` do CSS
 usam o 800.
+
+## Licenças e dados pessoais
+
+- **Phaser 3.90.0** — licença MIT (`LICENSE-Phaser.txt`).
+- **Baloo 2** e **Nunito** — SIL Open Font License 1.1 (`fonts/Baloo2-OFL.txt`, `fonts/Nunito-OFL.txt`).
+- **Dados pessoais**: o jogo não envia nada para servidores. O nome do jogador e o progresso ficam só
+  no `localStorage` do navegador (chave `vanbertos_save_v2`), sem cookies nem estatísticas, e
+  "Limpar tudo" apaga-os. O servidor que aloja os ficheiros (por exemplo, o GitHub Pages) pode
+  registar os pedidos, como qualquer site.
+
+## Língua
+
+Todo o texto é em português europeu, com o tratamento por **tu** e a grafia do Acordo Ortográfico de
+1990 tal como se aplica em Portugal: carateres, atual, ação, espetador, aspeto, facto, contacto.
+Vocabulário: palavra-passe (não *password*), ecrã, telemóvel, utilizador, ficheiro, partilhar,
+descarregar, Wi-Fi, iniciar sessão (não *fazer login*).
