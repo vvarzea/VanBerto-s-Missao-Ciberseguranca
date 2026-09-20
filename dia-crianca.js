@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260920v77";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260920v77";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260920v77";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260920v78";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260920v78";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260920v78";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260920v77";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260920v77";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260920v78";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260920v78";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260920v77";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260920v78";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260920v77";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260920v77";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260920v77";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260920v77";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260920v77";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260920v77";
-import { initBackground, applyBackground, drawSun, drawStars, drawCloud,
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260920v78";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260920v78";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260920v78";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260920v78";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260920v78";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260920v78";
+import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260920v77";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260920v78";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -274,6 +274,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const quizStats = { total:0, correct:0, everWrong:false, errors:[], errorsByTheme:{} };
   const usedQuizByLevel = {};
   const usedQuizByTheme = {}; // anti-repetição global por tema (cross-nível)
+  const lastQuizPickByTheme = {}; // última pergunta saída por tema (para não repetir ao reiniciar o ciclo)
   let lastQuizTheme = "historia";
 
   function resetQuizStats() { quizStats.total=0; quizStats.correct=0; quizStats.everWrong=false; quizStats.errors=[]; quizStats.errorsByTheme={}; }
@@ -343,12 +344,17 @@ window.addEventListener("DOMContentLoaded", () => {
     // Rastreio global por tema — evita repetir a mesma pergunta em níveis diferentes com o mesmo tema
     if (!usedQuizByTheme[theme]) usedQuizByTheme[theme] = new Set();
     const usedGlobal = usedQuizByTheme[theme];
-    if (usedGlobal.size >= pool.length) usedGlobal.clear(); // esgotou — reiniciar
+    if (usedGlobal.size >= pool.length) { // esgotou — reiniciar, mas sem repetir logo a última
+      usedGlobal.clear();
+      const last = lastQuizPickByTheme[theme];
+      if (last !== undefined && pool.length > 1) usedGlobal.add(last);
+    }
     const candidates = pool.map((_,i) => i).filter(i => !usedGlobal.has(i));
     const pick = candidates.length > 0
       ? candidates[Math.floor(Math.random() * candidates.length)]
       : Math.floor(Math.random() * pool.length);
     usedGlobal.add(pick);
+    lastQuizPickByTheme[theme] = pick;
     if (!usedQuizByLevel[levelIdx]) usedQuizByLevel[levelIdx] = new Set();
     usedQuizByLevel[levelIdx].add(pick);
     return pool[pick];
@@ -485,6 +491,54 @@ window.addEventListener("DOMContentLoaded", () => {
     if (LEVEL_BG_OVERRIDE[idx]) return LEVEL_BG_OVERRIDE[idx];
     const region = regionForLevel(idx);
     return region && region.mapBg ? "bg_" + region.id : null;
+  }
+
+  // ── Carregamento dos fundos (imagens grandes: ~4,5 MB no total) ────────────
+  // Antes carregavam todas no arranque. Agora o preload() só pede o fundo do nível
+  // em que o jogo arranca e o da sala secreta (os canos aparecem logo no nível 1);
+  // as restantes vêm depois, em segundo plano e pela ordem dos níveis. Se um nível
+  // começar antes do seu fundo chegar, applyBackground() mostra o céu desenhado e
+  // troca pela ilustração assim que ela chegar (ver setupBackgroundLoading).
+  const BG_FILES = {
+    bg_origens: "map-mundo1.jpg", bg_desenvolvimento: "map-mundo2.jpg",
+    bg_protecao: "map-mundo3.jpg", bg_participacao: "map-mundo4.jpg", // só de reserva (ver bgKeyForLevel)
+    bg_mundo1_n1e2: "mundo1_n1e2.jpg", bg_mundo1_n3e4: "mundo1_n3e4.jpg", bg_mundo1_n5: "mundo1_n5.jpg",
+    bg_mundo2_n6: "mundo2_n6.jpg", bg_mundo2_n7: "mundo2_n7.jpg", bg_mundo2_n8: "mundo2_n8.jpg", bg_mundo2_n9: "mundo2_n9.jpg",
+    bg_mundo3_n10e11: "mundo3_n10e11.jpg", bg_mundo3_n12e13: "mundo3_n12e13.jpg", bg_mundo3_n14e15: "mundo3_n14e15.jpg",
+    bg_mundo4_n16e17: "mundo4_n16e17.jpg", bg_mundo4_n18e19: "mundo4_n18e19.jpg", bg_mundo4_n20: "mundo4_n20.jpg",
+    bg_sala_secreta: "sala_secreta.jpg"
+  };
+  let _bootLevelIdx = 0;          // nível em que o Phaser arranca (definido antes de initPhaser)
+  const _bgRequested = new Set(); // fundos já pedidos depois do preload
+  let _lastBg = null;             // último applyBackground, para repetir quando a imagem chegar
+
+  function requestBg(scene, key) {
+    if (!key || !BG_FILES[key] || scene.textures.exists(key) || _bgRequested.has(key)) return;
+    _bgRequested.add(key);
+    scene.load.image(key, BG_FILES[key]);
+    scene.load.start(); // não faz nada se o loader já estiver a trabalhar; os ficheiros novos entram na fila
+  }
+
+  function setupBackgroundLoading(scene) {
+    scene.load.maxParallelDownloads = 2; // não competir com o jogo pela ligação
+    scene.load.on("filecomplete", (key) => {
+      if (_lastBg && _lastBg.scene === scene && _lastBg.args[3] === key) applyBackgroundRaw(scene, ..._lastBg.args);
+    });
+    scene.load.on("loaderror", (file) => { _bgRequested.delete(file.key); }); // permite tentar de novo mais tarde
+    // setTimeout (e não scene.time): o relógio da cena pára quando o jogo está em pausa/cartões de história.
+    setTimeout(() => {
+      for (let k = 0; k < 20; k++) requestBg(scene, LEVEL_BG_OVERRIDE[(_bootLevelIdx + k) % 20]);
+    }, 1500);
+  }
+
+  function applyBackground(scene, themeIdx, worldW, hazards, key) {
+    _lastBg = { scene, args: [themeIdx, worldW, hazards, key] };
+    applyBackgroundRaw(scene, themeIdx, worldW, hazards, key);
+    if (key && !scene.textures.exists(key)) requestBg(scene, key); // ainda não chegou: pede já
+  }
+
+  function prefersReducedMotion() {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
   }
 
   // O jogo só avança automaticamente DENTRO do mesmo mundo. Ao terminar o
@@ -778,6 +832,7 @@ window.addEventListener("DOMContentLoaded", () => {
       playRegionTitleCard(regionForLevel(idx), startTransition);
     };
     if (!window.__dc_game) {
+      _bootLevelIdx = idx;
       initPhaser();
       const waitScene = setInterval(() => {
         if (sceneRef) {
@@ -1582,35 +1637,10 @@ window.addEventListener("DOMContentLoaded", () => {
     // o robô ter sempre o mesmo aspeto em todo o lado (pedido do Berto).
     // this.load.image("vanberto_png", "vanberto_real.png");
 
-    // Ilustrações dos 4 mundos (as mesmas usadas no mapa) — servem de fundo
-    // fixo (não faz scroll) durante o próprio nível, para o jogo "estar"
-    // visualmente dentro do mundo em que o jogador está a jogar.
-    this.load.image("bg_origens", "map-mundo1.jpg");
-    this.load.image("bg_desenvolvimento", "map-mundo2.jpg");
-    this.load.image("bg_protecao", "map-mundo3.jpg");
-    this.load.image("bg_participacao", "map-mundo4.jpg");
-
-    // Fundos por NÍVEL (mais detalhados que os do mapa) — os 4 Mundos têm
-    // agora fundo dedicado por nível (alguns partilhados entre pares); a
-    // imagem única do mapa (bg_origens/desenvolvimento/protecao/participacao)
-    // já só é usada como reserva para níveis "soltos" sem mundo atribuído.
-    this.load.image("bg_mundo1_n1e2", "mundo1_n1e2.jpg");
-    this.load.image("bg_mundo1_n3e4", "mundo1_n3e4.jpg");
-    this.load.image("bg_mundo1_n5", "mundo1_n5.jpg");
-    this.load.image("bg_mundo2_n6", "mundo2_n6.jpg");
-    this.load.image("bg_mundo2_n7", "mundo2_n7.jpg");
-    this.load.image("bg_mundo2_n8", "mundo2_n8.jpg");
-    this.load.image("bg_mundo2_n9", "mundo2_n9.jpg");
-    this.load.image("bg_mundo3_n10e11", "mundo3_n10e11.jpg");
-    this.load.image("bg_mundo3_n12e13", "mundo3_n12e13.jpg");
-    this.load.image("bg_mundo3_n14e15", "mundo3_n14e15.jpg");
-    this.load.image("bg_mundo4_n16e17", "mundo4_n16e17.jpg");
-    this.load.image("bg_mundo4_n18e19", "mundo4_n18e19.jpg");
-    this.load.image("bg_mundo4_n20", "mundo4_n20.jpg");
-    // Fundo fixo das salas secretas (canos) — o mesmo em TODOS os mundos/níveis,
-    // de propósito (ver ROOM_THEME_IDX): reforça que o jogador entrou numa
-    // "sala secreta", reconhecível de imediato, independentemente de onde veio.
-    this.load.image("bg_sala_secreta", "sala_secreta.jpg");
+    // Fundos dos níveis: só o do nível em que o jogo arranca e o das salas secretas
+    // (fixo em todos os mundos, de propósito — ver ROOM_THEME_IDX). Os outros são
+    // carregados em segundo plano por setupBackgroundLoading().
+    [bgKeyForLevel(_bootLevelIdx), "bg_sala_secreta"].forEach(k => { if (k && BG_FILES[k]) this.load.image(k, BG_FILES[k]); });
   }
 
   function initPhaser() {
@@ -1638,6 +1668,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
     this.physics.world.setBounds(0, 0, 2600, 514);
     this.cameras.main.setBounds(0, 0, 2600, 540);
+    // Respeita "reduzir movimento" do sistema: sem abanões nem flashes do ecrã.
+    if (prefersReducedMotion()) { const cam = this.cameras.main; cam.shake = () => cam; cam.flash = () => cam; }
+    setupBackgroundLoading(this);
 
     makeTextures(this);
     initBackground(this);

@@ -7,7 +7,7 @@ export const PRAISE = ["🌟 Excelente!", "🛡️ Muito bem!", "🔐 Boa respos
 // PAUSE_TIPS são sobre MECÂNICAS de jogo (agachar, super-salto, power-ups,
 // tipos de vilão), não sobre o tema — mantidos tal como no original.
 export const PAUSE_TIPS = [
-  "🔽 <b>Agachar:</b> Prime ↓, S ou o botão 'Baixar' para te esquivares de ataques altos e passares por baixo de obstáculos!",
+  "🔽 <b>Agachar:</b> Prime ↓, S ou o botão 'Agachar' para te esquivares de ataques altos e passares por baixo de obstáculos!",
   "💡 <b>Star Power:</b> Apanha a estrela ⭐ e atropela vilões durante 8 segundos — +50 pontos cada!",
   "🛡️ <b>Escudo:</b> Fica invencível por 8s e absorve um golpe de qualquer vilão.",
   "🦅 <b>Asas:</b> Dão um segundo salto no ar — ótimo para plataformas altas!",

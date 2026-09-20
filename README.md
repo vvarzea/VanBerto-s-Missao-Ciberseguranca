@@ -63,11 +63,23 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260920v77`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260920v78`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas.
 Ao publicar uma versão nova, trocar a string **em todos os sítios de uma só vez**
 (`index.html`, `dia-crianca.js`, `achievements.js`, `background.js`, `stars.js`), senão os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
+
+## Carregamento dos fundos
+
+O Phaser só pede no arranque o fundo do nível em que o jogo começa e o da sala secreta (cerca de
+0,5 MB). Os restantes (`mundo*.jpg`) chegam em segundo plano, por ordem de nível, com 2 pedidos em
+paralelo; se um nível começar antes do seu fundo, mostra-se o céu desenhado e a ilustração entra
+assim que chegar (`setupBackgroundLoading` e `applyBackground` em `dia-crianca.js`). Um novo fundo
+tem de ser acrescentado a `LEVEL_BG_OVERRIDE` **e** a `BG_FILES`. As `map-mundo*.jpg` só são usadas
+no ecrã do mapa.
+
+Com "reduzir movimento" ativo no sistema, o CSS desliga as animações e o jogo não faz abanões nem
+flashes de ecrã.
 
 ## Sem dependências externas
 

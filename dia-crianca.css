@@ -3030,3 +3030,17 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #certificateOverlay .cert-stat strong { color: #8a5a00 !important; }
   #certificateOverlay .cert-sig-line { background: linear-gradient(90deg, transparent, #d9a441, transparent) !important; }
 }
+
+/* Perguntas compridas: deixa espaço para o selo do canto (direita) e a estrela (esquerda),
+   que antes ficavam por cima das primeiras palavras. */
+#quizQuestion { padding: 0 34px 0 8px; }
+
+/* Respeita "reduzir movimento" do sistema (os abanões e flashes do jogo são tratados em JS). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
