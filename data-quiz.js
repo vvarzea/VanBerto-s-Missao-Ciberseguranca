@@ -23,7 +23,7 @@ export const HISTORY = [
   },
   {
     title: "🆘 Quem Nos Protege Online",
-    text: "Em Portugal, o Centro Nacional de Cibersegurança (CNCS) e o projeto SeguraNet ajudam crianças e escolas a navegar em segurança. A Linha Internet Segura (800 21 90 90) e o site internetsegura.pt apoiam quem tiver um problema online."
+    text: "Em Portugal, o Centro Nacional de Cibersegurança (CNCS) e o projeto SeguraNet ajudam crianças e escolas a navegar em segurança. A Linha Internet Segura (800 21 90 90) e o site internetsegura.pt apoiam quem tiver um problema online. Se estiveres em perigo, liga sempre 112."
   },
   {
     title: "🦠 Vírus e Malware",

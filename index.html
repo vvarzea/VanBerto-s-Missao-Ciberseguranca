@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="VanBerto's" />
   <title>VanBerto's — Missão Cibersegurança</title>
-  <link rel="stylesheet" href="dia-crianca.css?v=20260920v78" />
+  <link rel="stylesheet" href="dia-crianca.css?v=20260921v79" />
 </head>
 <body>
 
@@ -38,7 +38,7 @@
       </p>
       <div class="name-row">
         <label for="playerName">O teu nome:</label>
-        <input type="text" id="playerName" maxlength="20" placeholder="Escreve o teu nome…" autocomplete="off" />
+        <input type="text" id="playerName" maxlength="20" placeholder="Escreve (só neste dispositivo)" autocomplete="off" />
       </div>
 
       <!-- MENU PRINCIPAL — grelha de opções -->
@@ -189,6 +189,7 @@
       <div class="card-seal" aria-hidden="true">📊</div>
       <h2>📊 As Tuas Estatísticas</h2>
       <div id="statsContent" class="stats-content"><!-- preenchido via JS --></div>
+      <p class="stats-note">🔒 O teu nome e o teu progresso ficam só neste dispositivo. «Limpar tudo» apaga-os.</p>
       <div class="row">
         <button id="btnCloseStats" class="btn primary">Fechar</button>
         <button id="btnResetStats" class="btn stats-reset-btn">🗑️ Limpar tudo</button>
@@ -442,18 +443,17 @@
     </div>
   </div>
 
-  <!-- NOME DO JOGADOR — HUD HTML -->
-  <div id="playerNameHtml" style="
-    display:none; position:fixed; top:8px; left:8px; z-index:9400;
-    font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:900;
-    color:#ffd700; text-shadow:0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
-    pointer-events:none; letter-spacing:0.3px;
-    background:rgba(10,4,32,0.55); border-radius:8px; padding:4px 10px;
-    border:1px solid rgba(255,215,0,0.25);
-  "></div>
-
   <!-- CONTROLO DO PROFESSOR — botão ☰ único durante o jogo -->
   <div id="teacherControls" style="position:fixed;top:10px;right:10px;z-index:9500;">
+    <!-- NOME DO JOGADOR — HUD HTML (ao lado do ☰, para não tapar o texto do HUD do jogo, à esquerda) -->
+    <div id="playerNameHtml" style="
+      display:none; align-self:center; margin-right:8px;
+      font-family:'Baloo 2',sans-serif; font-size:17px; font-weight:900;
+      color:#ffd700; text-shadow:0 0 8px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.8);
+      pointer-events:none; letter-spacing:0.3px;
+      background:rgba(10,4,32,0.55); border-radius:8px; padding:4px 10px;
+      border:1px solid rgba(255,215,0,0.25); white-space:nowrap;
+    "></div>
     <button id="btnTeacherMenu" class="btn" aria-label="Menu do jogo" title="Menu">☰ Menu</button>
     <!-- Botões fantasma — usados internamente pelo JS para compatibilidade -->
     <button id="btnFullscreenGame" style="display:none"></button>
@@ -760,7 +760,7 @@
     </div>
   </div>
 
-  <script src="phaser.min.js?v=20260920v78"></script>
-  <script type="module" src="dia-crianca.js?v=20260920v78"></script>
+  <script src="phaser.min.js?v=20260921v79"></script>
+  <script type="module" src="dia-crianca.js?v=20260921v79"></script>
 </body>
 </html>

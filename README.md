@@ -33,6 +33,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `fonts/` | Baloo 2 (400, 600, 700, 800) e Nunito (400, 600, 700 e 400 itálico), `woff2` latino, com as licenças OFL |
 | `phaser.min.js` | Phaser **3.90.0** minificado, servido localmente (sem CDN) |
 | `LICENSE-Phaser.txt` | Licença MIT do Phaser (obrigatória ao distribuir o `phaser.min.js`) |
+| `_dev/` | Ferramentas de desenvolvimento (verificações, teste no Chromium, script de lançamento). Não são necessárias no site publicado |
 | `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 126 perguntas, 4 opções) —, curiosidades e artigos |
 | `data-levels.js` | `THEMES` e `LEVELS` (definição dos 20 níveis) |
 | `data-bosses.js` | Definição dos bosses e das suas arenas |
@@ -63,11 +64,23 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260920v78`). Tem de ser sempre igual em todo o lado: o mesmo módulo
-importado com strings diferentes é carregado duas vezes, como duas instâncias separadas.
-Ao publicar uma versão nova, trocar a string **em todos os sítios de uma só vez**
-(`index.html`, `dia-crianca.js`, `achievements.js`, `background.js`, `stars.js`), senão os
+string `?v=…` (atualmente `20260921v79`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
+
+Não se troca à mão: `python3 _dev/release.py v80 descricao_curta` carimba a nova string em todo o
+lado, corre as verificações e o teste no Chromium e gera o zip.
+
+## Desenvolvimento (`_dev/`)
+
+- `node _dev/check.mjs` — verificações estáticas: uma só string `?v=`, ficheiros referenciados,
+  ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
+  português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
+- `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido e HUD.
+- `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
+
+A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
 
 ## Carregamento dos fundos
 

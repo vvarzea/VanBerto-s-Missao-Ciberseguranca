@@ -111,7 +111,7 @@ export const NPC_SIGNS = [
   { emoji:"🌐", text:"Sabias que a primeira página web foi publicada em 1991?" },
   { emoji:"🔐", text:"Uma palavra-passe com 12 ou mais carateres é muito mais difícil de adivinhar!" },
   { emoji:"🪪", text:"Nunca partilhes a tua morada ou telefone com quem só conheces online." },
-  { emoji:"🆘", text:"A Linha Internet Segura (800 21 90 90) é gratuita e confidencial: liga nos dias úteis!" },
+  { emoji:"🆘", text:"Linha Internet Segura: 800 21 90 90 (gratuita, dias úteis). Em perigo, liga 112!" },
   { emoji:"🦠", text:"Um antivírus atualizado é como uma vacina para o teu computador!" },
   { emoji:"🎮", text:"Sabias que os jogos têm uma idade mínima recomendada (PEGI) escrita na caixa?" },
   { emoji:"👣", text:"Tudo o que publicas online deixa uma pegada digital — pensa sempre antes de publicar!" },

@@ -3044,3 +3044,12 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
     scroll-behavior: auto !important;
   }
 }
+
+/* Nota de privacidade nas Estatísticas */
+.stats-note { margin: 8px 0 10px; font-size: 12px; opacity: 0.8; text-align: center; }
+
+/* Emblema com o nome do jogador (ao lado do ☰): nomes compridos ficam cortados com «…» */
+#playerNameHtml { max-width: 45vw; overflow: hidden; text-overflow: ellipsis; }
+@media (max-height: 520px) {
+  #playerNameHtml { font-size: 14px !important; padding: 3px 8px !important; max-width: 34vw; }
+}
