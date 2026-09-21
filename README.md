@@ -32,9 +32,10 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `dia-crianca.css` | Estilos e declaração (`@font-face`) dos tipos de letra |
 | `fonts/` | Baloo 2 (400, 600, 700, 800) e Nunito (400, 600, 700 e 400 itálico), `woff2` latino, com as licenças OFL |
 | `phaser.min.js` | Phaser **3.90.0** minificado, servido localmente (sem CDN) |
+| `sw.js` | Service worker: modo offline (guarda o jogo na 1.ª visita; uma cache por versão) |
 | `LICENSE-Phaser.txt` | Licença MIT do Phaser (obrigatória ao distribuir o `phaser.min.js`) |
 | `_dev/` | Ferramentas de desenvolvimento (verificações, teste no Chromium, script de lançamento). Não são necessárias no site publicado |
-| `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 126 perguntas, 4 opções) —, curiosidades e artigos |
+| `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 166 perguntas, 4 opções) —, curiosidades e artigos |
 | `data-levels.js` | `THEMES` e `LEVELS` (definição dos 20 níveis) |
 | `data-bosses.js` | Definição dos bosses e das suas arenas |
 | `data-story.js` | Narrativa: introduções de região, falas dos bosses, letreiros |
@@ -64,7 +65,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260921v81`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260921v82`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -77,7 +78,7 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
 - `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
-  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu e coerência entre a Vitória e o Certificado.
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline e atualização do service worker.
 - `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
 
 O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
@@ -85,6 +86,21 @@ partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, 
 `python3 _dev/release.py v82 descricao --no-smoke`.
 
 A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
+
+## Modo offline
+
+Na 1.ª visita o `sw.js` guarda o núcleo do jogo (páginas, scripts, estilos, Phaser, fontes e ícones,
+cerca de 2 MB). As imagens dos fundos guardam-se à medida que o jogo as pede: sem rede, os níveis já
+jogados têm fundo e os outros mostram o céu desenhado. Cada versão usa a sua própria cache
+(`vanbertos-<versão>`), por isso nunca se misturam ficheiros de versões diferentes, e a cache antiga é
+apagada quando a nova ativa. As páginas vão primeiro à rede (com limite de 4 s) e só usam a cache se
+não houver rede. Só funciona em `https://` ou `localhost`.
+
+- A `VERSION` do `sw.js` é carimbada pelo `release.py` junto com o `?v=`. O `check.mjs` recusa versões
+  diferentes e também ficheiros do jogo que faltem na lista `CORE` do `sw.js` (quem acrescentar um
+  ficheiro tem de o acrescentar lá).
+- Para desligar o modo offline num dispositivo: abrir o jogo com `?nosw` no endereço (desregista o
+  service worker e apaga as caches).
 
 ## Carregamento dos fundos
 

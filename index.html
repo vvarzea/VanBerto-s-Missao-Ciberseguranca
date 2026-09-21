@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="VanBerto's" />
   <title>VanBerto's — Missão Cibersegurança</title>
-  <link rel="stylesheet" href="dia-crianca.css?v=20260921v81" />
+  <link rel="stylesheet" href="dia-crianca.css?v=20260921v82" />
 </head>
 <body>
 
@@ -760,7 +760,19 @@
     </div>
   </div>
 
-  <script src="phaser.min.js?v=20260921v81"></script>
-  <script type="module" src="dia-crianca.js?v=20260921v81"></script>
+  <script>
+    // Modo offline: o service worker (sw.js) guarda o jogo depois da 1.ª visita.
+    // Para o desligar num dispositivo: abrir o jogo com «?nosw» no endereço.
+    if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+      if (/[?&]nosw\b/.test(location.search)) {
+        navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+        caches.keys().then(function (ks) { ks.filter(function (k) { return k.indexOf("vanbertos-") === 0; }).forEach(function (k) { caches.delete(k); }); });
+      } else {
+        window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+      }
+    }
+  </script>
+  <script src="phaser.min.js?v=20260921v82"></script>
+  <script type="module" src="dia-crianca.js?v=20260921v82"></script>
 </body>
 </html>

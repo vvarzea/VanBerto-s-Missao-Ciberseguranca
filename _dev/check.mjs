@@ -15,7 +15,7 @@ const isComment = l => /^\s*(\/\/|\/\*|\*)/.test(l);
 
 // 1) Uma única string ?v= em todo o lado (senão o mesmo módulo carrega duas vezes ou fica em cache velha)
 const stamps = new Map();
-for (const f of ["index.html", ...jsFiles]) for (const m of read(f).matchAll(/\?v=([A-Za-z0-9_]+)/g)) stamps.set(m[1], (stamps.get(m[1]) || 0) + 1);
+for (const f of ["index.html", ...jsFiles.filter(x => x !== "sw.js")]) for (const m of read(f).matchAll(/\?v=([A-Za-z0-9_]+)/g)) stamps.set(m[1], (stamps.get(m[1]) || 0) + 1);
 if (stamps.size !== 1) P(`Strings ?v= diferentes: ${[...stamps].map(([k, n]) => `${k}×${n}`).join(", ")}`);
 const stamp = [...stamps.keys()][0];
 if (stamp && !read("README.md").includes(stamp)) W(`README não menciona a versão atual (${stamp})`);
@@ -41,6 +41,23 @@ if (!bgFiles) P("BG_FILES não encontrado em dia-crianca.js");
 else for (const m of bgFiles[1].matchAll(/(bg_[a-z0-9_]+):\s*"([^"]+)"/g)) { bgKeys.add(m[1]); if (!exists(m[2])) P(`BG_FILES: ficheiro em falta ${m[2]}`); }
 const ov = /const LEVEL_BG_OVERRIDE = \{([\s\S]*?)\};/.exec(dc);
 if (ov) for (const m of ov[1].matchAll(/"(bg_[a-z0-9_]+)"/g)) if (!bgKeys.has(m[1])) P(`LEVEL_BG_OVERRIDE usa ${m[1]}, que não está em BG_FILES`);
+
+// 2b) Service worker: versão igual ao ?v= e núcleo completo (senão o modo offline falha em silêncio)
+if (!exists("sw.js")) P("Falta o sw.js (modo offline)");
+else {
+  const sw = read("sw.js");
+  const swVer = /const VERSION = "([^"]+)"/.exec(sw)?.[1];
+  if (swVer !== stamp) P(`sw.js: VERSION (${swVer}) é diferente da string ?v= (${stamp})`);
+  const coreBlock = /const CORE = \[([\s\S]*?)\];/.exec(sw);
+  const core = new Set([...(coreBlock ? coreBlock[1] : "").matchAll(/"([^"]+)"/g)].map(m => m[1]));
+  for (const f of core) if (f !== "./" && !exists(f)) P(`sw.js: ficheiro do núcleo em falta: ${f}`);
+  const need = new Set(["index.html", "manifest.json", ...jsFiles.filter(f => f !== "sw.js"), "dia-crianca.css", "phaser.min.js"]);
+  for (const m of html.matchAll(/(?:src|href)="([^"#?]+)/g)) if (!/^(https?:|data:)/.test(m[1])) need.add(m[1]);
+  for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) if (!/^(data:|#|%23)/.test(m[1]) && !/\.(jpg|jpeg)$/i.test(m[1])) need.add(m[1].split("?")[0]);
+  for (const i of manifest.icons || []) need.add(i.src.replace(/^\.?\//, ""));
+  for (const f of need) if (!core.has(f)) P(`sw.js: «${f}» é usado pelo jogo mas não está no núcleo do service worker`);
+  if (!/register\("sw\.js"\)/.test(html)) P("index.html não regista o sw.js");
+}
 
 // 3) Sem pedidos externos nos scripts (o jogo tem de funcionar só com os ficheiros do pacote)
 for (const f of jsFiles) read(f).split("\n").forEach((l, i) => {

@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v81";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260921v81";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v81";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v82";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260921v82";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v82";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v81";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v81";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v82";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v82";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v81";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v82";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v81";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v81";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v81";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v81";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v81";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v81";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v82";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v82";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v82";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v82";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v82";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v82";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v81";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v82";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -9457,12 +9457,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Uma só regra de medalhas para a Vitória e o Certificado (antes tinham limiares diferentes:
   // por exemplo, com 85% um dizia «Ouro» e o outro «Excelente» prateado).
-  function medalTier(pct) { return pct >= 100 ? "perfect" : pct >= 90 ? "gold" : pct >= 70 ? "silver" : "bronze"; }
+  function medalTier(pct) { return pct >= 100 ? "perfect" : pct >= 90 ? "gold" : pct >= 70 ? "silver" : pct >= 60 ? "bronze" : "improve"; }
   function medalTextWin(tier) {
-    return tier === "silver" ? "🥈 Prata — muito bem!" : tier === "bronze" ? "🥉 Bronze — missão concluída!" : "🥇 Ouro — excelente!";
+    return tier === "silver" ? "🥈 Prata — muito bem!" : tier === "bronze" ? "🥉 Bronze — missão concluída!"
+         : tier === "improve" ? "📚 Missão concluída — continua a treinar!" : "🥇 Ouro — excelente!";
   }
   function medalTextCert(tier) {
-    return tier === "perfect" ? "🥇 Perfeito" : tier === "gold" ? "🥇 Excelente" : tier === "silver" ? "🥈 Muito bom" : "🥉 Bom";
+    return tier === "perfect" ? "🥇 Perfeito" : tier === "gold" ? "🥇 Excelente" : tier === "silver" ? "🥈 Muito bom"
+         : tier === "bronze" ? "🥉 Bom" : "📚 A Melhorar";
   }
 
   // Ver comentário em globalStats.totalScoreEarned acima.

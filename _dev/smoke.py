@@ -18,8 +18,10 @@ BASE = f"http://127.0.0.1:{srv.server_address[1]}"
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 def new_page(browser, w=960, h=600, touch=False, reduced=False, route=None, errs=None, external=None):
+    # service_workers="block": estes testes interceptam pedidos com page.route, que não vê os pedidos tratados por um service worker.
+    # O service worker tem testes próprios (abaixo).
     ctx = browser.new_context(viewport={"width": w, "height": h}, has_touch=touch, is_mobile=touch,
-                              reduced_motion="reduce" if reduced else "no-preference")
+                              reduced_motion="reduce" if reduced else "no-preference", service_workers="block")
     pg = ctx.new_page()
     def default_route(r):
         if r.request.url.startswith(BASE): r.continue_()
@@ -53,6 +55,14 @@ def dismiss_cards(pg, rounds=6, wait=1100):
         if btn:
             try: btn.click(timeout=800)
             except Exception: pass
+
+def open_map(pg):
+    """Abre o Mapa e espera pela região atual (repete o clique se o menu ainda não estiver pronto)."""
+    for attempt in range(3):
+        pg.click("#btnOpenMap")
+        try: pg.wait_for_selector(".map-region--current", timeout=8000); return
+        except Exception:
+            if attempt == 2: raise
 
 TELEPORT_JS = """async()=>{ const s=window.__dc_game.scene.scenes[0], kids=s.children.list;
           const pl=kids.find(c=>c.texture&&c.texture.key==='vanberto_open'), door=kids.find(c=>/^door/.test((c.texture||{}).key||''));
@@ -118,8 +128,8 @@ with sync_playwright() as p:
         pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', JSON.stringify({map:{highestLevelReached:9, levelsCompleted:[0,1,2,3,4,5,6,7,8]}}))")
         pg.on("response", lambda r: imgs.append((time.time(), r.url.split("/")[-1].split("?")[0])) if ".jpg" in r.url else None)
         pg.goto(BASE + "/index.html", wait_until="networkidle")
-        pg.click("#btnOpenMap")   # «Mapa» (continua o progresso guardado; «Nova Aventura» recomeçava do nível 1)
-        pg.wait_for_selector(".map-region--current"); pg.click(".map-region--current")
+        open_map(pg)   # «Mapa» (continua o progresso guardado; «Nova Aventura» recomeçava do nível 1)
+        pg.click(".map-region--current")
         pg.wait_for_selector(".level-node--current"); mark = len(imgs); pg.click(".level-node--current")
         pg.wait_for_selector("canvas", timeout=20000); tc = time.time(); pg.wait_for_timeout(7000)
         new = imgs[mark:]; before = sorted(i[1] for i in new if i[0] <= tc); later = sorted(i[1] for i in new if i[0] > tc)
@@ -162,6 +172,36 @@ with sync_playwright() as p:
         assert "mundo2_n7.jpg" not in seen[2], f"pediu fundos a mais: {seen[2]}"
         assert not errs, errs[:3]; pg.context.close(); return f"até ao nível 4 só {len(seen[2])} imagens no total"
 
+    def open_victory(save):
+        """Abre o ecrã de Vitória com um jogo guardado à medida (globalStats/estrelas). Devolve (página, erros)."""
+        errs = []; pg = new_page(B, errs=errs)
+        pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        open_map(pg); pg.click(".map-region--current")
+        pg.wait_for_selector(".level-node--current"); pg.click(".level-node--current"); pg.wait_for_selector("canvas", timeout=15000)
+        dismiss_cards(pg, 5); pg.wait_for_timeout(800)
+        pg.evaluate("window.__vb_showVictory()")
+        for _ in range(30):   # o cartão do nível pode aparecer por cima da galeria; a galeria só mostra o botão no fim da animação
+            if pg.query_selector("#winOverlay:not(.hidden)"): break
+            for sel in ("#historyOverlay:not(.hidden) .btn.primary", "#btnAgContinue"):
+                b = pg.query_selector(sel)
+                if b and b.is_visible():
+                    try: b.click(timeout=700)
+                    except Exception: pass
+            pg.wait_for_timeout(800)
+        pg.wait_for_selector("#winOverlay:not(.hidden)", timeout=5000)
+        return pg, errs
+
+    def read_win_and_cert(pg):
+        txt = lambda sel: pg.evaluate("(s)=>document.querySelector(s).textContent.trim()", sel)
+        win = {"score": int(txt("#winScore")), "pct": txt("#winPct"), "medal": txt("#winMedal")}
+        pg.click("#btnWinCertificate"); pg.wait_for_selector("#certificateOverlay:not(.hidden)")
+        cert = {"score": int(txt("#certScore")), "pct": txt("#certCorrect"), "medal": txt("#certMedal")}
+        m = re.search(r"\((\d+)%\)|^(\d+)%", win["pct"]); win_pct = int(m.group(1) or m.group(2))
+        return win, cert, win_pct
+
+    MEDAL_PAIRS = {"Ouro": ("Perfeito", "Excelente"), "Prata": ("Muito bom",), "Bronze": ("Bom",), "continua a treinar": ("A Melhorar",)}
+
     @test("Vitória e Certificado: mesmos pontos, mesma percentagem, medalhas coerentes e erros de toda a aventura")
     def _():
         save = {"globalStats": {"quizTotal": 27, "quizCorrect": 17, "quizWrong": 10, "totalScoreEarned": 10225, "quizErrors": [
@@ -169,42 +209,87 @@ with sync_playwright() as p:
                     {"level": "Nível 7", "theme": "phishing", "q": "Como reconhecer phishing?", "wrong": "A", "correct": "B"},
                     {"level": "Nível 19", "theme": "direitos_digitais", "q": "O que são direitos digitais?", "wrong": "C", "correct": "D"}]},
                 "stars": {str(i): {"allItems": True, "noDamage": i < 14, "firstTry": i < 14} for i in range(20)}}
-        errs = []; pg = new_page(B, errs=errs)
-        pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
-        pg.goto(BASE + "/index.html", wait_until="networkidle")
-        pg.click("#btnOpenMap"); pg.wait_for_selector(".map-region--current"); pg.click(".map-region--current")
-        pg.wait_for_selector(".level-node--current"); pg.click(".level-node--current"); pg.wait_for_selector("canvas", timeout=15000)
-        dismiss_cards(pg, 5); pg.wait_for_timeout(800)
-        pg.evaluate("window.__vb_showVictory()")
-        for _ in range(12):
-            if pg.query_selector("#winOverlay:not(.hidden)"): break
-            btn = pg.query_selector(".overlay:not(.hidden) .btn.primary")
-            if btn:
-                try: btn.click(timeout=700)
-                except Exception: pass
-            pg.wait_for_timeout(900)
-        pg.wait_for_selector("#winOverlay:not(.hidden)", timeout=5000)
-        txt = lambda sel: pg.evaluate("(s)=>document.querySelector(s).textContent.trim()", sel)
-        win = {"score": int(txt("#winScore")), "pct": txt("#winPct"), "medal": txt("#winMedal")}
+        pg, errs = open_victory(save)
         rows = pg.evaluate("[...document.querySelectorAll('#winThemeTable tr')].slice(1).map(r=>parseInt(r.children[1].textContent))")
         btn_txt = pg.evaluate("document.getElementById('btnReviewMode').textContent.trim()")
         note = pg.evaluate("(document.getElementById('winErrorsNote')||{}).textContent||''")
         pg.click("#btnReviewMode"); pg.wait_for_selector("#reviewOverlay:not(.hidden)")
         n_review = pg.evaluate("document.querySelectorAll('#reviewList .review-question').length")
         pg.click("#btnCloseReview"); pg.wait_for_selector("#winOverlay:not(.hidden)")
-        pg.click("#btnWinCertificate"); pg.wait_for_selector("#certificateOverlay:not(.hidden)")
-        cert = {"score": int(txt("#certScore")), "pct": txt("#certCorrect"), "medal": txt("#certMedal")}
-        pct_win = re.search(r"\((\d+)%\)|^(\d+)%", win["pct"]); pct_win = int(pct_win.group(1) or pct_win.group(2))
+        win, cert, pct_win = read_win_and_cert(pg)
         assert win["score"] == cert["score"] >= 10225, f"pontos: vitória={win['score']} certificado={cert['score']}"
         assert f"{pct_win}%" == cert["pct"], f"percentagem: vitória={win['pct']} certificado={cert['pct']}"
         assert win["pct"] == "17/27 (63%)", f"fração esperada 17/27 (63%), veio {win['pct']}"
-        pairs = {"Ouro": ("Perfeito", "Excelente"), "Prata": ("Muito bom",), "Bronze": ("Bom",)}
-        w = next(k for k in pairs if k in win["medal"])
-        assert any(c in cert["medal"] for c in pairs[w]), f"medalhas incoerentes: {win['medal']} / {cert['medal']}"
+        w = next(k for k in MEDAL_PAIRS if k in win["medal"])
+        assert any(c in cert["medal"] for c in MEDAL_PAIRS[w]), f"medalhas incoerentes: {win['medal']} / {cert['medal']}"
         assert sum(rows) == 3 and btn_txt.startswith("📋 Ver 3 erros") and n_review == 3, f"erros: tabela={rows}, botão={btn_txt!r}, revisão={n_review}"
         assert "faltam 7 de 10" in note, f"nota sobre erros antigos: {note!r}"
         assert not errs, errs[:3]; pg.context.close()
         return f"{win['score']} pontos, {win['pct']}, {win['medal']} / {cert['medal']}; 3 erros listados + nota dos 7 anteriores"
+
+    @test("Vitória e Certificado com poucos acertos: «A Melhorar» nas duas telas")
+    def _():
+        save = {"globalStats": {"quizTotal": 27, "quizCorrect": 10, "quizWrong": 17, "totalScoreEarned": 3000, "quizErrors": []},
+                "stars": {str(i): {"allItems": True, "noDamage": False, "firstTry": i < 5} for i in range(20)}}
+        pg, errs = open_victory(save)
+        win, cert, pct_win = read_win_and_cert(pg)
+        assert f"{pct_win}%" == cert["pct"] and pct_win < 60, f"percentagens: vitória={win['pct']} certificado={cert['pct']}"
+        assert "continua a treinar" in win["medal"] and "A Melhorar" in cert["medal"], f"medalhas: {win['medal']} / {cert['medal']}"
+        assert win["score"] == cert["score"], f"pontos: {win['score']} / {cert['score']}"
+        assert not errs, errs[:3]; pg.context.close()
+        return f"{win['pct']} → {win['medal']} / {cert['medal']}"
+
+    CACHE_READY_JS = """async(name)=>{ await navigator.serviceWorker.ready;
+      for(let i=0;i<80;i++){ const ks=await caches.keys();
+        if(ks.length===1 && ks[0]===name){ const c=await caches.open(name); if((await c.keys()).length>=30) return ks; }
+        await new Promise(r=>setTimeout(r,500)); }
+      return await caches.keys(); }"""
+
+    @test("Offline: depois da 1.ª visita o jogo abre e arranca sem rede")
+    def _():
+        errs, failed = [], []
+        ctx = B.new_context(viewport={"width": 960, "height": 600}, service_workers="allow"); pg = ctx.new_page()
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        pg.on("requestfailed", lambda r: failed.append(r.url) if r.url.startswith(BASE) else None)
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        ks = pg.evaluate(CACHE_READY_JS, "vanbertos-" + STAMP)
+        assert ks == ["vanbertos-" + STAMP], f"cache do service worker: {ks}"
+        to_level1(pg); start_level(pg); pg.wait_for_selector("canvas", timeout=15000)
+        pg.wait_for_timeout(5000)                       # dá tempo aos fundos seguintes para ficarem em cache
+        ctx.set_offline(True)
+        to_level1(pg); start_level(pg); pg.wait_for_selector("canvas", timeout=15000); pg.wait_for_timeout(2500)
+        ok = pg.evaluate("({sw: !!navigator.serviceWorker.controller, phaser: typeof Phaser!=='undefined', font: document.fonts.check(\"800 20px 'Baloo 2'\"), bg: window.__dc_game.textures.exists('bg_mundo1_n1e2')})")
+        assert all(ok.values()), f"sem rede: {ok}"
+        assert not failed, f"pedidos locais falhados sem rede: {sorted(set(failed))[:4]}"
+        assert not errs, errs[:3]; ctx.close()
+        return "jogo carregado da cache, com fundo do nível 1 e sem pedidos falhados"
+
+    @test("Atualização: uma versão nova substitui a cache antiga e carrega os ficheiros novos")
+    def _():
+        import shutil, tempfile
+        tmp = pathlib.Path(tempfile.mkdtemp()); dst = tmp / "g"
+        shutil.copytree(ROOT, dst, ignore=shutil.ignore_patterns("_dev", "__pycache__"))
+        srv2 = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(dst)))
+        threading.Thread(target=srv2.serve_forever, daemon=True).start(); base2 = f"http://127.0.0.1:{srv2.server_address[1]}"
+        NEW = "TESTE" + str(len(STAMP)); errs = []  # não pode conter STAMP (senão os testes de «não há URLs antigos» enganam-se)
+        try:
+            ctx = B.new_context(service_workers="allow"); pg = ctx.new_page()
+            pg.on("pageerror", lambda e: errs.append(str(e)))
+            pg.goto(base2 + "/index.html", wait_until="networkidle")
+            ks = pg.evaluate(CACHE_READY_JS, "vanbertos-" + STAMP); assert ks == ["vanbertos-" + STAMP], f"antes: {ks}"
+            for f in dst.rglob("*"):                    # simula o release.py: nova string em todo o lado
+                if f.is_file() and f.suffix in (".html", ".js") and f.name != "phaser.min.js":
+                    s = f.read_text(encoding="utf8")
+                    if STAMP in s: f.write_text(s.replace(STAMP, NEW), encoding="utf8")
+            pg.reload(wait_until="networkidle")
+            ks = pg.evaluate(CACHE_READY_JS, "vanbertos-" + NEW); assert ks == ["vanbertos-" + NEW], f"depois: {ks}"
+            urls = pg.evaluate("performance.getEntriesByType('resource').map(r=>r.name)")
+            assert any("v=" + NEW in u for u in urls), "a página não carregou os ficheiros da versão nova"
+            assert not any("v=" + STAMP in u for u in urls), "a página ainda carregou ficheiros da versão antiga"
+            assert not errs, errs[:3]; ctx.close()
+        finally:
+            srv2.shutdown(); shutil.rmtree(tmp, ignore_errors=True)
+        return "cache antiga apagada, página com a versão nova"
 
     @test("Fundo em falta: se o 1.º pedido falhar, o jogo pede outra vez")
     def _():
