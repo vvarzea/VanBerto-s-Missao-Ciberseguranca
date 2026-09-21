@@ -2,7 +2,7 @@
 // Antes: 7 chaves separadas em localStorage (uma por sistema: som/alto contraste,
 // mapa, álbum de artefactos, estrelas, conquistas, estatísticas globais...),
 // cada uma com o seu próprio try/catch e sem qualquer versão.
-// Agora: UMA única chave "vanbertos_save_v2", com os dados de cada sistema
+// Agora: UMA única chave "vanbertos_ciberseguranca_save_v1", com os dados de cada sistema
 // guardados no seu próprio "namespace" dentro do mesmo objeto. Cada módulo
 // continua tão independente como antes — só troca localStorage.getItem/setItem
 // diretos por loadNamespace/saveNamespace.

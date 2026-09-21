@@ -46,7 +46,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `stars.js` | Estrelas por nível |
 | `achievements.js` | Conquistas |
 | `audio.js` | Som por síntese WebAudio (sem ficheiros de áudio) |
-| `storage.js` | Progresso guardado numa única chave de `localStorage` (`vanbertos_save_v2`) |
+| `storage.js` | Progresso guardado numa única chave de `localStorage` (`vanbertos_ciberseguranca_save_v1`) |
 | `vanberto_real.png` | Mascote usado fora do jogo — gerado a partir do desenho de `textures.js` |
 | `mundo*.jpg`, `map-mundo*.jpg`, `sala_secreta.jpg` | Fundos dos níveis e mapas dos mundos |
 | `manifest.json`, `icon-*.png`, `favicon*`, `apple-touch-icon.png` | Ícones e manifesto da app |
@@ -64,7 +64,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260921v80`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260921v81`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -77,19 +77,24 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
 - `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
-  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD e botões de fechar dos ecrãs do menu.
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu e coerência entre a Vitória e o Certificado.
 - `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
+
+O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
+partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, e depois
+`python3 _dev/release.py v82 descricao --no-smoke`.
 
 A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
 
 ## Carregamento dos fundos
 
 O Phaser só pede no arranque o fundo do nível em que o jogo começa e o da sala secreta (cerca de
-0,5 MB). Os restantes (`mundo*.jpg`) chegam em segundo plano, por ordem de nível, com 2 pedidos em
-paralelo; se um nível começar antes do seu fundo, mostra-se o céu desenhado e a ilustração entra
-assim que chegar (`setupBackgroundLoading` e `applyBackground` em `dia-crianca.js`). Um novo fundo
-tem de ser acrescentado a `LEVEL_BG_OVERRIDE` **e** a `BG_FILES`. As `map-mundo*.jpg` só são usadas
-no ecrã do mapa.
+0,5 MB). Sempre que um nível começa, pedem-se em segundo plano (2 pedidos em paralelo) os fundos
+dos 2 níveis seguintes com fundo diferente; por isso quem joga só uns níveis não descarrega o resto.
+Se um nível começar antes do seu fundo, mostra-se o céu desenhado e a ilustração entra assim que
+chegar (`prefetchBackgrounds`, `setupBackgroundLoading` e `applyBackground` em `dia-crianca.js`).
+Um novo fundo tem de ser acrescentado a `LEVEL_BG_OVERRIDE` **e** a `BG_FILES`. As `map-mundo*.jpg`
+só são usadas no ecrã do mapa.
 
 Com "reduzir movimento" ativo no sistema, o CSS desliga as animações e o jogo não faz abanões nem
 flashes de ecrã.
@@ -105,7 +110,7 @@ usam o 800.
 - **Phaser 3.90.0** — licença MIT (`LICENSE-Phaser.txt`).
 - **Baloo 2** e **Nunito** — SIL Open Font License 1.1 (`fonts/Baloo2-OFL.txt`, `fonts/Nunito-OFL.txt`).
 - **Dados pessoais**: o jogo não envia nada para servidores. O nome do jogador e o progresso ficam só
-  no `localStorage` do navegador (chave `vanbertos_save_v2`), sem cookies nem estatísticas, e
+  no `localStorage` do navegador (chave `vanbertos_ciberseguranca_save_v1`), sem cookies nem estatísticas, e
   "Limpar tudo" apaga-os. O servidor que aloja os ficheiros (por exemplo, o GitHub Pages) pode
   registar os pedidos, como qualquer site.
 

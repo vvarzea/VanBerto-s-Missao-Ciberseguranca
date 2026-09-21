@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v80";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260921v80";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v80";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v81";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260921v81";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v81";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v80";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v80";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v81";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v81";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v80";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v81";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v80";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v80";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v80";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v80";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v80";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v80";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v81";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v81";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v81";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v81";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v81";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v81";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v80";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v81";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -284,15 +284,16 @@ window.addEventListener("DOMContentLoaded", () => {
   // Preenche a lista #reviewList com as perguntas erradas da tentativa atual.
   let _reviewReturnOverlay = null; // overlay a repor ao fechar (ou null -> usa closeOverlay normal)
 
-  function populateReviewList() {
+  function populateReviewList(source = "attempt") {
     const reviewList = document.getElementById("reviewList");
     if (!reviewList) return;
     reviewList.innerHTML = "";
-    if (!quizStats.errors || quizStats.errors.length === 0) {
+    const errorList = source === "adventure" ? globalStats.quizErrors : quizStats.errors;
+    if (!errorList || errorList.length === 0) {
       reviewList.innerHTML = `<p style="text-align:center;color:#a0ffb0;font-size:14px;padding:20px 0;">🎉 Ainda não erraste nenhuma pergunta nesta tentativa. Continua assim!</p>`;
       return;
     }
-    quizStats.errors.forEach((e,i)=>{
+    errorList.forEach((e,i)=>{
       const pool=getQuizPool(e.theme)||[];
       const orig=pool.find(q=>q.q===e.q);
       const exp=orig?.exp||"";
@@ -315,8 +316,8 @@ window.addEventListener("DOMContentLoaded", () => {
   // quando o jogo já está numa tela de fim de tentativa. Se for null, usa o
   // sistema normal de overlays secundários (openOverlay/closeOverlay), para
   // acesso a meio do jogo (ex.: menu suspenso), que já trata da pausa da física.
-  function openReviewScreen(returnOverlayId = null) {
-    populateReviewList();
+  function openReviewScreen(returnOverlayId = null, source = "attempt") {
+    populateReviewList(source);
     _reviewReturnOverlay = returnOverlayId;
     if (returnOverlayId) {
       document.getElementById(returnOverlayId)?.classList.add("hidden");
@@ -326,14 +327,15 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
   window.__vb_openReview = () => openReviewScreen(null);
+  window.__vb_showVictory = () => showVictoryScreen(sceneRef); // usado pelo teste em _dev/smoke.py
 
-  function wireReviewButton(btnId, quizErrorsCount, labelSuffix, returnOverlayId) {
+  function wireReviewButton(btnId, quizErrorsCount, labelSuffix, returnOverlayId, source = "attempt") {
     const btn = document.getElementById(btnId);
     if (!btn) return;
     if (quizErrorsCount > 0) {
       btn.style.display = "block";
       btn.textContent = `📋 Ver ${quizErrorsCount} erro${quizErrorsCount>1?"s":""}${labelSuffix||""}`;
-      btn.onclick = () => openReviewScreen(returnOverlayId);
+      btn.onclick = () => openReviewScreen(returnOverlayId, source);
     } else {
       btn.style.display = "none";
     }
@@ -496,9 +498,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // ── Carregamento dos fundos (imagens grandes: ~4,5 MB no total) ────────────
   // Antes carregavam todas no arranque. Agora o preload() só pede o fundo do nível
   // em que o jogo arranca e o da sala secreta (os canos aparecem logo no nível 1);
-  // as restantes vêm depois, em segundo plano e pela ordem dos níveis. Se um nível
-  // começar antes do seu fundo chegar, applyBackground() mostra o céu desenhado e
-  // troca pela ilustração assim que ela chegar (ver setupBackgroundLoading).
+  // a cada nível que começa, pedem-se em segundo plano os fundos dos 2 níveis
+  // seguintes (BG_PREFETCH_AHEAD), para quem joga só uns níveis não gastar dados com
+  // o resto. Se um nível começar antes do seu fundo chegar, applyBackground() mostra
+  // o céu desenhado e troca pela ilustração assim que ela chegar.
   const BG_FILES = {
     bg_origens: "map-mundo1.jpg", bg_desenvolvimento: "map-mundo2.jpg",
     bg_protecao: "map-mundo3.jpg", bg_participacao: "map-mundo4.jpg", // só de reserva (ver bgKeyForLevel)
@@ -511,6 +514,8 @@ window.addEventListener("DOMContentLoaded", () => {
   let _bootLevelIdx = 0;          // nível em que o Phaser arranca (definido antes de initPhaser)
   const _bgRequested = new Set(); // fundos já pedidos depois do preload
   let _lastBg = null;             // último applyBackground, para repetir quando a imagem chegar
+  const BG_PREFETCH_AHEAD = 2;    // quantos fundos (distintos) à frente do nível atual se pedem
+  let _bgPrefetchTimer = null;
 
   function requestBg(scene, key) {
     if (!key || !BG_FILES[key] || scene.textures.exists(key) || _bgRequested.has(key)) return;
@@ -525,9 +530,21 @@ window.addEventListener("DOMContentLoaded", () => {
       if (_lastBg && _lastBg.scene === scene && _lastBg.args[3] === key) applyBackgroundRaw(scene, ..._lastBg.args);
     });
     scene.load.on("loaderror", (file) => { _bgRequested.delete(file.key); }); // permite tentar de novo mais tarde
-    // setTimeout (e não scene.time): o relógio da cena pára quando o jogo está em pausa/cartões de história.
-    setTimeout(() => {
-      for (let k = 0; k < 20; k++) requestBg(scene, LEVEL_BG_OVERRIDE[(_bootLevelIdx + k) % 20]);
+    prefetchBackgrounds(scene, _bootLevelIdx);
+  }
+
+  // Pede (em segundo plano) os fundos dos próximos BG_PREFETCH_AHEAD níveis com fundo diferente.
+  // Usa setTimeout (e não scene.time): o relógio da cena pára com o jogo em pausa/cartões de história.
+  function prefetchBackgrounds(scene, fromIdx) {
+    clearTimeout(_bgPrefetchTimer);
+    _bgPrefetchTimer = setTimeout(() => {
+      const seen = new Set([bgKeyForLevel(fromIdx)]);
+      let found = 0;
+      for (let i = fromIdx + 1; i < LEVELS.length && found < BG_PREFETCH_AHEAD; i++) {
+        const key = bgKeyForLevel(i);
+        if (!key || seen.has(key)) continue;
+        seen.add(key); found++; requestBg(scene, key);
+      }
     }, 1500);
   }
 
@@ -924,6 +941,7 @@ window.addEventListener("DOMContentLoaded", () => {
       globalStats.levelsCompleted = 0;
       globalStats.gamesPlayed = 0;
       globalStats.totalScoreEarned = 0;
+      globalStats.quizErrors = [];
       if (typeof saveGlobalStats === "function") saveGlobalStats();
     }
     // Preferência de som — mantém o comportamento anterior (reset também a apaga,
@@ -3598,6 +3616,7 @@ window.addEventListener("DOMContentLoaded", () => {
     collectedItemIndices=new Set();
     collectedRoomPipes=new Set();
     _hudDirty=true; updateHUD(L); applyBackground(scene,L.theme%THEMES.length,L.worldW,L.hazards||[],bgKeyForLevel(idx));
+    prefetchBackgrounds(scene, idx);
 
     L.platforms.forEach(p=>{
       const themeIdx = L.theme % THEMES.length;
@@ -8188,13 +8207,13 @@ window.addEventListener("DOMContentLoaded", () => {
       const _pctFromStars = Math.round((_firstTryLevels / LEVELS.length) * 100);
       const _pctFromGlobalStats = gTotal > 0 ? Math.round((gCorrect / gTotal) * 100) : 100;
       const pct = _allStars ? 100 : Math.min(_pctFromStars, _pctFromGlobalStats);
-      let medal="🥉 Bronze — missão concluída!";
-      if(pct>=70) medal="🥈 Prata — muito bem!";
-      if(pct>=90) medal="🥇 Ouro — excelente!";
-      const master=(pct>=100)?" 🌟 Defensor Perfeito da Cibersegurança!":"";
+      const _tier=medalTier(pct);
+      const medal=medalTextWin(_tier);
+      const master=(_tier==="perfect")?" 🌟 Defensor Perfeito da Cibersegurança!":"";
       document.getElementById("winPlayerName").textContent=playerName||"Ciber-Herói";
-      document.getElementById("winScore").textContent=score;
-      document.getElementById("winPct").textContent=(gTotal>0)?`${gCorrect}/${gTotal} (${pct}%)`:`${pct}%`;
+      document.getElementById("winScore").textContent=adventureScore();
+      // Só mostra a fração se a percentagem for a dela; se as estrelas mandarem (valor mais baixo), mostra só a percentagem — nunca «17/27 (50%)».
+      document.getElementById("winPct").textContent=(gTotal>0&&pct===_pctFromGlobalStats)?`${gCorrect}/${gTotal} (${pct}%)`:`${pct}%`;
       document.getElementById("winMedal").textContent=medal+master;
 
       // ── Tabela de temas com erros — aparece logo se existirem ───────
@@ -8212,7 +8231,12 @@ window.addEventListener("DOMContentLoaded", () => {
       };
       const winThemeErrors=document.getElementById("winThemeErrors");
       const winThemeTable=document.getElementById("winThemeTable");
-      const hasThemeErrors=Object.keys(quizStats.errorsByTheme||{}).length>0;
+      // Erros da aventura toda (registo persistente) — o mesmo âmbito de «17/27 (63%)» acima
+      const advErrors=globalStats.quizErrors||[];
+      const advByTheme={};
+      advErrors.forEach(e=>{ advByTheme[e.theme]=(advByTheme[e.theme]||0)+1; });
+      const missingErrors=Math.max(0,(globalStats.quizWrong||0)-advErrors.length);
+      const hasThemeErrors=advErrors.length>0;
       if(winThemeErrors&&winThemeTable){
         if(hasThemeErrors){
           winThemeErrors.style.display="block";
@@ -8220,7 +8244,7 @@ window.addEventListener("DOMContentLoaded", () => {
           const hdr=document.createElement("tr");
           hdr.innerHTML=`<th style="text-align:left;padding:3px 6px;border-bottom:1px solid rgba(255,215,0,0.3);color:#ffd700;font-size:11px;">Tema</th><th style="text-align:center;padding:3px 6px;border-bottom:1px solid rgba(255,215,0,0.3);color:#ffd700;font-size:11px;">Erros</th>`;
           winThemeTable.appendChild(hdr);
-          Object.entries(quizStats.errorsByTheme).sort((a,b)=>b[1]-a[1]).forEach(([theme,count])=>{
+          Object.entries(advByTheme).sort((a,b)=>b[1]-a[1]).forEach(([theme,count])=>{
             const tr=document.createElement("tr");
             const label=THEME_LABELS[theme]||theme;
             const bg=count>=3?"rgba(255,80,50,0.12)":count===2?"rgba(255,160,50,0.08)":"transparent";
@@ -8228,13 +8252,24 @@ window.addEventListener("DOMContentLoaded", () => {
             tr.innerHTML=`<td style="padding:5px 6px;background:${bg};border-radius:4px 0 0 4px;">${label}</td><td style="text-align:center;padding:5px 6px;background:${bg};font-weight:700;color:${col};border-radius:0 4px 4px 0;">${count}</td>`;
             winThemeTable.appendChild(tr);
           });
+        } else if(missingErrors>0){
+          winThemeErrors.style.display="block";
+          winThemeTable.innerHTML="";
         } else {
           winThemeErrors.style.display="none";
         }
+        // Erros anteriores a este registo (jogos guardados de versões antigas): diz-se com franqueza
+        let _note=document.getElementById("winErrorsNote");
+        if(!_note){
+          _note=document.createElement("p"); _note.id="winErrorsNote";
+          _note.style.cssText="font-size:11px;opacity:.75;margin:6px 0 0;text-align:center;";
+          winThemeErrors.appendChild(_note);
+        }
+        _note.textContent=missingErrors>0?`Só há detalhe dos erros feitos a partir desta versão: faltam ${missingErrors} de ${globalStats.quizWrong}.`:"";
       }
 
       // ── Botão "Ver erros" — visível apenas se houver erros ──────────
-      wireReviewButton("btnReviewMode", quizStats.errors?.length||0, "", "winOverlay");
+      wireReviewButton("btnReviewMode", advErrors.length, "", "winOverlay", "adventure");
       const btnCloseReview=document.getElementById("btnCloseReview");
       if(btnCloseReview){
         btnCloseReview.onclick=()=>{
@@ -8452,8 +8487,13 @@ window.addEventListener("DOMContentLoaded", () => {
           quizStats.errors=quizStats.errors||[];
           if(!isRetry) {
             const qTheme = _qTheme || "historia";
-            quizStats.errors.push({level:LEVELS[currentLevel]?.name||`Nível ${currentLevel+1}`,theme:qTheme,q:quiz.q,wrong:ans.t,correct:correct[0].t});
+            const _err = {level:LEVELS[currentLevel]?.name||`Nível ${currentLevel+1}`,theme:qTheme,q:quiz.q,wrong:ans.t,correct:correct[0].t};
+            quizStats.errors.push(_err);
             quizStats.errorsByTheme[qTheme] = (quizStats.errorsByTheme[qTheme]||0) + 1;
+            // Registo persistente: o relatório final mostra a aventura toda, não só a tentativa atual
+            globalStats.quizErrors.push(_err);
+            if (globalStats.quizErrors.length > QUIZ_ERRORS_MAX) globalStats.quizErrors.splice(0, globalStats.quizErrors.length - QUIZ_ERRORS_MAX);
+            saveGlobalStats();
           }
           if(quiz.exp){quizExplanation.textContent="💡 "+quiz.exp;quizExplanation.classList.remove("hidden");}
           const tip=QUIZ_TIPS[_qTheme]||"";
@@ -9363,6 +9403,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   // ===== ESTATÍSTICAS GLOBAIS — rastreio persistente =====
   // =====================================================
+  const QUIZ_ERRORS_MAX = 60; // limite do registo persistente de erros (≈15 KB no localStorage)
   let globalStats = {
     totalPlayTime: 0,        // segundos
     enemiesDefeated: 0,
@@ -9386,7 +9427,13 @@ window.addEventListener("DOMContentLoaded", () => {
     // reposto a 0 (ver flushScoreToStats(), chamada nesses mesmos sítios) —
     // exceto quando o reset é parte de um recomeço TOTAL (resetAllProgress,
     // que zera este campo também), onde não faria sentido preservá-lo.
-    totalScoreEarned: 0
+    totalScoreEarned: 0,
+    // Registo PERSISTENTE das perguntas falhadas à 1.ª tentativa (as últimas QUIZ_ERRORS_MAX).
+    // Antes só existia quizStats.errors, que é reposto a zero ao sair para o menu, ao tentar de
+    // novo depois de «Game Over», ao recomeçar o nível… — enquanto quizTotal/quizCorrect/quizWrong
+    // persistem. Resultado (print do Berto): o ecrã de Vitória dizia «17/27 (63%)» — ou seja, 10
+    // erros — mas o relatório listava só 1. O relatório final usa agora este registo.
+    quizErrors: []
   };
   let _statsSessionStart = Date.now();
 
@@ -9395,10 +9442,29 @@ window.addEventListener("DOMContentLoaded", () => {
     Object.keys(globalStats).forEach(k => {
       if (typeof d[k] === "number") globalStats[k] = d[k];
     });
+    if (Array.isArray(d.quizErrors)) {
+      globalStats.quizErrors = d.quizErrors
+        .filter(e => e && typeof e.q === "string" && typeof e.theme === "string")
+        .slice(-QUIZ_ERRORS_MAX);
+    }
   }
   function saveGlobalStats() {
     saveNamespace("globalStats", globalStats);
   }
+  // Pontos da aventura toda (o que já foi somado de tentativas anteriores + a tentativa atual).
+  // Usado no ecrã de Vitória E no Certificado, para nunca mostrarem números diferentes.
+  function adventureScore() { return globalStats.totalScoreEarned + score; }
+
+  // Uma só regra de medalhas para a Vitória e o Certificado (antes tinham limiares diferentes:
+  // por exemplo, com 85% um dizia «Ouro» e o outro «Excelente» prateado).
+  function medalTier(pct) { return pct >= 100 ? "perfect" : pct >= 90 ? "gold" : pct >= 70 ? "silver" : "bronze"; }
+  function medalTextWin(tier) {
+    return tier === "silver" ? "🥈 Prata — muito bem!" : tier === "bronze" ? "🥉 Bronze — missão concluída!" : "🥇 Ouro — excelente!";
+  }
+  function medalTextCert(tier) {
+    return tier === "perfect" ? "🥇 Perfeito" : tier === "gold" ? "🥇 Excelente" : tier === "silver" ? "🥈 Muito bom" : "🥉 Bom";
+  }
+
   // Ver comentário em globalStats.totalScoreEarned acima.
   function flushScoreToStats() {
     if (score > 0) {
@@ -9780,7 +9846,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // sempre os pontos da aventura toda, tal como já acontece com Estrelas
     // e Acertos.
     const certScore = document.getElementById("certScore");
-    if (certScore) certScore.textContent = globalStats.totalScoreEarned + score;
+    if (certScore) certScore.textContent = adventureScore();
 
     // Estrelas — fonte de verdade (persistente) para tudo o resto abaixo
     const earned = totalStarsEarned();
@@ -9826,7 +9892,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // Medalha
     const certMedal = document.getElementById("certMedal");
     if (certMedal) {
-      certMedal.textContent = allThreeStarsEverywhere ? "🥇 Perfeito" : pct >= 80 ? "🥈 Excelente" : pct >= 60 ? "🥉 Bom" : "📚 A Melhorar";
+      certMedal.textContent = medalTextCert(medalTier(pct));
     }
 
     // Estrelas

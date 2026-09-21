@@ -25,16 +25,18 @@ if not a.check_only:
     idx = (ROOT / "index.html").read_text(encoding="utf8")
     old = re.search(r"dia-crianca\.js\?v=([A-Za-z0-9_]+)", idx).group(1)
     new = datetime.date.today().strftime("%Y%m%d") + a.tag
-    if new == old: sys.exit(f"A versão {new} já está carimbada.")
     n = 0
     for f in ROOT.rglob("*"):
         if f.is_file() and f.suffix in TEXT_EXT and f.name != "phaser.min.js" and "_dev" not in f.parts:
             s = f.read_text(encoding="utf8")
-            if old in s: n += s.count(old); f.write_text(s.replace(old, new), encoding="utf8")
-    print(f"Carimbo {old} → {new} ({n} substituições)")
+            if new != old and old in s: n += s.count(old); f.write_text(s.replace(old, new), encoding="utf8")
+    print(f"Carimbo {old} → {new} ({n} substituições)" if new != old else f"Versão {new} já estava carimbada.")
 
 run(["node", str(DEV / "check.mjs")], "verificações estáticas")
-if not a.no_smoke: run([sys.executable, str(DEV / "smoke.py")], "teste de fumo (Chromium)")
+if not a.no_smoke:
+    # O teste completo demora ~5 min. Se o ambiente limitar o tempo por comando, corre-o por partes com
+    # `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"` etc. e depois `release.py <versão> --no-smoke`.
+    run([sys.executable, str(DEV / "smoke.py")], "teste de fumo (Chromium)")
 if a.check_only: sys.exit(0)
 
 out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
