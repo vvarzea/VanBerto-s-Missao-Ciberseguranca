@@ -82,6 +82,11 @@ def teleport_to_door(pg):
         except Exception:
             if attempt == 3: raise
 
+IMG_RE = re.compile(r"\.(?:jpg|webp)(?:\?|$)")
+def img_stem(url):
+    """Nome do ficheiro de imagem sem extensão (os testes valem para .jpg e para .webp)."""
+    return re.sub(r"\.(jpg|webp)$", "", url.split("/")[-1].split("?")[0])
+
 RESULTS = []
 def test(name):
     def deco(fn):
@@ -111,14 +116,14 @@ with sync_playwright() as p:
     @test("Carregamento: nível 1 arranca com 2 imagens e depois só pede os 2 fundos seguintes")
     def _():
         errs, imgs = [], []; pg = new_page(B, errs=errs)
-        pg.on("response", lambda r: imgs.append((time.time(), r.url.split("/")[-1].split("?")[0], int(r.headers.get("content-length", "0")))) if ".jpg" in r.url else None)
+        pg.on("response", lambda r: imgs.append((time.time(), img_stem(r.url), int(r.headers.get("content-length", "0")))) if IMG_RE.search(r.url) else None)
         to_level1(pg); mark = len(imgs); start_level(pg)
         pg.wait_for_selector("canvas", timeout=20000); tc = time.time(); pg.wait_for_timeout(7000)
         new = imgs[mark:]; before = [i for i in new if i[0] <= tc]; later = [i for i in new if i[0] > tc]
         kb = sum(i[2] for i in before) / 1024
         assert len(before) <= 3 and kb < 900, f"{len(before)} imagens / {kb:.0f} KB antes de jogar"
         names = sorted(i[1] for i in later)
-        assert names == ["mundo1_n3e4.jpg", "mundo1_n5.jpg"], f"em segundo plano deviam vir só os 2 fundos seguintes, vieram: {names}"
+        assert names == ["mundo1_n3e4", "mundo1_n5"], f"em segundo plano deviam vir só os 2 fundos seguintes, vieram: {names}"
         assert not errs, errs[:3]; pg.context.close()
         return f"{len(before)} imagens ({kb:.0f} KB) antes de jogar; {len(later)} depois"
 
@@ -126,15 +131,15 @@ with sync_playwright() as p:
     def _():
         errs, imgs = [], []; pg = new_page(B, errs=errs)
         pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', JSON.stringify({map:{highestLevelReached:9, levelsCompleted:[0,1,2,3,4,5,6,7,8]}}))")
-        pg.on("response", lambda r: imgs.append((time.time(), r.url.split("/")[-1].split("?")[0])) if ".jpg" in r.url else None)
+        pg.on("response", lambda r: imgs.append((time.time(), img_stem(r.url))) if IMG_RE.search(r.url) else None)
         pg.goto(BASE + "/index.html", wait_until="networkidle")
         open_map(pg)   # «Mapa» (continua o progresso guardado; «Nova Aventura» recomeçava do nível 1)
         pg.click(".map-region--current")
         pg.wait_for_selector(".level-node--current"); mark = len(imgs); pg.click(".level-node--current")
         pg.wait_for_selector("canvas", timeout=20000); tc = time.time(); pg.wait_for_timeout(7000)
         new = imgs[mark:]; before = sorted(i[1] for i in new if i[0] <= tc); later = sorted(i[1] for i in new if i[0] > tc)
-        assert before == ["mundo3_n10e11.jpg", "sala_secreta.jpg"], f"antes de jogar: {before}"
-        assert later == ["mundo3_n12e13.jpg", "mundo3_n14e15.jpg"], f"depois: {later}"
+        assert before == ["mundo3_n10e11", "sala_secreta"], f"antes de jogar: {before}"
+        assert later == ["mundo3_n12e13", "mundo3_n14e15"], f"depois: {later}"
         assert not errs, errs[:3]; pg.context.close(); return f"{before} e depois {later}"
 
     def complete_level(pg):
@@ -158,7 +163,7 @@ with sync_playwright() as p:
     @test("Progressão: cada nível que começa pede os fundos seguintes (o do mundo 2 só ao chegar ao nível 3)")
     def _():
         errs, imgs = [], []; pg = new_page(B, errs=errs)
-        pg.on("response", lambda r: imgs.append(r.url.split("/")[-1].split("?")[0]) if ".jpg" in r.url and "/map-" not in r.url else None)
+        pg.on("response", lambda r: imgs.append(img_stem(r.url)) if IMG_RE.search(r.url) and "/map-" not in r.url else None)
         to_level1(pg); start_level(pg); pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 5)
         seen = []
         for n in (1, 2, 3):
@@ -167,9 +172,9 @@ with sync_playwright() as p:
             pg.click(".level-node--current"); pg.wait_for_selector("canvas"); dismiss_cards(pg, 6); pg.wait_for_timeout(2500)
             seen.append(sorted(set(imgs)))
         # seen[0] = com o nível 2 a começar, seen[1] = nível 3, seen[2] = nível 4
-        assert "mundo2_n6.jpg" not in seen[0], f"pediu o fundo do mundo 2 cedo demais: {seen[0]}"
-        assert "mundo2_n6.jpg" in seen[1], f"não pediu o fundo seguinte ao chegar ao nível 3: {seen[1]}"
-        assert "mundo2_n7.jpg" not in seen[2], f"pediu fundos a mais: {seen[2]}"
+        assert "mundo2_n6" not in seen[0], f"pediu o fundo do mundo 2 cedo demais: {seen[0]}"
+        assert "mundo2_n6" in seen[1], f"não pediu o fundo seguinte ao chegar ao nível 3: {seen[1]}"
+        assert "mundo2_n7" not in seen[2], f"pediu fundos a mais: {seen[2]}"
         assert not errs, errs[:3]; pg.context.close(); return f"até ao nível 4 só {len(seen[2])} imagens no total"
 
     def open_victory(save):
@@ -297,7 +302,7 @@ with sync_playwright() as p:
         def route(r):
             u = r.request.url
             if not u.startswith(BASE): return r.abort()
-            if u.split("?")[0].endswith("/mundo1_n1e2.jpg"):
+            if re.search(r"/mundo1_n1e2\.(jpg|webp)$", u.split("?")[0]):
                 hits["n"] += 1
                 if hits["n"] == 1: return r.abort()
             r.continue_()
@@ -364,6 +369,17 @@ with sync_playwright() as p:
             if r["menu"] or r["hud"]: bad.append(f"{name}: menu={r['menu']} hud={r['hud']}")
             pg.context.close()
         assert not bad, "; ".join(bad); return "4 tamanhos de ecrã sem sobreposição"
+
+    @test("Menu inicial: cabe inteiro, sem scroll, em ecrãs de portátil e telemóvel na horizontal")
+    def _():
+        bad = []
+        for w, h, touch in [(960, 600, False), (1024, 600, False), (1280, 680, False), (1280, 720, False), (1366, 768, False), (844, 390, True), (667, 375, True)]:
+            pg = new_page(B, w, h, touch); pg.goto(BASE + "/index.html", wait_until="networkidle"); pg.wait_for_timeout(300)
+            r = pg.evaluate("()=>{const c=document.querySelector('#startOverlay .card'); return c.scrollHeight - c.clientHeight}")
+            if r > 1: bad.append(f"{w}x{h} (+{r}px)")
+            pg.context.close()
+        assert not bad, "o cartão do menu tem scroll em: " + ", ".join(bad)
+        return "7 tamanhos sem scroll"
 
     @test("Ecrãs do menu: o botão de fechar fica sempre à vista")
     def _():

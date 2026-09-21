@@ -3072,3 +3072,30 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
 }
 #howOverlay .card { overflow-x: hidden; }
 #howOverlay .card > #btnCloseHow { position: sticky; bottom: -8px; z-index: 2; box-shadow: 0 14px 0 0 #14052e, 0 -12px 14px -8px #14052e; }
+
+/* Menu inicial em ecrãs de portátil pouco altos: compacta espaçamentos e botões para o cartão caber
+   inteiro, sem scroll (antes, em 960×600 faltavam ~135 px e em 1280×720 uns 15 px). Dois níveis, para
+   quem tem mais altura ficar com um aspeto o mais próximo possível do original. O telemóvel na
+   horizontal (≤520 px) tem o seu próprio esquema mais acima. */
+@media (min-height: 521px) and (max-height: 670px) {
+  #startOverlay .card { padding: 12px 22px 10px; }
+  #startOverlay .card h1 { font-size: 20px; margin-bottom: 2px; }
+  #startOverlay .sub { font-size: 12.5px; margin: 0 0 3px; }
+  #startOverlay .desc { font-size: 12px; line-height: 1.4; margin: 3px 0 2px; }
+  #startOverlay .name-row { margin: 6px 0 0; }
+  #startOverlay .name-row input { padding: 5px 10px; }
+  #startOverlay .main-menu-grid { gap: 6px; margin: 8px 0 2px; }
+  #startOverlay .menu-tile { min-height: 52px; padding: 6px 4px; font-size: 20px; gap: 2px; }
+  #startOverlay .menu-tile span { font-size: 10.5px; }
+  #startOverlay .menu-tile.primary { min-height: 46px; }
+  #startOverlay .row { margin-top: 6px; gap: 6px; }
+  #startOverlay .row .btn { padding: 5px 10px; }
+  #startOverlay .tiny { margin-top: 4px; font-size: 10px; }
+}
+@media (min-height: 671px) and (max-height: 750px) {
+  #startOverlay .card { padding: 14px 24px 12px; }
+  #startOverlay .desc { font-size: 12.5px; line-height: 1.45; margin: 4px 0 2px; }
+  #startOverlay .main-menu-grid { gap: 7px; margin: 10px 0 2px; }
+  #startOverlay .menu-tile { min-height: 58px; padding: 8px 4px; }
+  #startOverlay .menu-tile.primary { min-height: 52px; }
+}
