@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v79";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260921v79";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v79";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v80";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260921v80";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v80";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v79";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v79";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v80";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v80";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v79";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v80";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v79";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v79";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v79";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v79";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v79";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v79";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v80";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v80";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v80";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v80";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v80";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v80";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v79";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v80";
 
 window.addEventListener("DOMContentLoaded", () => {
 

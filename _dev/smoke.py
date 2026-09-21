@@ -166,6 +166,23 @@ with sync_playwright() as p:
             pg.context.close()
         assert not bad, "; ".join(bad); return "4 tamanhos de ecrã sem sobreposição"
 
+    @test("Ecrãs do menu: o botão de fechar fica sempre à vista")
+    def _():
+        tiles = [("Mapa", "#btnOpenMap", "#btnCloseMap"), ("Conquistas", "#btnAchievements", "#btnCloseAchievements"),
+                 ("Álbum", "#btnAlbum", "#btnCloseAlbum"), ("Estatísticas", "#btnStats", "#btnCloseStats"),
+                 ("Opções", "#btnOptions", "#btnCloseOptions"), ("Como Jogar", "#btnHow", "#btnCloseHow")]
+        bad = []
+        for vname, w, h, touch in [("960x600", 960, 600, False), ("844x390", 844, 390, True), ("667x375", 667, 375, True)]:
+            for tname, tile, close in tiles:
+                pg = new_page(B, w, h, touch); pg.goto(BASE + "/index.html", wait_until="networkidle")
+                pg.click(tile); pg.wait_for_timeout(600)
+                r = pg.evaluate("""(sel)=>{const b=document.querySelector(sel).getBoundingClientRect();
+                  return b.top>=0 && b.bottom<=innerHeight}""", close)
+                if not r: bad.append(f"{tname}@{vname}")
+                pg.context.close()
+        assert not bad, "botão de fechar fora do ecrã: " + ", ".join(bad)
+        return "6 ecrãs x 3 tamanhos"
+
     B.close()
 
 srv.shutdown()

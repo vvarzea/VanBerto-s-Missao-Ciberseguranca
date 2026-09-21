@@ -3053,3 +3053,22 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
 @media (max-height: 520px) {
   #playerNameHtml { font-size: 14px !important; padding: 3px 8px !important; max-width: 34vw; }
 }
+
+/* Estatísticas: o título, a nota e os botões ficam sempre visíveis; só a lista desliza */
+#statsOverlay .card { display: flex; flex-direction: column; overflow: hidden; }
+#statsOverlay .stats-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; }
+#statsOverlay .stats-note, #statsOverlay .row { flex: 0 0 auto; }
+
+/* Ecrãs com muito conteúdo (Mapa, Conquistas, Álbum, Opções, Como Jogar): a linha dos botões
+   (Fechar, Guardar e Fechar…) fica sempre visível no fundo do cartão; só o resto desliza. */
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card { overflow-x: hidden; }
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card > .row:last-child {
+  position: sticky; bottom: -16px; z-index: 2; /* -16px = padding inferior do cartão: cola-se à borda */
+  margin-bottom: -16px; padding: 8px 0 14px;
+}
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card > .row:last-child::before {
+  content: ""; position: absolute; z-index: -1; left: -40px; right: -40px; top: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(20,5,46,0) 0%, #14052e 40%);
+}
+#howOverlay .card { overflow-x: hidden; }
+#howOverlay .card > #btnCloseHow { position: sticky; bottom: -8px; z-index: 2; box-shadow: 0 14px 0 0 #14052e, 0 -12px 14px -8px #14052e; }
