@@ -424,6 +424,27 @@ with sync_playwright() as p:
         assert not r["overlap"], "a secção «Jogar sem rede» sobrepõe-se ao rodapé fixo"
         pg.context.close(); return "sem sobreposição"
 
+    @test("Menu inicial: em telemóvel na vertical, nenhum botão fica maior do que devia (item solto na grelha)")
+    def _():
+        bad = []
+        for w, h in [(360, 780), (375, 812), (393, 851), (412, 915), (430, 932)]:
+            pg = new_page(B, w, h, touch=True); pg.goto(BASE + "/index.html", wait_until="networkidle"); pg.wait_for_timeout(300)
+            r = pg.evaluate("""()=>{const g=document.querySelector('.main-menu-grid'); const kids=[...g.children].filter(k=>!k.classList.contains('primary'));
+              const widths=kids.map(k=>Math.round(k.getBoundingClientRect().width)); const maxW=Math.max(...widths), minW=Math.min(...widths);
+              return {maxW, minW, cardW:Math.round(document.querySelector('#startOverlay .card').getBoundingClientRect().width)}}""")
+            if r["maxW"] - r["minW"] > 4 or r["maxW"] > r["cardW"] * 0.7:
+                bad.append(f"{w}x{h} (tiles entre {r['minW']} e {r['maxW']}px, cartão {r['cardW']}px)")
+            pg.context.close()
+        assert not bad, "botão(ões) fora do tamanho esperado: " + "; ".join(bad)
+        return "5 larguras de telemóvel, todos os botões do mesmo tamanho"
+
+    @test("Etiqueta de versão: visível no menu inicial e igual à string ?v= publicada")
+    def _():
+        pg = new_page(B); pg.goto(BASE + "/index.html", wait_until="networkidle")
+        txt = pg.evaluate("document.getElementById('versionTag')?.textContent || ''")
+        assert STAMP in txt, f"etiqueta de versão {txt!r} não contém {STAMP!r}"
+        pg.context.close(); return txt
+
     @test("Menu inicial: cabe inteiro, sem scroll, em ecrãs de portátil e telemóvel na horizontal")
     def _():
         bad = []

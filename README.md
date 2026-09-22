@@ -65,7 +65,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260922v86`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260922v87`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -78,7 +78,7 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
 - `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
-  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline (automático e «Guardar tudo»), atualização do service worker, menu inicial sem scroll e o ecrã de erro inesperado.
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline (automático e «Guardar tudo»), atualização do service worker, menu inicial sem scroll, sem botões soltos na grelha em telemóvel, etiqueta de versão e o ecrã de erro inesperado.
 - `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
 
 O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
@@ -86,6 +86,13 @@ partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, 
 `python3 _dev/release.py v82 descricao --no-smoke`.
 
 A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
+
+## Etiqueta de versão
+
+No fim do menu inicial, em letra pequena e discreta, aparece "Versão <string>" — a mesma do `?v=`.
+Serve para, ao receber um print de um problema, saber logo se é a versão mais recente ou uma mais
+antiga ainda por atualizar no sítio onde está publicado. `_dev/release.py` já a atualiza sozinho,
+como o resto do `?v=`; `_dev/check.mjs` recusa a versão se a etiqueta ficar desatualizada.
 
 ## Erro inesperado
 

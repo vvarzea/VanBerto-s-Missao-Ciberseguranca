@@ -71,6 +71,9 @@ if (!/addEventListener\("error"/.test(html) || !/addEventListener\("unhandledrej
   if (posErr < 0 || posPhaser < 0 || posErr > posPhaser) P("index.html: a rede de segurança de erros tem de vir ANTES do <script> do Phaser");
 }
 
+// 2d) Etiqueta de versão visível no menu (para diagnosticar screenshots — "que versão é esta?")
+if (!html.includes(`id="versionTag"`) || !html.includes(`Versão ${stamp}`)) P(`index.html: a etiqueta de versão não mostra a versão atual (${stamp})`);
+
 // 3) Sem pedidos externos nos scripts (o jogo tem de funcionar só com os ficheiros do pacote)
 for (const f of jsFiles) read(f).split("\n").forEach((l, i) => {
   if (isComment(l)) return;
