@@ -65,7 +65,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260922v85`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260922v86`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -78,7 +78,7 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
 - `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
-  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline (automático e «Guardar tudo»), atualização do service worker e menu inicial sem scroll.
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline (automático e «Guardar tudo»), atualização do service worker, menu inicial sem scroll e o ecrã de erro inesperado.
 - `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
 
 O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
@@ -86,6 +86,17 @@ partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, 
 `python3 _dev/release.py v82 descricao --no-smoke`.
 
 A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
+
+## Erro inesperado
+
+Um pequeno script logo no `<body>`, antes de qualquer outro (Phaser incluído), apanha qualquer erro
+não tratado (`window.onerror` e `unhandledrejection`) e mostra um ecrã simples — "Ups, algo correu
+mal!" — com um botão para recarregar. O progresso já estava guardado (o jogo grava a cada ação, não
+só no fim), por isso recarregar não perde nada. Fica sempre visível uma linha pequena com a mensagem
+técnica do erro, para conseguires perceber o que aconteceu sem abrir as ferramentas de programador.
+Só aparece uma vez por sessão, mesmo que hajam vários erros seguidos.
+
+Para testar: abrir a consola do browser e escrever `window.__vb_triggerFatalError()`.
 
 ## Modo offline
 

@@ -322,6 +322,24 @@ with sync_playwright() as p:
         assert not errs, errs[:3]; ctx.close()
         return "18 fundos guardados; nível 20 (nunca jogado) tem fundo mesmo sem rede"
 
+    @test("Erro inesperado: mostra a rede de segurança, sem perder o progresso guardado")
+    def _():
+        pg = new_page(B)  # SEM errs=[] de propósito: um erro é esperado aqui, não é para falhar o teste
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        pg.fill("#playerName", "Zé"); pg.press("#playerName", "Enter")
+        pg.wait_for_selector("#btnDiffFacil"); pg.click("#btnDiffFacil")  # progresso: dificuldade escolhida, guardada no localStorage
+        assert not pg.is_visible("#fatalErrorOverlay"), "a rede de segurança já estava visível antes de haver erro"
+        pg.evaluate("window.__vb_triggerFatalError()")
+        pg.wait_for_selector("#fatalErrorOverlay", state="visible", timeout=3000)
+        assert "Ups" in pg.evaluate("document.getElementById('fatalErrorOverlay').textContent")
+        before = pg.evaluate("localStorage.getItem('vanbertos_ciberseguranca_save_v1')")
+        assert before and "facil" in before, f"o progresso não estava guardado antes de recarregar: {before!r}"
+        pg.click("#btnFatalReload"); pg.wait_for_load_state("networkidle")
+        assert not pg.is_visible("#fatalErrorOverlay"), "a rede de segurança ficou visível depois de recarregar, sem novo erro"
+        after = pg.evaluate("localStorage.getItem('vanbertos_ciberseguranca_save_v1')")
+        assert after == before, "o progresso mudou só por ter recarregado depois de um erro"
+        pg.context.close(); return "overlay apareceu, «Recarregar» funcionou e o progresso manteve-se"
+
     @test("Fundo em falta: se o 1.º pedido falhar, o jogo pede outra vez")
     def _():
         hits = {"n": 0}
