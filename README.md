@@ -34,7 +34,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `phaser.min.js` | Phaser **3.90.0** minificado, servido localmente (sem CDN) |
 | `sw.js` | Service worker: modo offline (guarda o jogo na 1.ª visita; uma cache por versão) |
 | `LICENSE-Phaser.txt` | Licença MIT do Phaser (obrigatória ao distribuir o `phaser.min.js`) |
-| `_dev/` | Ferramentas de desenvolvimento (verificações, teste no Chromium, script de lançamento, conversor de fundos) e os JPG originais dos fundos (`_dev/originais/`). Não são necessárias no site publicado |
+| `_dev/` | Ferramentas de desenvolvimento (verificações, teste no Chromium, script de lançamento). Não são necessárias no site publicado |
 | `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 166 perguntas, 4 opções) —, curiosidades e artigos |
 | `data-levels.js` | `THEMES` e `LEVELS` (definição dos 20 níveis) |
 | `data-bosses.js` | Definição dos bosses e das suas arenas |
@@ -49,7 +49,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `audio.js` | Som por síntese WebAudio (sem ficheiros de áudio) |
 | `storage.js` | Progresso guardado numa única chave de `localStorage` (`vanbertos_ciberseguranca_save_v1`) |
 | `vanberto_real.png` | Mascote usado fora do jogo — gerado a partir do desenho de `textures.js` |
-| `mundo*.webp`, `map-mundo*.webp`, `sala_secreta.webp` | Fundos dos níveis e mapas dos mundos |
+| `mundo*.jpg`, `map-mundo*.jpg`, `sala_secreta.jpg` | Fundos dos níveis e mapas dos mundos |
 | `manifest.json`, `icon-*.png`, `favicon*`, `apple-touch-icon.png` | Ícones e manifesto da app |
 
 ## Correr localmente
@@ -65,7 +65,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260921v84`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260921v83`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -102,14 +102,6 @@ não houver rede. Só funciona em `https://` ou `localhost`.
 - Para desligar o modo offline num dispositivo: abrir o jogo com `?nosw` no endereço (desregista o
   service worker e apaga as caches).
 
-## Fundos em WebP
-
-Os fundos e mapas (`mundo*.webp`, `map-mundo*.webp`, `sala_secreta.webp`) estão em WebP com qualidade 85
-(3,35 MB no total, contra 4,82 MB em JPG, menos 31%). Os JPG originais ficam em `_dev/originais/`.
-`python3 _dev/converter_fundos.py --quality 85` converte e atualiza as referências (`BG_FILES`,
-`data-progression.js`, README); `--reverter` volta aos JPG. Um fundo novo deve acrescentar-se em JPG à
-pasta e passar pelo conversor.
-
 ## Carregamento dos fundos
 
 O Phaser só pede no arranque o fundo do nível em que o jogo começa e o da sala secreta (cerca de
@@ -117,7 +109,7 @@ O Phaser só pede no arranque o fundo do nível em que o jogo começa e o da sal
 dos 2 níveis seguintes com fundo diferente; por isso quem joga só uns níveis não descarrega o resto.
 Se um nível começar antes do seu fundo, mostra-se o céu desenhado e a ilustração entra assim que
 chegar (`prefetchBackgrounds`, `setupBackgroundLoading` e `applyBackground` em `dia-crianca.js`).
-Um novo fundo tem de ser acrescentado a `LEVEL_BG_OVERRIDE` **e** a `BG_FILES`. As `map-mundo*.webp`
+Um novo fundo tem de ser acrescentado a `LEVEL_BG_OVERRIDE` **e** a `BG_FILES`. As `map-mundo*.jpg`
 só são usadas no ecrã do mapa.
 
 Com "reduzir movimento" ativo no sistema, o CSS desliga as animações e o jogo não faz abanões nem

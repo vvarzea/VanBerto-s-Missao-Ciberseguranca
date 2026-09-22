@@ -53,7 +53,7 @@ else {
   for (const f of core) if (f !== "./" && !exists(f)) P(`sw.js: ficheiro do núcleo em falta: ${f}`);
   const need = new Set(["index.html", "manifest.json", ...jsFiles.filter(f => f !== "sw.js"), "dia-crianca.css", "phaser.min.js"]);
   for (const m of html.matchAll(/(?:src|href)="([^"#?]+)/g)) if (!/^(https?:|data:)/.test(m[1])) need.add(m[1]);
-  for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) if (!/^(data:|#|%23)/.test(m[1]) && !/\.(jpg|jpeg|webp)$/i.test(m[1])) need.add(m[1].split("?")[0]);
+  for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) if (!/^(data:|#|%23)/.test(m[1]) && !/\.(jpg|jpeg)$/i.test(m[1])) need.add(m[1].split("?")[0]);
   for (const i of manifest.icons || []) need.add(i.src.replace(/^\.?\//, ""));
   for (const f of need) if (!core.has(f)) P(`sw.js: «${f}» é usado pelo jogo mas não está no núcleo do service worker`);
   if (!/register\("sw\.js"\)/.test(html)) P("index.html não regista o sw.js");

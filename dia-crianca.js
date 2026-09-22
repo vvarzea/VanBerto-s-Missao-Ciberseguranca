@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v84";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260921v84";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v84";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v83";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260921v83";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v83";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v84";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v84";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v83";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v83";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v84";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v83";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v84";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v84";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v84";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v84";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v84";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v84";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v83";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v83";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v83";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v83";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v83";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v83";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v84";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v83";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -503,13 +503,13 @@ window.addEventListener("DOMContentLoaded", () => {
   // o resto. Se um nível começar antes do seu fundo chegar, applyBackground() mostra
   // o céu desenhado e troca pela ilustração assim que ela chegar.
   const BG_FILES = {
-    bg_origens: "map-mundo1.webp", bg_desenvolvimento: "map-mundo2.webp",
-    bg_protecao: "map-mundo3.webp", bg_participacao: "map-mundo4.webp", // só de reserva (ver bgKeyForLevel)
-    bg_mundo1_n1e2: "mundo1_n1e2.webp", bg_mundo1_n3e4: "mundo1_n3e4.webp", bg_mundo1_n5: "mundo1_n5.webp",
-    bg_mundo2_n6: "mundo2_n6.webp", bg_mundo2_n7: "mundo2_n7.webp", bg_mundo2_n8: "mundo2_n8.webp", bg_mundo2_n9: "mundo2_n9.webp",
-    bg_mundo3_n10e11: "mundo3_n10e11.webp", bg_mundo3_n12e13: "mundo3_n12e13.webp", bg_mundo3_n14e15: "mundo3_n14e15.webp",
-    bg_mundo4_n16e17: "mundo4_n16e17.webp", bg_mundo4_n18e19: "mundo4_n18e19.webp", bg_mundo4_n20: "mundo4_n20.webp",
-    bg_sala_secreta: "sala_secreta.webp"
+    bg_origens: "map-mundo1.jpg", bg_desenvolvimento: "map-mundo2.jpg",
+    bg_protecao: "map-mundo3.jpg", bg_participacao: "map-mundo4.jpg", // só de reserva (ver bgKeyForLevel)
+    bg_mundo1_n1e2: "mundo1_n1e2.jpg", bg_mundo1_n3e4: "mundo1_n3e4.jpg", bg_mundo1_n5: "mundo1_n5.jpg",
+    bg_mundo2_n6: "mundo2_n6.jpg", bg_mundo2_n7: "mundo2_n7.jpg", bg_mundo2_n8: "mundo2_n8.jpg", bg_mundo2_n9: "mundo2_n9.jpg",
+    bg_mundo3_n10e11: "mundo3_n10e11.jpg", bg_mundo3_n12e13: "mundo3_n12e13.jpg", bg_mundo3_n14e15: "mundo3_n14e15.jpg",
+    bg_mundo4_n16e17: "mundo4_n16e17.jpg", bg_mundo4_n18e19: "mundo4_n18e19.jpg", bg_mundo4_n20: "mundo4_n20.jpg",
+    bg_sala_secreta: "sala_secreta.jpg"
   };
   let _bootLevelIdx = 0;          // nível em que o Phaser arranca (definido antes de initPhaser)
   const _bgRequested = new Set(); // fundos já pedidos depois do preload
