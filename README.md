@@ -65,7 +65,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260921v84`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260922v85`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -78,7 +78,7 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
 - `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
-  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline e atualização do service worker.
+  carregamento dos fundos, quiz Fácil e Difícil, movimento reduzido, HUD, botões de fechar dos ecrãs do menu, coerência entre a Vitória e o Certificado, modo offline (automático e «Guardar tudo»), atualização do service worker e menu inicial sem scroll.
 - `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
 
 O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
@@ -88,6 +88,15 @@ partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, 
 A pasta `_dev/` não é necessária no site (o GitHub Pages, com Jekyll, ignora pastas que começam por `_`).
 
 ## Modo offline
+
+### Guardar tudo (botão em Opções)
+
+Em Opções, com o service worker ativo, aparece "📶 Jogar sem rede" → "⬇️ Guardar tudo": descarrega
+os 18 fundos de uma vez (channel `sw.js` → `CACHE_ALL` / `CACHE_ALL_PROGRESS` / `CACHE_ALL_DONE`), com
+uma barra de progresso em texto. Serve para preparar tablets numa escola, com Wi-Fi, antes de uma aula
+sem rede. Sem isto, só ficam em cache os níveis por onde se passou (ver "Carregamento dos fundos").
+
+### O resto (automático)
 
 Na 1.ª visita o `sw.js` guarda o núcleo do jogo (páginas, scripts, estilos, Phaser, fontes e ícones,
 cerca de 2 MB). As imagens dos fundos guardam-se à medida que o jogo as pede: sem rede, os níveis já

@@ -4,7 +4,7 @@
 //    jogados têm fundo; os outros mostram o céu desenhado (o jogo já lida com isso em applyBackground).
 //  • Cada versão tem a sua própria cache, por isso nunca se misturam ficheiros de versões diferentes.
 // VERSION é carimbada pelo _dev/release.py e tem de ser igual à string ?v= do index.html (o check.mjs verifica).
-const VERSION = "20260921v84";
+const VERSION = "20260922v85";
 const CACHE = "vanbertos-" + VERSION;
 
 // Ficheiros do núcleo. Os .js e .css pedem-se com ?v=VERSION, como no index.html e nos imports.
@@ -72,6 +72,30 @@ async function assetRequest(req) {
     return Response.error();
   }
 }
+
+// Descarregar TUDO de propósito (botão "Guardar para jogar sem rede", em Opções): o cliente envia
+// a lista de fundos (dia-crianca.js sabe-a — BG_FILES) por uma MessageChannel e o service worker
+// vai buscando e guardando cada um, respondendo o progresso à medida que avança.
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "CACHE_ALL") return;
+  const port = event.ports[0];
+  const files = event.data.files || [];
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    let done = 0, failed = [];
+    for (const f of files) {
+      try {
+        if (!(await cache.match(f))) {
+          const res = await fetch(f);
+          if (res && res.ok) await cache.put(f, res.clone()); else failed.push(f);
+        }
+      } catch (e) { failed.push(f); }
+      done++;
+      port?.postMessage({ type: "CACHE_ALL_PROGRESS", done, total: files.length });
+    }
+    port?.postMessage({ type: "CACHE_ALL_DONE", failed });
+  })());
+});
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;

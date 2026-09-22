@@ -58,6 +58,10 @@ else {
   for (const f of need) if (!core.has(f)) P(`sw.js: «${f}» é usado pelo jogo mas não está no núcleo do service worker`);
   if (!/register\("sw\.js"\)/.test(html)) P("index.html não regista o sw.js");
 }
+  const sw2 = read("sw.js");
+  if (!/type !== "CACHE_ALL"/.test(sw2)) P("sw.js: falta o handler de mensagens do botão «Guardar tudo» (CACHE_ALL)");
+  if (!/optBtnDownloadAll/.test(html)) P("index.html: falta o botão «Guardar tudo» (optBtnDownloadAll)");
+  if (!/CACHE_ALL/.test(dc)) P("dia-crianca.js: não liga o botão «Guardar tudo» ao service worker (CACHE_ALL)");
 
 // 3) Sem pedidos externos nos scripts (o jogo tem de funcionar só com os ficheiros do pacote)
 for (const f of jsFiles) read(f).split("\n").forEach((l, i) => {

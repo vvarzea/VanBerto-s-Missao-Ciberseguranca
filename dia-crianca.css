@@ -3061,15 +3061,22 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
 
 /* Ecrãs com muito conteúdo (Mapa, Conquistas, Álbum, Opções, Como Jogar): a linha dos botões
    (Fechar, Guardar e Fechar…) fica sempre visível no fundo do cartão; só o resto desliza. */
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card { overflow-x: hidden; }
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card > .row:last-child {
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card { overflow-x: hidden; }
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > .row:last-child {
   position: sticky; bottom: -16px; z-index: 2; /* -16px = padding inferior do cartão: cola-se à borda */
   margin-bottom: -16px; padding: 8px 0 14px;
 }
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay, #optionsOverlay) .card > .row:last-child::before {
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > .row:last-child::before {
   content: ""; position: absolute; z-index: -1; left: -40px; right: -40px; top: 0; bottom: 0;
   background: linear-gradient(180deg, rgba(20,5,46,0) 0%, #14052e 40%);
 }
+
+/* Opções: com o truque acima (sticky no próprio .card, que é quem desliza), o rodapé ficava colado
+   demasiado cedo quando o conteúdo cresceu (secção "Jogar sem rede"). Em vez disso, o cabeçalho e o
+   rodapé ficam fixos e só #optionsScroll desliza — o mesmo padrão do #statsOverlay. */
+#optionsOverlay .card { display: flex; flex-direction: column; overflow: hidden; }
+#optionsOverlay .options-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-right: 6px; }
+#optionsOverlay .row { flex: 0 0 auto; margin-top: 10px; }
 #howOverlay .card { overflow-x: hidden; }
 #howOverlay .card > #btnCloseHow { position: sticky; bottom: -8px; z-index: 2; box-shadow: 0 14px 0 0 #14052e, 0 -12px 14px -8px #14052e; }
 

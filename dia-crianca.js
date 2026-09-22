@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260921v84";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260921v84";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260921v84";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260922v85";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260922v85";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260922v85";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260921v84";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260921v84";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260922v85";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260922v85";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260921v84";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260922v85";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260921v84";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260921v84";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260921v84";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260921v84";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260921v84";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260921v84";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260922v85";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260922v85";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260922v85";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260922v85";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260922v85";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260922v85";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260921v84";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260922v85";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -9829,6 +9829,42 @@ window.addEventListener("DOMContentLoaded", () => {
     toggleFullscreen();
     setTimeout(syncOptionsUI, 300);
   });
+
+  // ── "Guardar tudo para jogar sem rede" ──────────────────────────────────
+  // Só aparece se houver service worker ativo (o mesmo que guarda o núcleo — ver sw.js).
+  // Sem ele, o botão não teria onde guardar os fundos, por isso fica escondido em vez de falhar.
+  (function setupOfflineDownload() {
+    const section = document.getElementById("optionsOfflineSection");
+    const btn = document.getElementById("optBtnDownloadAll");
+    const status = document.getElementById("offlineDownloadStatus");
+    if (!section || !btn || !status) return;
+    if (!("serviceWorker" in navigator)) return;
+
+    let downloading = false;
+    navigator.serviceWorker.ready.then(() => { section.style.display = ""; }).catch(() => {});
+
+    btn.addEventListener("click", () => {
+      if (downloading) return;
+      const reg = navigator.serviceWorker.controller;
+      if (!reg) { status.textContent = "Ainda a preparar o modo offline — tenta outra vez daqui a um instante."; return; }
+      downloading = true; btn.disabled = true; btn.textContent = "⏳ A guardar…";
+      status.textContent = "";
+      const files = [...new Set(Object.values(BG_FILES))]; // os fundos: o resto do jogo já fica em cache na 1.ª visita (ver sw.js)
+      const channel = new MessageChannel();
+      channel.port1.onmessage = (event) => {
+        const msg = event.data;
+        if (msg.type === "CACHE_ALL_PROGRESS") {
+          btn.textContent = `⏳ A guardar… ${msg.done}/${msg.total}`;
+        } else if (msg.type === "CACHE_ALL_DONE") {
+          downloading = false; btn.disabled = false; btn.textContent = "⬇️ Guardar tudo";
+          status.textContent = msg.failed.length
+            ? `Guardado, mas ${msg.failed.length} imagem(ns) falhou — repete quando tiveres melhor ligação.`
+            : "✅ Tudo guardado — o jogo já funciona sem internet.";
+        }
+      };
+      reg.postMessage({ type: "CACHE_ALL", files }, [channel.port2]);
+    });
+  })();
 
   // =====================================================
   // ===== CERTIFICADO FINAL =====

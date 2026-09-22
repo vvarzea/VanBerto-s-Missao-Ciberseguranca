@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="VanBerto's" />
   <title>VanBerto's — Missão Cibersegurança</title>
-  <link rel="stylesheet" href="dia-crianca.css?v=20260921v84" />
+  <link rel="stylesheet" href="dia-crianca.css?v=20260922v85" />
 </head>
 <body>
 
@@ -205,6 +205,7 @@
       <div class="card-seal" aria-hidden="true">⚙️</div>
       <h2>⚙️ Opções</h2>
 
+      <div id="optionsScroll" class="options-scroll" tabindex="0" role="region" aria-label="Lista de opções">
       <div class="options-section">
         <p class="options-section-title">🔊 Áudio</p>
         <label class="options-toggle-row">
@@ -234,6 +235,15 @@
         </label>
       </div>
 
+      <div class="options-section" id="optionsOfflineSection" style="display:none">
+        <p class="options-section-title">📶 Jogar sem rede</p>
+        <label class="options-toggle-row">
+          <span>Guarda o jogo neste aparelho, para funcionar sem internet</span>
+          <button id="optBtnDownloadAll" class="option-toggle-btn">⬇️ Guardar tudo</button>
+        </label>
+        <p class="tiny" id="offlineDownloadStatus"></p>
+      </div>
+
       <div class="options-section">
         <p class="options-section-title">🖥️ Ecrã</p>
         <label class="options-toggle-row">
@@ -251,6 +261,8 @@
           <span><kbd>H</kbd></span><span>Alto Contraste</span>
           <span><kbd>F</kbd></span><span>Ecrã completo</span>
         </div>
+      </div>
+
       </div>
 
       <div class="row">
@@ -772,7 +784,7 @@
       }
     }
   </script>
-  <script src="phaser.min.js?v=20260921v84"></script>
-  <script type="module" src="dia-crianca.js?v=20260921v84"></script>
+  <script src="phaser.min.js?v=20260922v85"></script>
+  <script type="module" src="dia-crianca.js?v=20260922v85"></script>
 </body>
 </html>

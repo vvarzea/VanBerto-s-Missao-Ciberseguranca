@@ -296,6 +296,32 @@ with sync_playwright() as p:
             srv2.shutdown(); shutil.rmtree(tmp, ignore_errors=True)
         return "cache antiga apagada, página com a versão nova"
 
+    @test("Botão «Guardar tudo»: descarrega os fundos todos e o jogo funciona sem rede em qualquer nível")
+    def _():
+        errs = []
+        ctx = B.new_context(viewport={"width": 960, "height": 600}, service_workers="allow"); pg = ctx.new_page()
+        pg.on("pageerror", lambda e: errs.append(str(e)))
+        # nível 20 já desbloqueado, mas cujo fundo NUNCA foi pedido nesta sessão (não passa pelos 20 níveis a jogar)
+        save = {"map": {"highestLevelReached": 19, "levelsCompleted": list(range(19))}}
+        pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        pg.wait_for_function("navigator.serviceWorker.controller", timeout=15000)
+        pg.click("#btnOptions"); pg.wait_for_selector("#optionsOverlay:not(.hidden)")
+        assert pg.evaluate("getComputedStyle(document.getElementById('optionsOfflineSection')).display") != "none", "secção «Jogar sem rede» escondida com service worker ativo"
+        pg.click("#optBtnDownloadAll")
+        pg.wait_for_function("document.getElementById('offlineDownloadStatus').textContent.length>0", timeout=30000)
+        status = pg.evaluate("document.getElementById('offlineDownloadStatus').textContent")
+        assert "Tudo guardado" in status, f"estado inesperado: {status!r}"
+        n = pg.evaluate(r"(name)=>caches.open(name).then(c=>c.keys()).then(ks=>ks.filter(k=>/\.webp$/.test(k.url)).length)", "vanbertos-" + STAMP)
+        assert n == 18, f"fundos em cache: {n} (esperava 18)"
+        pg.click("#btnCloseOptions"); ctx.set_offline(True)
+        open_map(pg); pg.click(".map-region--current"); pg.wait_for_selector(".level-node--current"); pg.click(".level-node--current")
+        pg.wait_for_selector("canvas", timeout=15000); pg.wait_for_timeout(2000)
+        ok = pg.evaluate("window.__dc_game.textures.exists('bg_mundo4_n20')")
+        assert ok, "fundo do nível 20 não disponível offline, apesar de «Guardar tudo»"
+        assert not errs, errs[:3]; ctx.close()
+        return "18 fundos guardados; nível 20 (nunca jogado) tem fundo mesmo sem rede"
+
     @test("Fundo em falta: se o 1.º pedido falhar, o jogo pede outra vez")
     def _():
         hits = {"n": 0}
@@ -369,6 +395,16 @@ with sync_playwright() as p:
             if r["menu"] or r["hud"]: bad.append(f"{name}: menu={r['menu']} hud={r['hud']}")
             pg.context.close()
         assert not bad, "; ".join(bad); return "4 tamanhos de ecrã sem sobreposição"
+
+    @test("Opções: a secção «Jogar sem rede» não fica escondida atrás do rodapé fixo")
+    def _():
+        pg = new_page(B, 960, 600); pg.goto(BASE + "/index.html", wait_until="networkidle")
+        pg.click("#btnOptions"); pg.wait_for_selector("#optionsOverlay:not(.hidden)"); pg.wait_for_timeout(300)
+        r = pg.evaluate("""()=>{const rc=e=>e.getBoundingClientRect();
+          const row=rc(document.querySelector('#optionsOverlay .row')), off=rc(document.getElementById('optionsOfflineSection'));
+          return {overlap: !(off.bottom<=row.top || off.top>=row.bottom)}}""")
+        assert not r["overlap"], "a secção «Jogar sem rede» sobrepõe-se ao rodapé fixo"
+        pg.context.close(); return "sem sobreposição"
 
     @test("Menu inicial: cabe inteiro, sem scroll, em ecrãs de portátil e telemóvel na horizontal")
     def _():
