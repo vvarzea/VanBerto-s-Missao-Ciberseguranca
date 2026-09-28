@@ -15,7 +15,7 @@
 // que o ficheiro principal fazia às variáveis internas `doorGlowGfx` e
 // `platDecorGfx`/`platDecorData` ao (re)carregar um nível.
 
-import { THEMES } from "./data-levels.js?v=20260928v92";
+import { THEMES } from "./data-levels.js?v=20260928v93";
 
 let bgGraphics, farGraphics, hillsGraphics, groundGraphics, decorGraphics;
 let platDecorGfx, sunGraphics, moonGraphics, starGraphics, doorGlowGfx;

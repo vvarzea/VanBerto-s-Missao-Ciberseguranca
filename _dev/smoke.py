@@ -583,6 +583,28 @@ with sync_playwright() as p:
         assert not bad, "; ".join(bad)
         return f"6 ecrãs x {len(sizes)} tamanhos"
 
+    @test("Conquistas e Álbum em jogo: o nome do jogador e o «☰ Menu» não tapam o título nem o progresso")
+    def _():
+        bad = []
+        for vname, w, h in [("960x600", 960, 600), ("844x390", 844, 390), ("667x375", 667, 375)]:
+            pg = new_page(B, w, h, True); to_level1(pg, name="Maria Isabel Santos!"); start_level(pg)
+            pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 5); pg.wait_for_timeout(600)
+            for tname, btn, ov in [("Conquistas", "#mBtnAchievements", "#achievementsOverlay"), ("Álbum", "#mBtnAlbum", "#albumOverlay")]:
+                pg.click("#btnTeacherMenu"); pg.click(btn); pg.wait_for_selector(ov + ":not(.hidden)"); pg.wait_for_timeout(500)
+                pg.evaluate("(ov)=>document.querySelectorAll('.overlay:not(.hidden)').forEach(e=>{ if('#'+e.id!==ov) e.classList.add('hidden'); })", ov)
+                pg.wait_for_timeout(300)
+                r = pg.evaluate("""(ov)=>{const rc=r=>({l:r.left,t:r.top,r:r.right,b:r.bottom});
+                  const txt=e=>{const g=document.createRange(); g.selectNodeContents(e); return rc(g.getBoundingClientRect())};
+                  const hit=(a,b)=>!(a.r<=b.l||b.r<=a.l||a.b<=b.t||b.b<=a.t);
+                  const ctl=[document.getElementById('playerNameHtml'), document.getElementById('btnTeacherMenu')].map(e=>rc(e.getBoundingClientRect()));
+                  const c=document.querySelector(ov+' .card');
+                  const parts={título:txt(c.querySelector('h2')), progresso:txt(c.querySelector('.map-progress-line'))};
+                  return Object.entries(parts).filter(([k,v])=>ctl.some(x=>hit(x,v))).map(([k])=>k)}""", ov)
+                if r: bad.append(f"{tname}@{vname}: tapa {', '.join(r)}")
+                pg.click(ov + " .row:last-child .btn"); pg.wait_for_timeout(300)
+            pg.context.close()
+        assert not bad, "; ".join(bad); return "2 ecrãs x 3 tamanhos sem sobreposição"
+
     @test("Mapa em jogo: o nome do jogador e o «☰ Menu» não tapam o título, a barra nem os mundos")
     def _():
         bad = []

@@ -3071,15 +3071,7 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
 
 /* Ecrãs com muito conteúdo (Mapa, Conquistas, Álbum, Opções, Como Jogar): a linha dos botões
    (Fechar, Guardar e Fechar…) fica sempre visível no fundo do cartão; só o resto desliza. */
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card { overflow-x: hidden; }
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > .row:last-child {
-  position: sticky; bottom: -16px; z-index: 2; /* -16px = padding inferior do cartão: cola-se à borda */
-  margin-bottom: -16px; padding: 8px 0 14px;
-}
-:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > .row:last-child::before {
-  content: ""; position: absolute; z-index: -1; left: -40px; right: -40px; top: 0; bottom: 0;
-  background: linear-gradient(180deg, rgba(20,5,46,0) 0%, #14052e 40%);
-}
+/* (Mapa, Conquistas e Álbum: ver «Ecrãs de lista» no fim do ficheiro — cabeçalho e «Fechar» fixos, só a lista desliza.) */
 
 /* Opções: com o truque acima (sticky no próprio .card, que é quem desliza), o rodapé ficava colado
    demasiado cedo quando o conteúdo cresceu (secção "Jogar sem rede"). Em vez disso, o cabeçalho e o
@@ -3154,28 +3146,23 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #startOverlay .tiny:not(#versionTag) { display: none; }
 }
 
-/* Mapa da Aventura: o título, a barra de progresso e o botão «Fechar» ficam sempre visíveis e só a
-   lista de mundos desliza (o mesmo padrão das Estatísticas e das Opções). Antes, o cartão inteiro
-   deslizava com `justify-content: center`: quando o conteúdo era mais alto que o ecrã (telemóvel na
-   horizontal) o excesso cortava-se por igual em cima e em baixo — o título ficava inalcançável — e o
-   rodapé «colado» tapava o último cartão. */
-#mapOverlay .map-card { overflow: hidden; }
-#mapOverlay .map-card > h2,
-#mapOverlay .map-card > .map-progress-line,
-#mapOverlay .map-card > .map-progress-track,
-#mapOverlay .map-card > .map-hint,
-#mapOverlay .map-card > .row { flex: 0 0 auto; }
-#mapOverlay .map-card > .map-regions-grid {
+/* ===== Ecrãs de lista (Mapa, Conquistas, Álbum) — o MESMO padrão das Estatísticas e das Opções =====
+   O título, a barra de progresso e o botão «Fechar» ficam sempre visíveis e só a lista desliza.
+   Antes, o cartão inteiro deslizava e o «Fechar» era «colado» ao fundo com `position: sticky`: no Mapa,
+   com `justify-content: center`, o excesso (telemóvel na horizontal) cortava-se por igual em cima e em baixo
+   — o título ficava inalcançável — e o rodapé colado tapava o último cartão. Com um só padrão, um ecrã novo
+   nunca volta a ter este problema por não ter herdado o truque certo. */
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card { display: flex; flex-direction: column; overflow: hidden; }
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > * { flex: 0 0 auto; }
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > :is(.map-regions-grid, .achievements-grid, .album-grid) {
   flex: 0 1 auto; min-height: 0;
   overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
   padding: 5px;               /* deixa espaço ao brilho dourado / anel de foco, que o overflow cortaria */
   box-sizing: border-box;
   align-content: start;
 }
-#mapOverlay .map-card > .row:last-child {
-  position: static; margin-bottom: 0; padding: 8px 0 0;
-}
-#mapOverlay .map-card > .row:last-child::before { display: none; }
+:is(#mapOverlay, #achievementsOverlay, #albumOverlay) .card > .row:last-child { margin-bottom: 0; padding: 8px 0 0; }
+/* No Conquistas/Álbum o selo decorativo é absoluto e o título passa a ter a largura toda: nada a mudar. */
 
 /* Telemóvel na horizontal (e outros ecrãs pouco altos): tudo mais compacto para caberem os 5 cartões
    e o rodapé; em jogo, o nome + «☰ Menu» (fixos no canto superior direito) ficam ao lado do título,
@@ -3206,4 +3193,28 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
 }
 @media (max-height: 420px) {
   #mapOverlay .map-card > .map-hint { display: none; }
+}
+
+/* Conquistas e Álbum em ecrãs pouco altos (telemóvel na horizontal): mais compactos e com mais colunas,
+   para a lista (que agora desliza entre o cabeçalho e o «Fechar» fixos) mostrar mais de uma vez. */
+@media (max-height: 520px) {
+  :is(#achievementsOverlay, #albumOverlay) .card { padding: 8px 16px; max-height: calc(100dvh - 16px); }
+  :is(#achievementsOverlay, #albumOverlay) .card > .card-seal { display: none; }
+  :is(#achievementsOverlay, #albumOverlay) .card > h2 { font-size: 16px; margin: 0 0 2px; }
+  :is(#achievementsOverlay, #albumOverlay) .card > .map-progress-line { font-size: 12px; margin: 0 0 4px; }
+  :is(#achievementsOverlay, #albumOverlay) .card > .map-progress-track { height: 7px; margin: 0 0 4px; }
+  :is(#achievementsOverlay, #albumOverlay) .card > .row:last-child { padding: 6px 0 0; }
+  /* Em jogo, o nome do jogador e o «☰ Menu» (fixos no canto superior direito) ficam ao lado do título,
+     como no Mapa: título e progresso alinhados à esquerda e com a largura limitada, para não os tapar. */
+  body.game-started :is(#achievementsOverlay, #albumOverlay) .card > h2,
+  body.game-started :is(#achievementsOverlay, #albumOverlay) .card > .map-progress-line,
+  body.game-started :is(#achievementsOverlay, #albumOverlay) .card > .map-progress-track {
+    max-width: calc(100% - min(370px, 52vw)); margin-left: 0; margin-right: auto; text-align: left;
+  }
+  :is(#achievementsOverlay, #albumOverlay) #btnCloseAchievements,
+  :is(#achievementsOverlay, #albumOverlay) #btnCloseAlbum { padding: 6px 26px; min-height: 0; font-size: 15px; }
+}
+@media (max-height: 520px) and (min-width: 600px) {
+  #achievementsOverlay .achievements-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 2px 0; }
+  #albumOverlay .album-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 2px 0; }
 }
