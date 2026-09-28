@@ -14,8 +14,8 @@
 // rastreio de segredos (secretsFoundThisLevel/incrementSecretsFound) NÃO foi
 // tocado — continua a existir e a ser usado pela conquista "Explorador" em
 // achievements.js, só deixou de decidir esta estrela.
-import { LEVELS } from "./data-levels.js?v=20260928v90";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v90";
+import { LEVELS } from "./data-levels.js?v=20260928v91";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v91";
 
 export let levelStars = {};           // { [levelIdx]: { allItems:bool, noDamage:bool, firstTry:bool } }
 let secretsFoundThisLevel = 0;        // reposto em cada loadLevel — ainda usado pela conquista "Explorador"

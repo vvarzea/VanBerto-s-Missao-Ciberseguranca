@@ -488,6 +488,53 @@ with sync_playwright() as p:
         assert not bad, "botão de fechar fora do ecrã: " + ", ".join(bad)
         return "6 ecrãs x 3 tamanhos"
 
+    @test("Ecrãs do menu: o título também fica à vista (não só o botão de fechar) e nada sai do ecrã na largura")
+    def _():
+        # O corte do Mapa em telemóvel na horizontal passou despercebido porque só se verificava o botão de fechar:
+        # o cartão estava centrado e a deslizar, e o excesso cortava-se por igual em cima (título) e em baixo.
+        tiles = [("Mapa", "#btnOpenMap", "#mapOverlay"), ("Conquistas", "#btnAchievements", "#achievementsOverlay"),
+                 ("Álbum", "#btnAlbum", "#albumOverlay"), ("Estatísticas", "#btnStats", "#statsOverlay"),
+                 ("Opções", "#btnOptions", "#optionsOverlay"), ("Como Jogar", "#btnHow", "#howOverlay")]
+        bad = []
+        sizes = [("960x600", 960, 600, False), ("932x430", 932, 430, True), ("915x412", 915, 412, True),
+                 ("844x390", 844, 390, True), ("745x347", 745, 347, True), ("667x375", 667, 375, True)]
+        for vname, w, h, touch in sizes:
+            for tname, tile, ov in tiles:
+                pg = new_page(B, w, h, touch); pg.goto(BASE + "/index.html", wait_until="networkidle")
+                pg.click(tile); pg.wait_for_selector(ov + ":not(.hidden)"); pg.wait_for_timeout(500)
+                r = pg.evaluate("""(ov)=>{const t=document.querySelector(ov+' h1, '+ov+' h2').getBoundingClientRect();
+                  return {top:t.top, bottom:t.bottom, sw:document.documentElement.scrollWidth, vw:innerWidth, vh:innerHeight}}""", ov)
+                if r["top"] < 0 or r["bottom"] > r["vh"]: bad.append(f"{tname}@{vname}: título fora do ecrã (top={r['top']:.0f})")
+                if r["sw"] > r["vw"] + 1: bad.append(f"{tname}@{vname}: scroll horizontal ({r['sw']}>{r['vw']})")
+                pg.context.close()
+        assert not bad, "; ".join(bad)
+        return f"6 ecrãs x {len(sizes)} tamanhos"
+
+    @test("Mapa em jogo: o nome do jogador e o «☰ Menu» não tapam o título, a barra nem os mundos")
+    def _():
+        bad = []
+        for vname, w, h in [("960x600", 960, 600), ("932x430", 932, 430), ("844x390", 844, 390), ("667x375", 667, 375)]:
+            pg = new_page(B, w, h, True); to_level1(pg, name="Maria Isabel Santos!"); start_level(pg)
+            pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 5); pg.wait_for_timeout(600)
+            pg.click("#btnTeacherMenu"); pg.click("#mBtnMap"); pg.wait_for_selector("#mapOverlay:not(.hidden)"); pg.wait_for_timeout(600)
+            # Só interessa a geometria do Mapa: esconde outros cartões (ex.: «Sabias que…?» do nível) que possam estar por cima.
+            pg.evaluate("document.querySelectorAll('.overlay:not(.hidden)').forEach(e=>{ if(e.id!=='mapOverlay') e.classList.add('hidden'); })")
+            pg.wait_for_timeout(300)
+            r = pg.evaluate("""()=>{const rc=r=>({l:r.left,t:r.top,r:r.right,b:r.bottom});
+              const txt=e=>{const g=document.createRange(); g.selectNodeContents(e); return rc(g.getBoundingClientRect())};
+              const hit=(a,b)=>!(a.r<=b.l||b.r<=a.l||a.b<=b.t||b.b<=a.t);
+              const ctl=[document.getElementById('playerNameHtml'), document.getElementById('btnTeacherMenu')].map(e=>rc(e.getBoundingClientRect()));
+              const c=document.querySelector('#mapOverlay .map-card');
+              const parts={título:txt(c.querySelector('h2')), progresso:txt(c.querySelector('.map-progress-line')),
+                           barra:rc(c.querySelector('.map-progress-track').getBoundingClientRect())};
+              [...c.querySelectorAll('.map-region')].forEach((e,i)=>parts['mundo'+(i+1)]=rc(e.getBoundingClientRect()));
+              // um mundo que está dentro da lista deslizante e fora da área visível dela não conta
+              const g=c.querySelector('.map-regions-grid').getBoundingClientRect();
+              return Object.entries(parts).filter(([k,v])=>!k.startsWith('mundo')||(v.t<g.bottom&&v.b>g.top)).filter(([k,v])=>ctl.some(x=>hit(x,v))).map(([k])=>k)}""")
+            if r: bad.append(f"{vname}: tapa {', '.join(r)}")
+            pg.context.close()
+        assert not bad, "; ".join(bad); return "4 tamanhos sem sobreposição"
+
     B.close()
 
 srv.shutdown()
