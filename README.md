@@ -14,7 +14,9 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
   | Fortaleza da Proteção Digital | 10–15 | Robô do Spam |
   | Cidade da Identidade Digital | 16–20 | Espião das Sombras |
 
-- **Quiz** no fim de cada nível (e outro depois de vencer cada boss), estrelas por nível (até 3),
+- **Quiz** no fim de cada nível (e outro depois de vencer cada boss). Uma pergunta falhada à 1.ª tentativa volta mais tarde
+  (pelo menos 2 níveis depois) como **«Revisão rápida»**, antes do quiz do nível: sem perder vidas e sem contar para pontos,
+  estatísticas ou certificado; acertar (ou falhar 2 revisões) tira-a da lista. Estrelas por nível (até 3),
   artefactos, conquistas, mapa da aventura e certificado final.
 - **Dificuldade** (escolhida em "Nova Aventura", alterável em Opções): 😊 Fácil (3 vidas),
   🎓 Difícil (2 vidas) e 🔥 Extremo (1 vida). O Difícil e o Extremo usam o quiz mais técnico, com 4 opções de resposta. Há ainda o *Modo Exploração*
@@ -65,7 +67,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260928v91`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260928v92`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 

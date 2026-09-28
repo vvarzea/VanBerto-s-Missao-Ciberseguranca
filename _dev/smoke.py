@@ -386,6 +386,79 @@ with sync_playwright() as p:
     @test("Quiz Difícil: 4 opções")
     def _(): return quiz_case("#btnDiffDificil", 4, True)
 
+    def reach_level_quiz(pg):
+        """Do arranque até ao 1.º quiz do nível 1 (teleporta para o portal e dispensa os cartões)."""
+        start_level(pg); dismiss_cards(pg, 6); pg.wait_for_timeout(1000); teleport_to_door(pg)
+        for _ in range(14):
+            if pg.query_selector("#quizOverlay:not(.hidden)"): break
+            btn = pg.query_selector(".overlay:not(.hidden) .btn.primary")
+            if btn:
+                try: btn.click(timeout=800)
+                except Exception: pass
+            pg.wait_for_timeout(900)
+        pg.wait_for_selector("#quizOverlay:not(.hidden)", timeout=3000); pg.wait_for_timeout(500)
+
+    ANSWER_JS = """async([q,stamp,wantCorrect])=>{ const m=await import('./data-quiz.js?v='+stamp);
+      for(const bank of [m.QUIZ_BY_THEME_AVANCADO,m.QUIZ_BY_THEME]) for(const t of Object.keys(bank)) for(const it of bank[t]) if(q.endsWith(it.q)){
+        const c=it.a.find(x=>x.ok).t; const btns=[...document.querySelectorAll('#quizAnswers .btn')];
+        const b=wantCorrect ? btns.find(x=>x.textContent===c) : btns.find(x=>x.textContent!==c);
+        if(b){ b.click(); return 'ok'; } return 'botão não encontrado'; } return 'pergunta não encontrada'; }"""
+
+    @test("Revisão dos erros: uma pergunta falhada há ≥2 níveis volta como «Revisão rápida» antes do quiz do nível e sai da lista ao acertar")
+    def _():
+        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
+        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
+        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:-5})", q)
+        reach_level_quiz(pg)
+        shown = pg.evaluate("document.getElementById('quizQuestion').textContent")
+        assert "Revisão rápida" in shown and q in shown, f"1.º ecrã do quiz não é a revisão: {shown[:80]!r}"
+        STATS_JS = "(()=>{const g=JSON.parse(localStorage.getItem('vanbertos_ciberseguranca_save_v1')).globalStats||{}; return [g.quizTotal||0,g.quizCorrect||0,g.quizWrong||0]})()"
+        stats0 = pg.evaluate(STATS_JS)
+        res = pg.evaluate(ANSWER_JS, [shown, STAMP, True]); assert res == "ok", res
+        pg.wait_for_timeout(300)
+        fb = pg.evaluate("document.getElementById('quizFeedback').textContent"); assert "Boa" in fb, fb
+        assert pg.evaluate("window.__vb_quizReview.queue().length") == 0, "acertar devia tirar a pergunta da lista"
+        assert pg.evaluate(STATS_JS) == stats0, "a revisão não devia contar para as estatísticas do quiz"
+        pg.click("#btnCloseQuiz"); pg.wait_for_timeout(600)
+        nxt = pg.evaluate("document.getElementById('quizQuestion').textContent")
+        assert "Revisão rápida" not in nxt and nxt.strip(), f"depois da revisão devia vir o quiz normal: {nxt[:80]!r}"
+        n = pg.evaluate("document.querySelectorAll('#quizAnswers .btn:not(:disabled)').length"); assert n == 3, f"{n} opções no quiz normal"
+        assert not errs, errs[:3]; pg.context.close()
+        return "revisão à frente do quiz normal; acertar remove-a; quiz normal segue com 3 opções"
+
+    @test("Revisão dos erros: não aparece cedo demais, e um erro à 1.ª tentativa fica registado para mais tarde")
+    def _():
+        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
+        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
+        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:0})", q)   # falhada neste mesmo nível: ainda não vence
+        reach_level_quiz(pg)
+        shown = pg.evaluate("document.getElementById('quizQuestion').textContent")
+        assert "Revisão rápida" not in shown, "a revisão apareceu no próprio nível em que foi falhada"
+        res = pg.evaluate(ANSWER_JS, [shown, STAMP, False]); assert res == "ok", res
+        pg.wait_for_timeout(400)
+        queue = pg.evaluate("window.__vb_quizReview.queue()")
+        assert len(queue) == 2 and queue[1]["at"] == 0 and queue[1]["theme"] != "palavras_passe", f"lista: {queue}"
+        saved = pg.evaluate("JSON.parse(localStorage.getItem('vanbertos_ciberseguranca_save_v1')).quizReview.queue.length")
+        assert saved == 2, f"a lista não ficou guardada (guardadas: {saved})"
+        assert not errs, errs[:3]; pg.context.close()
+        return "sem revisão no mesmo nível; o erro ficou na lista (e guardado no localStorage)"
+
+    @test("Revisão dos erros: falhar a última revisão permitida também tira a pergunta da lista (ninguém fica preso)")
+    def _():
+        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
+        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
+        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:-5, tries:1})", q)
+        reach_level_quiz(pg)
+        shown = pg.evaluate("document.getElementById('quizQuestion').textContent"); assert "Revisão rápida" in shown, shown[:80]
+        res = pg.evaluate(ANSWER_JS, [shown, STAMP, False]); assert res == "ok", res
+        pg.wait_for_timeout(300)
+        fb = pg.evaluate("document.getElementById('quizFeedback').textContent"); assert "resposta certa era" in fb, fb
+        assert pg.evaluate("window.__vb_quizReview.queue().length") == 0, "2.ª revisão falhada devia tirar a pergunta da lista"
+        pg.click("#btnCloseQuiz"); pg.wait_for_timeout(600)
+        nxt = pg.evaluate("document.getElementById('quizQuestion').textContent"); assert "Revisão rápida" not in nxt and nxt.strip(), nxt[:80]
+        assert not errs, errs[:3]; pg.context.close()
+        return "falhou a 2.ª revisão → sai da lista e o quiz normal segue"
+
     @test("Movimento reduzido: sem animações CSS nem abanões")
     def _():
         out = []

@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260928v91";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260928v91";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v91";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260928v92";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260928v92";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v92";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260928v91";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260928v91";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260928v92";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260928v92";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260928v91";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260928v92";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260928v91";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260928v91";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260928v91";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260928v91";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v91";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260928v91";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260928v92";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260928v92";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260928v92";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260928v92";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v92";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260928v92";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260928v91";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260928v92";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -278,6 +278,120 @@ window.addEventListener("DOMContentLoaded", () => {
   let lastQuizTheme = "historia";
 
   function resetQuizStats() { quizStats.total=0; quizStats.correct=0; quizStats.everWrong=false; quizStats.errors=[]; quizStats.errorsByTheme={}; }
+
+  // ===== Revisão espaçada dos erros do quiz =====
+  // Cada tema só aparece no seu próprio nível, por isso uma pergunta falhada à 1.ª tentativa nunca voltava a sair
+  // (só por acaso, ao reiniciar). Agora fica numa lista e volta como «Revisão rápida», ANTES da pergunta normal
+  // do nível, pelo menos REVIEW_MIN_GAP níveis depois de ter sido falhada (não logo a seguir, para o aluno
+  // responder por memória e não por a acabar de ver). É só prática: não gasta vidas nem pontos e não conta para
+  // as estatísticas, conquistas ou certificado. Acertar tira-a da lista; falhar REVIEW_MAX_TRIES revisões
+  // também (ninguém fica preso à mesma pergunta). No máximo 1 revisão por nível.
+  const REVIEW_MIN_GAP = 2, REVIEW_MAX_TRIES = 2, REVIEW_QUEUE_MAX = 12;
+  let quizReviewQueue = [];
+  function loadQuizReview() {
+    const d = loadNamespace("quizReview", {});
+    quizReviewQueue = Array.isArray(d.queue)
+      ? d.queue.filter(e => e && typeof e.q === "string" && typeof e.theme === "string" && Number.isFinite(e.at))
+          .map(e => ({ q: e.q, theme: e.theme, at: e.at, tries: Number.isFinite(e.tries) ? e.tries : 0 }))
+          .slice(-REVIEW_QUEUE_MAX)
+      : [];
+  }
+  function saveQuizReview() { saveNamespace("quizReview", { queue: quizReviewQueue }); }
+  function clearQuizReview() { quizReviewQueue = []; saveQuizReview(); }
+  loadQuizReview();
+  // Teste automático (_dev/smoke.py) — mesmo padrão de window.__vb_showVictory
+  window.__vb_quizReview = {
+    queue: () => JSON.parse(JSON.stringify(quizReviewQueue)),
+    seed: (e) => { quizReviewQueue.push({ tries: 0, ...e }); saveQuizReview(); }
+  };
+
+  // A pergunta pode ter sido falhada num banco (Fácil) e a revisão cair noutro (Difícil): procura em todos.
+  function findQuizByText(theme, q) {
+    for (const pool of [getQuizPool(theme), QUIZ_BY_THEME[theme], QUIZ_BY_THEME_AVANCADO[theme]]) {
+      const hit = pool && pool.find(x => x.q === q);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  function noteMissedQuiz(quiz, theme) {
+    if (!quiz || !quiz.q || !theme) return;
+    if (quizReviewQueue.some(e => e.q === quiz.q)) return;
+    quizReviewQueue.push({ q: quiz.q, theme, at: currentLevel, tries: 0 });
+    if (quizReviewQueue.length > REVIEW_QUEUE_MAX) quizReviewQueue.shift();
+    saveQuizReview();
+  }
+  function nextDueReview() {
+    for (const e of quizReviewQueue) {
+      if (currentLevel - e.at < REVIEW_MIN_GAP) continue;
+      const quiz = findQuizByText(e.theme, e.q);
+      if (quiz) return { entry: e, quiz };
+      quizReviewQueue = quizReviewQueue.filter(x => x !== e); // já não existe no banco (perguntas atualizadas)
+      saveQuizReview();
+      return nextDueReview();
+    }
+    return null;
+  }
+  // Se houver uma revisão «vencida», mostra-a primeiro e só depois arranca o quiz normal do nível.
+  function withQuizReview(startLevelQuiz) {
+    const due = nextDueReview();
+    if (due) showReviewQuestion(due, startLevelQuiz); else startLevelQuiz();
+  }
+  function showReviewQuestion({ entry, quiz }, next) {
+    const bindTap = (el, handler) => { el.onclick = handler; el.ontouchend = (e) => { e.preventDefault(); handler(); }; };
+    quizOverlay.classList.remove("hidden");
+    quizQuestion.innerHTML = `<span class="quiz-article-badge">🔁 Revisão rápida — sem perder vidas</span><br>` + quiz.q;
+    quizAnswers.innerHTML = ""; quizFeedback.textContent = ""; quizFeedback.style.color = "#ff6b35";
+    quizExplanation.textContent = ""; quizExplanation.classList.add("hidden");
+    btnCloseQuiz.classList.add("hidden"); btnCloseQuiz.onclick = null; btnCloseQuiz.ontouchend = null;
+
+    const correct = quiz.a.filter(x => x.ok), wrong = quiz.a.filter(x => !x.ok);
+    for (let i = wrong.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [wrong[i], wrong[j]] = [wrong[j], wrong[i]]; }
+    const nWrong = getDifficulty() === "facil" ? 2 : 3;
+    const opts = [...correct.slice(0, 1), ...wrong.slice(0, nWrong)];
+    for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+    quizAnswers.classList.toggle("answers--four", opts.length >= 4);
+
+    let answered = false;
+    opts.forEach(ans => {
+      const b = document.createElement("button");
+      b.className = "btn"; b.textContent = ans.t;
+      b.setAttribute("aria-label", `Resposta: ${ans.t}`);
+      bindTap(b, () => {
+        if (answered) return; answered = true;
+        ensureAudio();
+        quizAnswers.querySelectorAll(".btn").forEach(btn => {
+          btn.disabled = true;
+          if (btn.textContent === correct[0].t) {
+            btn.style.background = "rgba(20,80,20,0.75)"; btn.style.borderColor = "#4caf50"; btn.style.color = "#b8ffb8";
+          } else if (btn === b && !ans.ok) {
+            btn.style.background = "rgba(100,20,20,0.75)"; btn.style.borderColor = "#c0392b"; btn.style.color = "#ffb8b8";
+          } else { btn.style.opacity = "0.35"; }
+        });
+        if (ans.ok) {
+          SFX.coin();
+          quizFeedback.textContent = "✅ Boa! Já sabes esta!"; quizFeedback.style.color = "#208050";
+          quizReviewQueue = quizReviewQueue.filter(x => x !== entry);
+        } else {
+          SFX.hit();
+          entry.tries += 1;
+          quizFeedback.textContent = "❌ Quase! A resposta certa era: " + correct[0].t; quizFeedback.style.color = "#e84d10";
+          if (entry.tries >= REVIEW_MAX_TRIES) quizReviewQueue = quizReviewQueue.filter(x => x !== entry);
+        }
+        saveQuizReview();
+        const tip = QUIZ_TIPS[entry.theme] || "";
+        const expText = quiz.exp ? "💡 " + quiz.exp : (tip ? "📌 Recorda: " + tip : "");
+        if (expText) { quizExplanation.textContent = expText; quizExplanation.classList.remove("hidden"); }
+        btnCloseQuiz.classList.remove("hidden"); btnCloseQuiz.textContent = "Continuar ▶";
+        bindTap(btnCloseQuiz, () => {
+          btnCloseQuiz.classList.add("hidden"); btnCloseQuiz.onclick = null; btnCloseQuiz.ontouchend = null;
+          next(); // o quiz normal do nível reaproveita o mesmo ecrã (sem o esconder e mostrar de novo)
+        });
+        btnCloseQuiz.focus({ preventScroll: true });
+      });
+      quizAnswers.appendChild(b);
+    });
+    quizAnswers.querySelector(".btn")?.focus({ preventScroll: true });
+  }
 
   // ===== Modo Revisão — reutilizável a partir de vários pontos =====
   // (vitória final, ecrã de "Missão Falhada" e menu suspenso a meio do jogo).
@@ -959,6 +1073,7 @@ window.addEventListener("DOMContentLoaded", () => {
     resetQuizStats();
     Object.keys(usedQuizByLevel).forEach(k => usedQuizByLevel[k].clear());
     Object.keys(usedQuizByTheme).forEach(k => usedQuizByTheme[k].clear());
+    clearQuizReview();
   }
 
   // Verifica se um conjunto de 5 artefactos ficou completo agora
@@ -1865,7 +1980,7 @@ window.addEventListener("DOMContentLoaded", () => {
         _doorAnimRunning = false;
         touch.left=touch.right=touch.jump=touch.crouch=false;
         flushScoreToStats(); score=0; lives=getStartLives(); livesLostThisLevel=0;
-        resetQuizStats(); Object.keys(usedQuizByLevel).forEach(k=>usedQuizByLevel[k].clear()); Object.keys(usedQuizByTheme).forEach(k=>usedQuizByTheme[k].clear());
+        resetQuizStats(); Object.keys(usedQuizByLevel).forEach(k=>usedQuizByLevel[k].clear()); Object.keys(usedQuizByTheme).forEach(k=>usedQuizByTheme[k].clear()); clearQuizReview();
         scoreText.setText(`🌟 Pontos: ${score}`); updateHearts();
         loadLevel(sceneRef,0);
         showHistory(0, () => { awaitingQuiz=false; if(!pausedByTeacher) sceneRef.physics.resume(); });
@@ -4798,7 +4913,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if(!awaitingQuiz) return; // segurança: só mostrar se ainda estamos à espera
       _doorAnimRunning = false; // reset para próxima porta
       lastQuizTheme = LEVELS[currentLevel].quizTheme;
-      showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
+      withQuizReview(() => showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
         if(ok){
           ensureAudio();
           finalizeLevelStars(currentLevel, livesLostThisLevel, itemsCollected, itemsTotal);
@@ -4818,7 +4933,7 @@ window.addEventListener("DOMContentLoaded", () => {
             nextLevel(scene);
           });
         }
-      });
+      }));
     });
   }
 
@@ -8497,6 +8612,7 @@ window.addEventListener("DOMContentLoaded", () => {
             const _err = {level:LEVELS[currentLevel]?.name||`Nível ${currentLevel+1}`,theme:qTheme,q:quiz.q,wrong:ans.t,correct:correct[0].t};
             quizStats.errors.push(_err);
             quizStats.errorsByTheme[qTheme] = (quizStats.errorsByTheme[qTheme]||0) + 1;
+            noteMissedQuiz(quiz, qTheme); // volta mais tarde como «Revisão rápida»
             // Registo persistente: o relatório final mostra a aventura toda, não só a tentativa atual
             globalStats.quizErrors.push(_err);
             if (globalStats.quizErrors.length > QUIZ_ERRORS_MAX) globalStats.quizErrors.splice(0, globalStats.quizErrors.length - QUIZ_ERRORS_MAX);

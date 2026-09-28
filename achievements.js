@@ -1,11 +1,11 @@
 // ===== Sistema de Conquistas — Fase 2 =====
 // Persistente em localStorage. Critérios ligados a eventos já existentes no jogo.
 
-import { LEVELS } from "./data-levels.js?v=20260928v91";
-import { ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v91";
-import { ensureAudio, beep } from "./audio.js?v=20260928v91";
-import { levelStars, starsForLevel, incrementSecretsFound, markFirstTryThisLevel } from "./stars.js?v=20260928v91";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v91";
+import { LEVELS } from "./data-levels.js?v=20260928v92";
+import { ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v92";
+import { ensureAudio, beep } from "./audio.js?v=20260928v92";
+import { levelStars, starsForLevel, incrementSecretsFound, markFirstTryThisLevel } from "./stars.js?v=20260928v92";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v92";
 
 export let unlockedAchievements = {}; // { [id]: true }
 let historiesReadCount = 0;
