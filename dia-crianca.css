@@ -3122,3 +3122,24 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #startOverlay .menu-tile span { font-size: 13px; line-height: 1.15; text-align: left; }
   #startOverlay .menu-tile.primary { justify-content: center; min-height: 54px; }
 }
+
+/* Ecrãs táteis (rato/teclado não são o dispositivo principal): "Sair" não fecha o separador em
+   telemóveis/PWA (window.close() é bloqueado) e a dica de teclado não serve. Escondê-los deixa a grelha
+   com 6 botões (3 linhas de 2) e o menu cabe sem deslizar. No portátil mantêm-se. */
+@media (pointer: coarse) {
+  #startOverlay #btnExitGame { display: none; }
+  #startOverlay .hint-pc { display: none; }
+}
+
+/* Telemóveis na vertical mais baixos (≈ 640–740 px de altura útil, com a barra do browser): compacta um
+   pouco mais para o menu caber sem deslizar. A dica de toque sai (está em "Como Jogar"). */
+@media (max-width: 460px) and (orientation: portrait) and (max-height: 760px) {
+  #startOverlay .card { padding-top: 10px; padding-bottom: 8px; }
+  #startOverlay .card h1 { font-size: 18px; margin-bottom: 2px; }
+  #startOverlay .desc { font-size: 12.5px; line-height: 1.35; margin: 3px 0 2px; }
+  #startOverlay .main-menu-grid { gap: 6px; margin: 8px 0 2px; }
+  #startOverlay .menu-tile { min-height: 44px; padding: 4px 10px; }
+  #startOverlay .menu-tile.primary { min-height: 48px; }
+  #startOverlay .row { margin-top: 6px; }
+  #startOverlay .tiny:not(#versionTag) { display: none; }
+}

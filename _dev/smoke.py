@@ -429,7 +429,7 @@ with sync_playwright() as p:
         bad = []
         for w, h in [(360, 780), (375, 812), (393, 851), (412, 915), (430, 932)]:
             pg = new_page(B, w, h, touch=True); pg.goto(BASE + "/index.html", wait_until="networkidle"); pg.wait_for_timeout(300)
-            r = pg.evaluate("""()=>{const g=document.querySelector('.main-menu-grid'); const kids=[...g.children].filter(k=>!k.classList.contains('primary'));
+            r = pg.evaluate("""()=>{const g=document.querySelector('.main-menu-grid'); const kids=[...g.children].filter(k=>!k.classList.contains('primary') && getComputedStyle(k).display!=='none');
               const widths=kids.map(k=>Math.round(k.getBoundingClientRect().width)); const maxW=Math.max(...widths), minW=Math.min(...widths);
               return {maxW, minW, cardW:Math.round(document.querySelector('#startOverlay .card').getBoundingClientRect().width)}}""")
             if r["maxW"] - r["minW"] > 4 or r["maxW"] > r["cardW"] * 0.7:
@@ -437,6 +437,21 @@ with sync_playwright() as p:
             pg.context.close()
         assert not bad, "botão(ões) fora do tamanho esperado: " + "; ".join(bad)
         return "5 larguras de telemóvel, todos os botões do mesmo tamanho"
+
+    @test("Menu inicial: em telemóvel na vertical cabe inteiro (sem scroll), com a linha de Som/Ecrã todo à vista e sem «Sair»")
+    def _():
+        bad = []
+        for w, h in [(360, 640), (375, 667), (360, 740), (412, 742), (390, 844), (430, 932)]:
+            pg = new_page(B, w, h, touch=True); pg.goto(BASE + "/index.html", wait_until="networkidle"); pg.wait_for_timeout(300)
+            r = pg.evaluate("""()=>{const c=document.querySelector('#startOverlay .card');
+              const fs=document.getElementById('btnFullscreen').getBoundingClientRect();
+              return {over:c.scrollHeight-c.clientHeight, fsBottom:Math.round(fs.bottom), vh:innerHeight,
+                      exit:getComputedStyle(document.getElementById('btnExitGame')).display}}""")
+            if r["over"] > 1 or r["fsBottom"] > r["vh"] or r["exit"] != "none":
+                bad.append(f"{w}x{h} (scroll +{r['over']}px, «Ecrã todo» termina em {r['fsBottom']}px, «Sair» {r['exit']})")
+            pg.context.close()
+        assert not bad, "menu inicial em telemóvel na vertical: " + "; ".join(bad)
+        return "6 tamanhos, tudo à vista sem deslizar"
 
     @test("Etiqueta de versão: visível no menu inicial e igual à string ?v= publicada")
     def _():
