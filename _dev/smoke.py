@@ -583,6 +583,44 @@ with sync_playwright() as p:
         assert not bad, "; ".join(bad)
         return f"6 ecrãs x {len(sizes)} tamanhos"
 
+    @test("Cartão «Sabias que…?»: os ecrãs abertos pelo Menu ficam POR CIMA dele, e o cartão volta ao fechar")
+    def _():
+        errs = []; bad = []; import time; T0 = time.time(); step = ["início"]
+        pg = new_page(B, 844, 390, True, errs=errs)
+        # O cartão fecha-se sozinho ao fim de 15 s (rede de segurança do jogo). Este teste demora mais do que isso
+        # em máquinas lentas e o resultado dependia de o cartão estar escondido ou visível quando o temporizador
+        # disparava — por isso, só aqui, esse temporizador de 15 s não é agendado.
+        pg.add_init_script("(()=>{const st=window.setTimeout; window.setTimeout=function(f,d,...a){ return d===15000 ? 0 : st.call(window,f,d,...a); };})();")
+        to_level1(pg); start_level(pg)
+        pg.wait_for_selector("#historyOverlay:not(.hidden)", timeout=15000); pg.wait_for_timeout(600); T0 = time.time()
+        TOP_JS = """(ov)=>{const c=document.querySelector(ov+' .card'); const r=c.getBoundingClientRect();
+          const el=document.elementFromPoint(r.left+r.width/2, r.top+r.height/2); return !!(el && el.closest(ov))}"""
+        for tname, mbtn, ov, close in [("Mapa", "#mBtnMap", "#mapOverlay", "#btnCloseMap"),
+                                       ("Conquistas", "#mBtnAchievements", "#achievementsOverlay", "#btnCloseAchievements"),
+                                       ("Álbum", "#mBtnAlbum", "#albumOverlay", "#btnCloseAlbum"),
+                                       ("Estatísticas", "#mBtnStats", "#statsOverlay", "#btnCloseStats")]:
+            step[0] = f"{tname} ({time.time()-T0:.1f}s)"; pg.click("#btnTeacherMenu"); pg.click(mbtn); pg.wait_for_selector(ov + ":not(.hidden)"); pg.wait_for_timeout(500)
+            if not pg.evaluate(TOP_JS, ov): bad.append(f"{tname}: ficou por baixo de outro ecrã")
+            if not pg.evaluate("document.getElementById('historyOverlay').classList.contains('hidden')"): bad.append(f"{tname}: o cartão continua visível")
+            try: pg.click(close, timeout=2500)
+            except Exception:
+                bad.append(f"{tname}: o botão «Fechar» não é clicável (tapado)")
+                pg.evaluate("(s)=>document.querySelector(s).click()", close)   # fecha por JS só para o teste continuar
+            pg.wait_for_timeout(500)
+            if pg.evaluate("document.getElementById('historyOverlay').classList.contains('hidden')"): bad.append(f"{tname}: o cartão não voltou ao fechar")
+        # O cartão continua a ser o que segura o nível: fechá-lo (Continuar) liberta o jogo como antes
+        t_cont = time.time() - T0; step[0] = f"Continuar ({t_cont:.1f}s)"
+        try: pg.click("#btnHistory", timeout=3000)
+        except Exception: raise AssertionError(f"«Continuar» não clicável aos {time.time()-T0:.1f}s (passo: {step[0]}) — o cartão fecha sozinho aos 15 s")
+        pg.wait_for_timeout(500)
+        assert pg.evaluate("document.getElementById('historyOverlay').classList.contains('hidden')"), "«Continuar» não fechou o cartão"
+        # E depois de lido, abrir/fechar um ecrã do Menu não o ressuscita
+        pg.click("#btnTeacherMenu"); pg.click("#mBtnAlbum"); pg.wait_for_selector("#albumOverlay:not(.hidden)"); pg.wait_for_timeout(300)
+        pg.click("#btnCloseAlbum"); pg.wait_for_timeout(500)
+        if not pg.evaluate("document.getElementById('historyOverlay').classList.contains('hidden')"): bad.append("cartão já lido voltou a aparecer")
+        assert not bad, "; ".join(bad); assert not errs, errs[:3]
+        pg.context.close(); return f"4 ecrãs por cima do cartão; cartão volta ao fechar; lido → não volta "
+
     @test("Conquistas e Álbum em jogo: o nome do jogador e o «☰ Menu» não tapam o título nem o progresso")
     def _():
         bad = []

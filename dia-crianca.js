@@ -10,26 +10,26 @@
  * VanBerto's: mascote-robô guardião da cibersegurança
  *************************************************/
 
-import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260928v93";
-import { THEMES, LEVELS } from "./data-levels.js?v=20260928v93";
-import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v93";
+import { HISTORY, QUIZ_TIPS, QUIZ_ARTICLE, QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "./data-quiz.js?v=20260928v94";
+import { THEMES, LEVELS } from "./data-levels.js?v=20260928v94";
+import { MAP_REGIONS, ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS, ACHIEVEMENTS_DEFS } from "./data-progression.js?v=20260928v94";
 import { PRAISE, PAUSE_TIPS, LEVEL_ENTRY_PHRASES, DYNAMIC_MSGS_CORRECT, DYNAMIC_MSGS_WRONG,
-         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260928v93";
-import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260928v93";
+         VB_LEVEL_INTRO, VB_HIT, VB_QUIZ_CORRECT, VB_QUIZ_WRONG, VB_STAR_POWER, VB_PERFECT_LEVEL } from "./data-flavor.js?v=20260928v94";
+import { ensureAudio, beep, SFX, isMuted, setMuted, toggleMuted } from "./audio.js?v=20260928v94";
 import { starsForLevel, totalStarsEarned, resetLevelStarTracking, finalizeLevelStars,
-         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260928v93";
+         resetAllStars, getStarRecord, levelStars } from "./stars.js?v=20260928v94";
 import { unlockedAchievements, checkAchievements, onSecretFoundForAchievements,
          onHistoryReadForAchievements, onCorrectAnswerForAchievements, renderAchievements,
-         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260928v93";
-import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260928v93";
-import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260928v93";
-import { playTitleCard, playCinematic } from "./cinematics.js?v=20260928v93";
-import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v93";
-import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260928v93";
+         resetAchievements, showAchievementToast, onSecretRoomFoundForAchievements } from "./achievements.js?v=20260928v94";
+import { BOSSES, BOSS_BY_LEVEL } from "./data-bosses.js?v=20260928v94";
+import { REGION_INTRO, BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_VICTORY_VB, NPC_SIGNS, BOSS_HP_TAUNTS } from "./data-story.js?v=20260928v94";
+import { playTitleCard, playCinematic } from "./cinematics.js?v=20260928v94";
+import { loadNamespace, saveNamespace } from "./storage.js?v=20260928v94";
+import { makeTextures, makePlatformTextureThemed, makePipeTexture } from "./textures.js?v=20260928v94";
 import { initBackground, applyBackground as applyBackgroundRaw, drawSun, drawStars, drawCloud,
          updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor,
          spawnPlatformDecor, resetDoorGlow, clearPlatformDecor, hideDoorGlow,
-         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260928v93";
+         clouds, bgConfetti, NIGHT_THEMES } from "./background.js?v=20260928v94";
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -177,7 +177,31 @@ window.addEventListener("DOMContentLoaded", () => {
   // Mapa, que já sabe até onde cada jogador chegou.
 
   // ===== Gestão de overlay-open (desativa touch quando overlay visível) =====
+  // O cartão «Sabias que…?» (historyOverlay) e os ecrãs abertos pelo Menu (Mapa, Conquistas, Álbum, Estatísticas,
+  // Opções, Como Jogar, Rever Erros, Galeria) têm o mesmo z-index e o cartão vem depois no HTML — por isso, se o
+  // Menu fosse aberto com o cartão ainda por fechar, o ecrã ficava POR BAIXO dele. Enquanto um ecrã do Menu está
+  // aberto, escondemos o cartão (sem o «fechar»: o nível continua à espera dele — awaitingStory — e não conta
+  // como curiosidade lida) e repomo-lo quando o ecrã fecha. Tudo aqui é acionado pelo observer abaixo, por isso
+  // cobre qualquer caminho de abrir/fechar. (Lista própria, e não SECONDARY_OVERLAYS, que só existe mais abaixo:
+  // esta função corre já no arranque.)
+  const _SUB_OVERLAY_IDS = ["mapOverlay", "worldMapOverlay", "achievementsOverlay", "albumOverlay",
+    "statsOverlay", "optionsOverlay", "howOverlay", "reviewOverlay", "artefactGalleryOverlay"];
+  let _historySubOpen = false, _historySubLevel = -1;
+  function syncHistoryWithSubOverlays() {
+    const subOpen = _SUB_OVERLAY_IDS.some(id => { const e = document.getElementById(id); return e && !e.classList.contains("hidden"); });
+    const histHidden = historyOverlay.classList.contains("hidden");
+    if (subOpen && !histHidden) {
+      _historySubOpen = true; _historySubLevel = currentLevel;
+      historyOverlay.classList.add("hidden");
+    } else if (!subOpen && _historySubOpen) {
+      _historySubOpen = false;
+      // Só repõe se o cartão ainda é o do MESMO nível e continua por fechar (não ressuscita um cartão antigo
+      // se o jogador entretanto escolheu outro nível ou reiniciou).
+      if (histHidden && awaitingStory && currentLevel === _historySubLevel) historyOverlay.classList.remove("hidden");
+    }
+  }
   function updateOverlayOpenClass() {
+    syncHistoryWithSubOverlays();
     const anyOpen = !startOverlay.classList.contains("hidden")
       || !howOverlay.classList.contains("hidden")
       || !quizOverlay.classList.contains("hidden")
@@ -907,6 +931,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // Arranca (ou continua) o jogo Phaser diretamente num nível escolhido no mapa
   function startLevelFromMap(idx) {
+    _historySubOpen = false; // escolher outro nível a partir do Mapa: o cartão «Sabias que…?» antigo não volta
     document.getElementById("mapOverlay")?.classList.add("hidden");
     document.getElementById("worldMapOverlay")?.classList.add("hidden");
     startOverlay.classList.add("hidden");
@@ -1931,7 +1956,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (!confirm(`⚠️ Reiniciar o ${lvlName}?\nO progresso neste nível perde-se.`)) return;
         pausedByTeacher=false; _overlayPaused=false; btnPause.textContent="⏸ Pausa"; showPauseScreen(false);
         quizOverlay.classList.add("hidden"); btnCloseQuiz.classList.add("hidden");
-        historyOverlay.classList.add("hidden");
+        historyOverlay.classList.add("hidden"); _historySubOpen = false;
         // Matar todos os tweens pendentes (porta e robot) para evitar que callbacks antigos
         // disparem showQuiz no nível novo se o botão for pressionado durante a animação da porta
         try { sceneRef.tweens.killAll(); } catch {}
@@ -1959,7 +1984,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if (btnPause) btnPause.textContent = "⏸ Pausa"; showPauseScreen(false);
       teacherMenuPanel?.classList.remove("open");
       quizOverlay.classList.add("hidden"); btnCloseQuiz.classList.add("hidden");
-      historyOverlay.classList.add("hidden");
+      historyOverlay.classList.add("hidden"); _historySubOpen = false;
       gameOverOverlay.classList.add("hidden");
       winOverlay.classList.add("hidden"); document.getElementById("confetti")?.classList.add("hidden");
       closeAllSecondaryOverlays();
@@ -1973,7 +1998,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (!sceneRef) return;
         pausedByTeacher=false; _overlayPaused=false; btnPause.textContent="⏸ Pausa"; showPauseScreen(false);
         quizOverlay.classList.add("hidden"); btnCloseQuiz.classList.add("hidden");
-        historyOverlay.classList.add("hidden");
+        historyOverlay.classList.add("hidden"); _historySubOpen = false;
         // Matar todos os tweens pendentes antes de reiniciar
         try { sceneRef.tweens.killAll(); } catch {}
         resetPipeWarpState();
@@ -2021,7 +2046,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
         pausedByTeacher=false; btnPause.textContent="⏸ Pausa"; showPauseScreen(false);
         quizOverlay.classList.add("hidden"); btnCloseQuiz.classList.add("hidden");
-        historyOverlay.classList.add("hidden"); awaitingQuiz=false;
+        historyOverlay.classList.add("hidden"); _historySubOpen = false; awaitingQuiz=false;
         // Cancelar timers da porta antes de mudar de nível
         if(_doorWatchdogTimer){ try{_doorWatchdogTimer.remove(false);}catch{} _doorWatchdogTimer=null; }
         if(_landingCheckTimer){ try{_landingCheckTimer.remove(false);}catch{} _landingCheckTimer=null; }
