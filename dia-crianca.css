@@ -3107,3 +3107,18 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #startOverlay .menu-tile { min-height: 58px; padding: 8px 4px; }
   #startOverlay .menu-tile.primary { min-height: 52px; }
 }
+
+/* Menu inicial em telemóvel na vertical: os botões eram muito altos (~85 px) e com o emoji grande
+   afastado da etiqueta, o que empurrava "Sair" e a linha de Som/Ecrã para fora do ecrã. Agora ficam
+   em linha (emoji + etiqueta, como o "Nova Aventura"), mais baixos e proporcionados ao texto, todos
+   com o mesmo tamanho. Vem no fim do ficheiro (e com #startOverlay) para ganhar às regras de altura
+   acima. */
+@media (max-width: 460px) and (orientation: portrait) {
+  #startOverlay .main-menu-grid { gap: 8px; margin: 10px 0 2px; }
+  #startOverlay .menu-tile {
+    flex-direction: row; justify-content: flex-start; gap: 8px;
+    min-height: 50px; padding: 6px 10px; font-size: 22px;
+  }
+  #startOverlay .menu-tile span { font-size: 13px; line-height: 1.15; text-align: left; }
+  #startOverlay .menu-tile.primary { justify-content: center; min-height: 54px; }
+}
