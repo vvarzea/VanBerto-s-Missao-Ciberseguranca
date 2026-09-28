@@ -3143,3 +3143,56 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #startOverlay .row { margin-top: 6px; }
   #startOverlay .tiny:not(#versionTag) { display: none; }
 }
+
+/* Mapa da Aventura: o título, a barra de progresso e o botão «Fechar» ficam sempre visíveis e só a
+   lista de mundos desliza (o mesmo padrão das Estatísticas e das Opções). Antes, o cartão inteiro
+   deslizava com `justify-content: center`: quando o conteúdo era mais alto que o ecrã (telemóvel na
+   horizontal) o excesso cortava-se por igual em cima e em baixo — o título ficava inalcançável — e o
+   rodapé «colado» tapava o último cartão. */
+#mapOverlay .map-card { overflow: hidden; }
+#mapOverlay .map-card > h2,
+#mapOverlay .map-card > .map-progress-line,
+#mapOverlay .map-card > .map-progress-track,
+#mapOverlay .map-card > .map-hint,
+#mapOverlay .map-card > .row { flex: 0 0 auto; }
+#mapOverlay .map-card > .map-regions-grid {
+  flex: 0 1 auto; min-height: 0;
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  padding: 5px;               /* deixa espaço ao brilho dourado / anel de foco, que o overflow cortaria */
+  box-sizing: border-box;
+  align-content: start;
+}
+#mapOverlay .map-card > .row:last-child {
+  position: static; margin-bottom: 0; padding: 8px 0 0;
+}
+#mapOverlay .map-card > .row:last-child::before { display: none; }
+
+/* Telemóvel na horizontal (e outros ecrãs pouco altos): tudo mais compacto para caberem os 5 cartões
+   e o rodapé; em jogo, o nome + «☰ Menu» (fixos no canto superior direito) ficam ao lado do título,
+   sem tapar a lista. */
+@media (max-height: 520px) {
+  #mapOverlay .map-card { padding: 8px 14px; }
+  #mapOverlay .map-card > .card-seal { display: none; }
+  #mapOverlay .map-card > h2 { font-size: 16px !important; margin: 0 auto 2px 0 !important; text-align: left; }
+  #mapOverlay .map-card > .map-progress-line { font-size: 12px; margin: 0 auto 4px 0; text-align: left; }
+  #mapOverlay .map-card > .map-progress-track { height: 7px; margin: 0 auto 6px 0; }
+  #mapOverlay .map-card > h2,
+  #mapOverlay .map-card > .map-progress-line,
+  #mapOverlay .map-card > .map-progress-track { max-width: 100%; }
+  body.game-started #mapOverlay .map-card > h2,
+  body.game-started #mapOverlay .map-card > .map-progress-line,
+  body.game-started #mapOverlay .map-card > .map-progress-track { max-width: calc(100% - min(370px, 52vw)); }
+  #mapOverlay .map-card > .map-regions-grid { max-width: 100%; gap: 6px; }
+  /* min-height: auto (e não 0): com 0 a grelha podia espremer os cartões abaixo da altura do texto */
+  #mapOverlay .map-region { min-height: auto; padding: 6px 12px; gap: 10px; border-radius: 12px; }
+  #mapOverlay .map-region-icon { font-size: 26px; width: 34px; }
+  #mapOverlay .map-region-name { font-size: 14px; margin: 0; }
+  #mapOverlay .map-region-sub { font-size: 11px; line-height: 1.25; }
+  #mapOverlay .map-region-badge { font-size: 11px; padding: 2px 8px; }
+  #mapOverlay .map-card > .map-hint { font-size: 11px !important; margin: 4px auto 0; }
+  #mapOverlay .map-card > .row:last-child { padding: 6px 0 0; }
+  #mapOverlay #btnCloseMap { padding: 6px 26px; min-height: 0; font-size: 15px; }
+}
+@media (max-height: 420px) {
+  #mapOverlay .map-card > .map-hint { display: none; }
+}
