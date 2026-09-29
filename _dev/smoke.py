@@ -459,6 +459,56 @@ with sync_playwright() as p:
         assert not errs, errs[:3]; pg.context.close()
         return "falhou a 2.ª revisão → sai da lista e o quiz normal segue"
 
+    @test("Bosses: os 4 combates arrancam, correm 5 s com todos os ataques ativos, e a derrota leva ao quiz do boss")
+    def _():
+        # Os bosses são ~1/3 do código do jogo e nenhum outro teste passa por lá: um nome mal ligado ao dividir o
+        # ficheiro só rebentaria a meio de um combate, com uma criança a jogar.
+        errs = []; pg = new_page(B, 960, 600, False, errs=errs); to_level1(pg); start_level(pg)
+        pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 6); pg.wait_for_timeout(800)
+        seen = []
+        for after in (4, 8, 14, 19):
+            pg.evaluate("(a)=>window.__vb_test.startBoss(a)", after)
+            for _ in range(40):                                # cinemática de entrada: dispensa cartões até o combate arrancar
+                if pg.evaluate("window.__vb_test.inBossFight() && !!window.__vb_test.boss()"): break
+                btn = pg.query_selector(".overlay:not(.hidden) .btn.primary, #cineSkip, .cine-skip")
+                if btn:
+                    try: btn.click(timeout=500)
+                    except Exception: pass
+                pg.wait_for_timeout(500)
+            info = pg.evaluate("window.__vb_test.boss()"); assert info, f"boss após o nível {after} não arrancou"
+            seen.append(info["id"])
+            for _ in range(5):                                 # 5 s de combate: ataques, zonas tóxicas, pop-ups, etc.
+                pg.evaluate("window.__vb_test.keepAlive()"); pg.wait_for_timeout(1000)
+            hits = 0
+            for _ in range(info["max"] + 2):                   # derrota: tira-lhe toda a vida (fases, fúria, últimos golpes)
+                if pg.evaluate("window.__vb_test.hitBoss()"): hits += 1
+                pg.evaluate("window.__vb_test.keepAlive()"); pg.wait_for_timeout(1300)
+                left = pg.evaluate("window.__vb_test.boss()")
+                if not left or left["hp"] <= 0: break
+            for _ in range(60):                                # depois da derrota: quiz do boss (ou coleta de itens, conforme o boss)
+                if pg.query_selector("#quizOverlay:not(.hidden)"): break
+                pg.evaluate("window.__vb_test.keepAlive()"); pg.wait_for_timeout(700)
+                btn = pg.query_selector(".overlay:not(.hidden):not(#quizOverlay) .btn.primary")
+                if btn:
+                    try: btn.click(timeout=500)
+                    except Exception: pass
+            assert pg.query_selector("#quizOverlay:not(.hidden)"), f"{info['id']}: depois da derrota não apareceu o quiz do boss (golpes dados: {hits})"
+            q = pg.evaluate("document.getElementById('quizQuestion').textContent")
+            res = pg.evaluate(ANSWER_JS, [q, STAMP, True]); assert res == "ok", f"{info['id']}: {res}"
+            pg.wait_for_timeout(600)
+            for _ in range(14):                                # fecha o quiz e o que vier a seguir (portal, cartões)
+                pg.evaluate("window.__vb_test.keepAlive()")
+                btn = pg.query_selector("#btnCloseQuiz:not(.hidden)") or pg.query_selector(".overlay:not(.hidden) .btn.primary")
+                if btn:
+                    try: btn.click(timeout=500)
+                    except Exception: pass
+                pg.wait_for_timeout(700)
+            assert not errs, f"{info['id']}: {errs[:3]}"
+            # volta a um nível normal para o combate seguinte partir de um estado limpo
+            pg.evaluate("document.querySelectorAll('.overlay:not(.hidden)').forEach(e=>{ if(e.id!=='mapOverlay') e.classList.add('hidden'); })")
+        pg.context.close()
+        return "4 bosses: " + ", ".join(seen)
+
     @test("Movimento reduzido: sem animações CSS nem abanões")
     def _():
         out = []

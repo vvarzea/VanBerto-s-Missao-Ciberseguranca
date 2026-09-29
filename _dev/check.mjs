@@ -10,7 +10,9 @@ const problems = [], warns = [];
 const P = m => problems.push(m), W = m => warns.push(m);
 const read = f => fs.readFileSync(path.join(root, f), "utf8");
 const exists = f => fs.existsSync(path.join(root, f));
-const jsFiles = fs.readdirSync(root).filter(f => f.endsWith(".js") && f !== "phaser.min.js");
+// O código do jogo está dividido: dia-crianca.js (arranque) + game/*.js (módulos). Tudo o que era «dia-crianca.js» vale para o conjunto.
+const gameFiles = fs.existsSync(path.join(root, "game")) ? fs.readdirSync(path.join(root, "game")).filter(f => f.endsWith(".js")).map(f => "game/" + f) : [];
+const jsFiles = [...fs.readdirSync(root).filter(f => f.endsWith(".js") && f !== "phaser.min.js"), ...gameFiles];
 const isComment = l => /^\s*(\/\/|\/\*|\*)/.test(l);
 
 // 1) Uma única string ?v= em todo o lado (senão o mesmo módulo carrega duas vezes ou fica em cache velha)
@@ -34,10 +36,10 @@ for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
 if (/@import/.test(css)) P("CSS usa @import (pedido externo/encadeado)");
 const manifest = JSON.parse(read("manifest.json"));
 for (const i of manifest.icons || []) if (!exists(i.src.replace(/^\.?\//, ""))) P(`manifest.json: ícone em falta ${i.src}`);
-const dc = read("dia-crianca.js");
+const dc = ["dia-crianca.js", ...gameFiles].map(read).join("\n");   // código do jogo, todos os ficheiros
 const bgFiles = /const BG_FILES = \{([\s\S]*?)\};/.exec(dc);
 const bgKeys = new Set();
-if (!bgFiles) P("BG_FILES não encontrado em dia-crianca.js");
+if (!bgFiles) P("BG_FILES não encontrado em dia-crianca.js / game/*.js");
 else for (const m of bgFiles[1].matchAll(/(bg_[a-z0-9_]+):\s*"([^"]+)"/g)) { bgKeys.add(m[1]); if (!exists(m[2])) P(`BG_FILES: ficheiro em falta ${m[2]}`); }
 const ov = /const LEVEL_BG_OVERRIDE = \{([\s\S]*?)\};/.exec(dc);
 if (ov) for (const m of ov[1].matchAll(/"(bg_[a-z0-9_]+)"/g)) if (!bgKeys.has(m[1])) P(`LEVEL_BG_OVERRIDE usa ${m[1]}, que não está em BG_FILES`);
