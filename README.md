@@ -30,11 +30,12 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | Ficheiro | Para que serve |
 | --- | --- |
 | `index.html` | Estrutura, overlays e carregamento (`phaser.min.js` + `dia-crianca.js` como módulo) |
-| `dia-crianca.js` | Motor do jogo: física, níveis, bosses, quiz, UI, guardar/continuar |
+| `dia-crianca.js` | Só arranca o jogo (importa e chama o `game/`, ver «Estrutura do código» abaixo) |
 | `dia-crianca.css` | Estilos e declaração (`@font-face`) dos tipos de letra |
 | `fonts/` | Baloo 2 (400, 600, 700, 800) e Nunito (400, 600, 700 e 400 itálico), `woff2` latino, com as licenças OFL |
 | `phaser.min.js` | Phaser **3.90.0** minificado, servido localmente (sem CDN) |
 | `sw.js` | Service worker: modo offline (guarda o jogo na 1.ª visita; uma cache por versão) |
+| `game/` | Motor do jogo, dividido em 24 módulos (física, níveis, bosses, quiz, UI, guardar/continuar — ver «Estrutura do código») |
 | `LICENSE-Phaser.txt` | Licença MIT do Phaser (obrigatória ao distribuir o `phaser.min.js`) |
 | `_dev/` | Ferramentas de desenvolvimento (verificações, teste no Chromium, script de lançamento, conversor de fundos) e os JPG originais dos fundos (`_dev/originais/`). Não são necessárias no site publicado |
 | `data-quiz.js` | Perguntas — `QUIZ_BY_THEME` (Fácil, 185 perguntas, 3 opções) e `QUIZ_BY_THEME_AVANCADO` (Difícil e Extremo, 166 perguntas, 4 opções) —, curiosidades e artigos |
@@ -54,6 +55,43 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 | `mundo*.webp`, `map-mundo*.webp`, `sala_secreta.webp` | Fundos dos níveis e mapas dos mundos |
 | `manifest.json`, `icon-*.png`, `favicon*`, `apple-touch-icon.png` | Ícones e manifesto da app |
 
+## Estrutura do código
+
+O motor do jogo (antes um único `dia-crianca.js` com ~10 300 linhas) está dividido em 24 módulos ES em `game/`,
+por assunto — a lista completa está no topo de `_dev/split_source.mjs`. Guia rápido:
+
+| Módulo | Conteúdo |
+| --- | --- |
+| `game/state.js` | Estado partilhado (jogador, vidas, pontos, poderes…) e dificuldade — os outros módulos só o LEEM (`import`); para alterar usam-se as funções `set_<nome>()` que o próprio `state.js` exporta |
+| `game/scene.js` | Configuração e ciclo do Phaser (`preload`, `create`, `update`) |
+| `game/level.js`, `game/world.js`, `game/rooms.js`, `game/door.js` | Um nível: HUD, objetos do cenário, agachar/canos/salas secretas, porta e transição |
+| `game/boss-core.js`, `game/boss-attacks.js`, `game/boss-combat.js`, `game/boss-end.js` | Os 4 combates de boss, por assunto (arranque/arena, ataques, dano/derrota, vitória) |
+| `game/quiz.js` | Quiz do fim de nível, revisão espaçada dos erros e «Sabias que…?» |
+| `game/map.js`, `game/artefacts.js`, `game/screens.js` | Mapa da aventura, artefactos/Álbum/Galeria, e os ecrãs de Conquistas/Estatísticas/Opções/Certificado |
+| `game/items.js`, `game/flow.js`, `game/overlays.js`, `game/ui.js` | Itens/poderes, avançar de nível e fim de jogo, gestão de ecrãs sobrepostos, botões e atalhos |
+| `game/dom.js`, `game/dialogue.js`, `game/feedback.js`, `game/vanberto.js`, `game/input.js`, `game/stats.js` | Referências ao HTML, balões de fala, elogios/mensagens, animação do VanBerto's, controlos de toque, estatísticas globais |
+
+**Porquê módulos e não classes/objetos:** o código todo continua a correr dentro do MESMO fecho de arranque de
+antes (agora repartido por `init_<módulo>_<n>()`, chamadas por `dia-crianca.js` pela ordem exata em que o código
+corria no ficheiro único) — só a ORGANIZAÇÃO em ficheiros mudou, não a arquitetura. Isto foi deliberado: dividir
+em serviços/classes teria sido uma reescrita, com muito mais risco de mudar comportamento por engano; dividir por
+ficheiro, mantendo tudo o resto igual, é uma mudança mecânica e verificável.
+
+**Para alterar o código do jogo:** encontra o módulo certo em `game/` (a tabela acima, ou o comentário no início
+de cada ficheiro) e edita-o diretamente, como qualquer outro ficheiro — este é agora o código-fonte; não há um
+ficheiro único escondido algures a partir do qual `game/` seja regerado.
+
+**Como a divisão foi feita e confirmada** (uma única vez, ao passar de `dia-crianca.js` para `game/`) fica
+registado em `_dev/divisao-em-modulos/`, para consulta ou para o caso de vir a ser precisa uma divisão semelhante
+no futuro (ex.: partir um módulo grande outra vez):
+- `dia-crianca.antes-da-divisao.js` — o ficheiro único original, guardado tal como estava.
+- `split_source.mjs` — o script que gerou `game/` e o `dia-crianca.js` atual a partir dele.
+- `verify_split.mjs` — a auditoria que confirmou, função a função e efeito de arranque a efeito de arranque (por
+  AST, ignorando comentários/formatação), que o resultado tem exatamente o mesmo comportamento do original.
+
+Nenhum dos dois scripts corre automaticamente, nem faz parte do jogo publicado, e precisam de pacotes extra só
+deles (`npm i acorn acorn-walk eslint-scope`) — ver o comentário no topo de cada um.
+
 ## Correr localmente
 
 Os módulos ES não funcionam abrindo o `index.html` diretamente (`file://`). Na pasta do jogo:
@@ -67,7 +105,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260928v94`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20260929v95`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 

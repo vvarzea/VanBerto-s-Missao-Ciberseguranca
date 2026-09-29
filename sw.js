@@ -4,13 +4,18 @@
 //    jogados têm fundo; os outros mostram o céu desenhado (o jogo já lida com isso em applyBackground).
 //  • Cada versão tem a sua própria cache, por isso nunca se misturam ficheiros de versões diferentes.
 // VERSION é carimbada pelo _dev/release.py e tem de ser igual à string ?v= do index.html (o check.mjs verifica).
-const VERSION = "20260928v94";
+const VERSION = "20260929v95";
 const CACHE = "vanbertos-" + VERSION;
 
 // Ficheiros do núcleo. Os .js e .css pedem-se com ?v=VERSION, como no index.html e nos imports.
 const CORE = [
   "./", "index.html", "manifest.json",
   "dia-crianca.css", "dia-crianca.js", "phaser.min.js",
+  "game/artefacts.js", "game/boss-attacks.js", "game/boss-combat.js", "game/boss-core.js", "game/boss-end.js",
+  "game/dialogue.js", "game/dom.js", "game/door.js", "game/feedback.js", "game/flow.js", "game/input.js",
+  "game/items.js", "game/level.js", "game/map.js", "game/overlays.js", "game/quiz.js", "game/rooms.js",
+  "game/scene.js", "game/screens.js", "game/state.js", "game/stats.js", "game/ui.js", "game/vanberto.js",
+  "game/world.js",
   "achievements.js", "audio.js", "background.js", "cinematics.js", "stars.js", "storage.js", "textures.js",
   "data-bosses.js", "data-flavor.js", "data-levels.js", "data-progression.js", "data-quiz.js", "data-story.js",
   "vanberto_real.png", "apple-touch-icon.png", "favicon.ico", "favicon-16x16.png", "favicon-32x32.png", "favicon-48x48.png",
