@@ -506,12 +506,12 @@ function makeBossTextures(scene){
   // com uma cara maléfica tipo abóbora do Halloween em brilho ciano, capa
   // esfarrapada azul-marinho, uma garra grande de um lado e uma cana de
   // pesca com anzol do outro. Continua "stompBoss" (salta-lhe em cima 3
-  // vezes) — só a pele muda, a mecânica é exactamente a mesma, e os 8
+  // vezes) — só a pele muda, a mecânica é exatamente a mesma, e os 8
   // estados (normal/armsdown/blink/ouch/laugh/angry/sad) mantêm-se
   // todos, só desenhados de novo com esta identidade.
   //
   // Paleta centralizada num só objeto (PH) para as 8 variantes usarem
-  // sempre exactamente as mesmas cores — evita o "cada estado com o seu
+  // sempre exatamente as mesmas cores — evita o "cada estado com o seu
   // tom" que aconteceria copiando valores à mão em cada função.
   const PH = {
     cloakDark:  "#0b1330",
@@ -1100,7 +1100,7 @@ function makeBossTextures(scene){
       // risca de realce só cobria a metade interior da sola (dx-5..dx+5)
       // e tinha um blur pesado, por isso lia-se mais como uma fresta a
       // brilhar do que como o realce nítido de uma bota. Agora usa
-      // exactamente a mesma risca do Monstro do Phishing/Espião das
+      // exatamente a mesma risca do Monstro do Phishing/Espião das
       // Sombras: de ponta a ponta da sola (dx-11..dx+11), sem blur —
       // âmbar (VG.glow2) em vez de vermelho, para não se confundir com o
       // brilho da cara/garras e reforçar a mesma paleta dos pixels de
@@ -1268,7 +1268,7 @@ function makeBossTextures(scene){
   // Versão anterior: uma capa/robe lisa cinzento-arroxeada, sem pernas, só
   // com dois olhos ciano a brilhar dentro do capuz — lê-se bem mas não tem
   // nenhuma ligação de família com o resto do elenco (Monstro do Phishing,
-  // ver secção 1 acima). Nova versão: usa exactamente a mesma "receita" do
+  // ver secção 1 acima). Nova versão: usa exatamente a mesma "receita" do
   // Monstro do Phishing (cabeça-ecrã com cara maléfica + capuz/chapéu por
   // cima + garra articulada + botas) para os dois lerem como a mesma
   // família de bosses, mas em roxo-magenta em vez de azul-ciano, com capuz
