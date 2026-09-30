@@ -7,20 +7,20 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { hitFlash } from "./dom.js?v=20260929v96";
-import { applyHitStop, showFloat } from "./feedback.js?v=20260929v96";
-import { showGameOver } from "./flow.js?v=20260929v96";
-import { clearPower, setInvuln } from "./items.js?v=20260929v96";
-import { updateHearts } from "./level.js?v=20260929v96";
-import { saveGame } from "./overlays.js?v=20260929v96";
-import { snapPlayerToGround } from "./rooms.js?v=20260929v96";
-import { _critterSession, _overlayPaused, awaitingQuiz, balloons, collectedItemIndices, collectedRoomPipes, critters, currentLevel, currentSign, decorativePipes, extraShieldCounted, getVillainSpeedMult, hazards, invuln, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, livesLostThisLevel, malwareGroup, movingPlatforms, pausedByTeacher, pipeHintSign, player, powered, sceneRef, secretDoors, secretSigns, set__critterSession, set__hudDirty, set_awaitingQuiz, set_balloons, set_critters, set_currentSign, set_extraShieldCounted, set_hazards, set_invuln, set_itemsCollected, set_itemsTotal, set_lives, set_livesLostThisLevel, set_movingPlatforms, set_pipeHintSign, set_secretDoors, set_secretSigns, set_trampolines, tipText, touch, trampolines } from "./state.js?v=20260929v96";
-import { triggerVanBertoSad } from "./vanberto.js?v=20260929v96";
-import { THEMES, LEVELS } from "../data-levels.js?v=20260929v96";
-import { makePlatformTextureThemed } from "../textures.js?v=20260929v96";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
-import { onSecretFoundForAchievements } from "../achievements.js?v=20260929v96";
-import { NPC_SIGNS } from "../data-story.js?v=20260929v96";
+import { hitFlash } from "./dom.js?v=20260930v97";
+import { applyHitStop, showFloat } from "./feedback.js?v=20260930v97";
+import { showGameOver } from "./flow.js?v=20260930v97";
+import { clearPower, setInvuln } from "./items.js?v=20260930v97";
+import { updateHearts } from "./level.js?v=20260930v97";
+import { saveGame } from "./overlays.js?v=20260930v97";
+import { snapPlayerToGround } from "./rooms.js?v=20260930v97";
+import { _critterSession, _overlayPaused, awaitingQuiz, balloons, collectedItemIndices, collectedRoomPipes, critters, currentLevel, currentSign, decorativePipes, extraShieldCounted, getVillainSpeedMult, hazards, invuln, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, livesLostThisLevel, malwareGroup, movingPlatforms, pausedByTeacher, pipeHintSign, player, powered, sceneRef, secretDoors, secretSigns, set__critterSession, set__hudDirty, set_awaitingQuiz, set_balloons, set_critters, set_currentSign, set_extraShieldCounted, set_hazards, set_invuln, set_itemsCollected, set_itemsTotal, set_lives, set_livesLostThisLevel, set_movingPlatforms, set_pipeHintSign, set_secretDoors, set_secretSigns, set_trampolines, tipText, touch, trampolines } from "./state.js?v=20260930v97";
+import { triggerVanBertoSad } from "./vanberto.js?v=20260930v97";
+import { THEMES, LEVELS } from "../data-levels.js?v=20260930v97";
+import { makePlatformTextureThemed } from "../textures.js?v=20260930v97";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20260930v97";
+import { onSecretFoundForAchievements } from "../achievements.js?v=20260930v97";
+import { NPC_SIGNS } from "../data-story.js?v=20260930v97";
 
 // ===== Balões flutuantes apanháveis =====
 

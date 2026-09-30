@@ -81,7 +81,7 @@ export function playCinematic(slides, onComplete, bars = true) {
   // título (playTitleCard, mais abaixo neste ficheiro) já tinha um auto-
   // avanço destes; faltava aqui. Rearma-se a cada fala nova (armAutoAdvance,
   // chamado por render()); se ninguém tocar em 9s, avança sozinho (ou
-  // termina, na última fala) — exactamente como um toque faria.
+  // termina, na última fala) — exatamente como um toque faria.
   let autoTimer = null;
   function armAutoAdvance() {
     clearTimeout(autoTimer);

@@ -7,7 +7,7 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { PRAISE } from "../data-flavor.js?v=20260929v96";
+import { PRAISE } from "../data-flavor.js?v=20260930v97";
 
 // ===== Elogios =====
 
@@ -16,7 +16,7 @@ export function pickPraise() { return PRAISE[Math.floor(Math.random() * PRAISE.l
 // Reportado (screenshot): apanhar vários itens/segredos quase ao mesmo
 // tempo (ex: ao correr por um grupo denso de colecionáveis) fazia todos
 // os textos flutuantes ("Drone +15", "Pacote +10", "Escudo! PROTEGIDO",
-// "+50", "Fantástico!"...) nascerem exactamente na mesma posição, uns
+// "+50", "Fantástico!"...) nascerem exatamente na mesma posição, uns
 // por cima dos outros — ilegível, e parecia "erro" mesmo sem nenhuma
 // exceção. _floatBurst guarda os instantes recentes de showFloat() para
 // desviar verticalmente cada novo texto de um "rebentamento" (janela de

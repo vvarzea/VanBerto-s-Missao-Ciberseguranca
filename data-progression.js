@@ -3,7 +3,7 @@
 
 // Mantém os 20 níveis e a sua dificuldade intactos (só o TEMA de cada
 // nível mudou, ver data-levels.js). Os 4 mundos e as posições dos bosses
-// mantêm-se exactamente iguais à estrutura original.
+// mantêm-se exatamente iguais à estrutura original.
 export const MAP_REGIONS = [
   { id:"origens",        icon:"🌐", name:"Reino dos Fundamentos",         sub:"Internet, palavras-passe e o primeiro vírus",      levels:[0,1,2,3,4],
     mapBg:"map-mundo1.webp",

@@ -7,17 +7,17 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20260929v96";
-import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260929v96";
-import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20260929v96";
-import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260929v96";
-import { clearExtremoAllies } from "./level.js?v=20260929v96";
-import { showQuiz } from "./quiz.js?v=20260929v96";
-import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, getQuizPool, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20260929v96";
-import { playVanBertoDance } from "./vanberto.js?v=20260929v96";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
-import { showAchievementToast } from "../achievements.js?v=20260929v96";
-import { BOSS_VICTORY_VB } from "../data-story.js?v=20260929v96";
+import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20260930v97";
+import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260930v97";
+import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20260930v97";
+import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260930v97";
+import { clearExtremoAllies } from "./level.js?v=20260930v97";
+import { showQuiz } from "./quiz.js?v=20260930v97";
+import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, getQuizPool, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20260930v97";
+import { playVanBertoDance } from "./vanberto.js?v=20260930v97";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20260930v97";
+import { showAchievementToast } from "../achievements.js?v=20260930v97";
+import { BOSS_VICTORY_VB } from "../data-story.js?v=20260930v97";
 
 // ===== Flourish de vitória próprio de cada boss — Fase "Batalhas Épicas" =====
 // Substitui/complementa o confetti genérico por algo ligado ao tema do boss
@@ -182,7 +182,7 @@ export function startBossQuizPhase() {
 function spawnBossPortal(scene, onEnter, def) {
   const color = (def && def.color != null) ? def.color : 0x9060ff;
   // Antes: px/py fixos em (800,380) — só calhavam bem nas arenas "grandes"
-  // (1600px) dos 3 bosses originais, porque 800 é exactamente o centro
+  // (1600px) dos 3 bosses originais, porque 800 é exatamente o centro
   // dessas arenas. Na arena "do tamanho da janela" do Monstro da Ignorância
   // (960px), 800 fica perto do bordo direito, sem garantia de chão por
   // baixo — o portal podia ficar difícil ou impossível de alcançar.
@@ -229,7 +229,7 @@ function spawnBossPortal(scene, onEnter, def) {
   // frame (câmara a assentar, tween a terminar), o Arcade Physics pode
   // nunca chegar a reportar esse overlap — o VanBerto's fica visualmente
   // dentro/à frente do portal para sempre, sem nada o disparar. A porta
-  // normal (tryOpenDoor) já usa exactamente este tipo de rede de segurança
+  // normal (tryOpenDoor) já usa exatamente este tipo de rede de segurança
   // por polling (_landingCheckTimer) por este mesmo motivo.
   const enterPortal = () => {
     if (triggered) return;

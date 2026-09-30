@@ -1,7 +1,7 @@
 // ===== Definições dos Bosses temáticos — Fase 3 =====
 // Ficheiro puramente de dados — zero acoplamento ao motor do jogo.
 // "afterLevel" é o índice (0-based) do nível DEPOIS do qual o boss aparece,
-// exactamente como currentLevel já é usado em LEVELS — NUNCA altera o array LEVELS.
+// exatamente como currentLevel já é usado em LEVELS — NUNCA altera o array LEVELS.
 //
 // quizTheme tem de corresponder a uma chave existente em QUIZ_BY_THEME (data-quiz.js).
 // Confirma os nomes exactos das chaves aí antes de ativar cada boss.
@@ -33,7 +33,7 @@ export const BOSSES = [
     // e uma mecânica só — saltar-lhe em cima 3 vezes. Nada de fases, nada de
     // ataque especial, nada de fase de recolha à parte. Simples, rápido,
     // divertido. stompBoss=true liga este modo dedicado no motor do jogo;
-    // os outros 3 bosses (ainda sem stompBoss) continuam exactamente iguais.
+    // os outros 3 bosses (ainda sem stompBoss) continuam exatamente iguais.
     stompBoss: true,
     stompsToDefeat: 3,       // 3 saltos na cabeça = derrotado (reaproveita def.hp)
     // Melhorias "mais género Mario" (pedido), sem nenhum perigo novo no
@@ -109,7 +109,7 @@ export const BOSSES = [
     // ~1px do topo da tela (116px), bem mais alto do que a sobrancelha do
     // desenho antigo. Medido o pixel mais alto desenhado (~57px acima do
     // centro do canvas) × bossScale (1.5) ≈ 85, mais uma pequena folga →
-    // 96. Os pés continuam a ~49px abaixo do centro, exactamente como no
+    // 96. Os pés continuam a ~49px abaixo do centro, exatamente como no
     // desenho antigo, por isso bossY (abaixo) NÃO precisou de mudar.
     hpBarOffset: 96,
     // Letreiro do objetivo (ver startBossFight): fica perto do chão, junto
@@ -144,13 +144,13 @@ export const BOSSES = [
       // 514 = mesmo limite físico usado por omissão pelos níveis normais e
       // pelos outros bosses (ver startBossFight em dia-crianca.js) — o chão
       // principal (topo em y=506) fica ligeiramente acima deste limite,
-      // exactamente como acontece nos níveis normais, por isso não precisa
+      // exatamente como acontece nos níveis normais, por isso não precisa
       // de um valor próprio.
       worldH: 514,
       // Variedade de silhueta (nova — antes as 4 arenas tinham quase a
       // mesma forma: chão + 2 plataformas simétricas à mesma altura). Só
       // o Y da plataforma direita mudou (391, 30px mais alta que a
-      // esquerda) — o X mantém-se exactamente igual, por isso signX (mais
+      // esquerda) — o X mantém-se exatamente igual, por isso signX (mais
       // abaixo) continua válido sem recálculo. Mais uma 3ª plataforma
       // central, mais alta ainda — mesmo "degrau" a meio da arena que o
       // Robô do Spam já tinha.
@@ -219,7 +219,7 @@ export const BOSSES = [
     // spawnMiniViruses em dia-crianca.js, que ainda tinha coordenadas da
     // arena antiga de 1600px de largura e por isso ficava fora do ecrã na
     // arena atual de 960px; corrigido à parte, mas mantido desligado aqui
-    // por agora, só a zona de chão). Zonas colocadas exactamente por baixo
+    // por agora, só a zona de chão). Zonas colocadas exatamente por baixo
     // de cada plataforma baixa (mesmo X/W dela) — o chão nessa faixa fica
     // tóxico, o que transforma as 2 plataformas num "precisas de saltar
     // para lá" em vez de um extra opcional. O corredor central (entre
@@ -298,7 +298,7 @@ export const BOSSES = [
     // bossY: recalculado com o redesenho "robô-vírus" (ver makeBossTextures
     // em textures.js) — a esfera antiga não tinha pernas (pixel mais baixo
     // a ~44px do centro); agora tem botas, tal como os outros 3 bosses, com
-    // os pés exactamente na mesma posição da família (~49px abaixo do
+    // os pés exatamente na mesma posição da família (~49px abaixo do
     // centro × bossScale 1.5 ≈ 73,5 → 506-73,5≈433).
     bossY: 433,
     bossScale: 1.5,
@@ -430,7 +430,7 @@ export const BOSSES = [
     // bossY: recalculado com o redesenho "feiticeiro-espião" (ver
     // makeBossTextures em textures.js) — a capa/robe antiga não tinha
     // pernas (bainha a ~43px abaixo do centro); agora tem botas, tal como
-    // o Monstro do Phishing, com os pés exactamente na mesma posição
+    // o Monstro do Phishing, com os pés exatamente na mesma posição
     // (~49px abaixo do centro × bossScale 1.5 ≈ 73,5 → 506-73,5≈433).
     bossY: 433,
     bossScale: 1.5,

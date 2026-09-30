@@ -7,30 +7,30 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { createArtOrbs } from "./artefacts.js?v=20260929v96";
-import { updateBossFight } from "./boss-combat.js?v=20260929v96";
-import { btnCloseQuiz, btnMute, btnPause, btnRestart, btnRestartGame, gameOverOverlay, historyOverlay, quizOverlay, startOverlay, winOverlay } from "./dom.js?v=20260929v96";
-import { playLevelTransition } from "./door.js?v=20260929v96";
-import { pickPraise, showFloat } from "./feedback.js?v=20260929v96";
-import { createTouchInput } from "./input.js?v=20260929v96";
-import { onCollectItem, onHitMalware, poweredCountdownVal } from "./items.js?v=20260929v96";
-import { loadLevel, updateHUD, updateHearts, updateProgressBar } from "./level.js?v=20260929v96";
-import { BG_FILES, _bootLevelIdx, bgKeyForLevel, prefersReducedMotion, renderMap, setupBackgroundLoading } from "./map.js?v=20260929v96";
-import { SECONDARY_OVERLAYS, closeAllSecondaryOverlays, loadGame, openOverlay, saveGame } from "./overlays.js?v=20260929v96";
-import { clearQuizReview, quizStats, resetQuizStats, showHistory, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20260929v96";
-import { exitCrouch, setCrouchHitbox, tryEnterPipe } from "./rooms.js?v=20260929v96";
-import { COYOTE_MS, GRAVITY, JUMP_BUFFER_MS, _critterSession, _doorAnimRunning, _doorWatchdogTimer, _hudDirty, _landingCheckTimer, _overlayPaused, _pipeDownWasHeld, _pipeWarping, _suppressCrouchUntilRelease, awaitingQuiz, awaitingStory, balloons, bossState, controlsInvertedUntil, coyoteUntil, critters, currentLevel, cursors, door, doorOverlap, doubleJumpActive, doubleJumpUsed, getStartLives, hazards, inBossFight, inSecretRoom, invuln, isCrouching, itemsGroup, jumpBufferedUntil, keyS, keySpace, lives, malwareGroup, mapProgress, pauseOverlayGfx, pausedByTeacher, pipes, platforms, player, powerHaloGfx, powered, progressBg, progressFill, resetPipeWarpState, sceneRef, score, scoreText, set__doorAnimRunning, set__doorWatchdogTimer, set__historySubOpen, set__hudDirty, set__landingCheckTimer, set__overlayPaused, set__pipeDownWasHeld, set__suppressCrouchUntilRelease, set_awaitingQuiz, set_awaitingStory, set_coyoteUntil, set_cursors, set_difficultyBadge, set_doorOverlap, set_doubleJumpUsed, set_heartsGfx, set_hudText, set_isCrouching, set_itemCountText, set_itemsGroup, set_jumpBufferedUntil, set_keyS, set_keySpace, set_lives, set_livesLostThisLevel, set_malwareGroup, set_pauseOverlayGfx, set_pausedByTeacher, set_platforms, set_player, set_playerNameHUD, set_powerHaloGfx, set_powerIndicator, set_progressBg, set_progressFill, set_sceneRef, set_score, set_scoreText, set_shadowGfx, set_sunAngle, set_tipText, set_transitionGfx, set_transitionLabel, shadowGfx, starPower, starPowerCountVal, sunAngle, touch, updateDifficultyBadge } from "./state.js?v=20260929v96";
-import { flushScoreToStats } from "./stats.js?v=20260929v96";
-import { applyVanBertoTexture, scheduleBlink, triggerVanBertoWink } from "./vanberto.js?v=20260929v96";
-import { updateDecorativePipeReactions, updateHazards, updateMovingPlatforms, updatePipeHintSign, updateSecretSigns, updateSecrets, updateSigns, updateTrampolines } from "./world.js?v=20260929v96";
-import { makeTextures } from "../textures.js?v=20260929v96";
-import { initBackground, drawSun, NIGHT_THEMES, drawStars, clouds, drawCloud, updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor, bgConfetti } from "../background.js?v=20260929v96";
-import { isMuted, ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
-import { LEVELS, THEMES } from "../data-levels.js?v=20260929v96";
-import { ACHIEVEMENTS_DEFS } from "../data-progression.js?v=20260929v96";
-import { unlockedAchievements } from "../achievements.js?v=20260929v96";
-import { totalStarsEarned } from "../stars.js?v=20260929v96";
-import { PAUSE_TIPS } from "../data-flavor.js?v=20260929v96";
+import { createArtOrbs } from "./artefacts.js?v=20260930v97";
+import { updateBossFight } from "./boss-combat.js?v=20260930v97";
+import { btnCloseQuiz, btnMute, btnPause, btnRestart, btnRestartGame, gameOverOverlay, historyOverlay, quizOverlay, startOverlay, winOverlay } from "./dom.js?v=20260930v97";
+import { playLevelTransition } from "./door.js?v=20260930v97";
+import { pickPraise, showFloat } from "./feedback.js?v=20260930v97";
+import { createTouchInput } from "./input.js?v=20260930v97";
+import { onCollectItem, onHitMalware, poweredCountdownVal } from "./items.js?v=20260930v97";
+import { loadLevel, updateHUD, updateHearts, updateProgressBar } from "./level.js?v=20260930v97";
+import { BG_FILES, _bootLevelIdx, bgKeyForLevel, prefersReducedMotion, renderMap, setupBackgroundLoading } from "./map.js?v=20260930v97";
+import { SECONDARY_OVERLAYS, closeAllSecondaryOverlays, loadGame, openOverlay, saveGame } from "./overlays.js?v=20260930v97";
+import { clearQuizReview, quizStats, resetQuizStats, showHistory, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20260930v97";
+import { exitCrouch, setCrouchHitbox, tryEnterPipe } from "./rooms.js?v=20260930v97";
+import { COYOTE_MS, GRAVITY, JUMP_BUFFER_MS, _critterSession, _doorAnimRunning, _doorWatchdogTimer, _hudDirty, _landingCheckTimer, _overlayPaused, _pipeDownWasHeld, _pipeWarping, _suppressCrouchUntilRelease, awaitingQuiz, awaitingStory, balloons, bossState, controlsInvertedUntil, coyoteUntil, critters, currentLevel, cursors, door, doorOverlap, doubleJumpActive, doubleJumpUsed, getStartLives, hazards, inBossFight, inSecretRoom, invuln, isCrouching, itemsGroup, jumpBufferedUntil, keyS, keySpace, lives, malwareGroup, mapProgress, pauseOverlayGfx, pausedByTeacher, pipes, platforms, player, powerHaloGfx, powered, progressBg, progressFill, resetPipeWarpState, sceneRef, score, scoreText, set__doorAnimRunning, set__doorWatchdogTimer, set__historySubOpen, set__hudDirty, set__landingCheckTimer, set__overlayPaused, set__pipeDownWasHeld, set__suppressCrouchUntilRelease, set_awaitingQuiz, set_awaitingStory, set_coyoteUntil, set_cursors, set_difficultyBadge, set_doorOverlap, set_doubleJumpUsed, set_heartsGfx, set_hudText, set_isCrouching, set_itemCountText, set_itemsGroup, set_jumpBufferedUntil, set_keyS, set_keySpace, set_lives, set_livesLostThisLevel, set_malwareGroup, set_pauseOverlayGfx, set_pausedByTeacher, set_platforms, set_player, set_playerNameHUD, set_powerHaloGfx, set_powerIndicator, set_progressBg, set_progressFill, set_sceneRef, set_score, set_scoreText, set_shadowGfx, set_sunAngle, set_tipText, set_transitionGfx, set_transitionLabel, shadowGfx, starPower, starPowerCountVal, sunAngle, touch, updateDifficultyBadge } from "./state.js?v=20260930v97";
+import { flushScoreToStats } from "./stats.js?v=20260930v97";
+import { applyVanBertoTexture, scheduleBlink, triggerVanBertoWink } from "./vanberto.js?v=20260930v97";
+import { updateDecorativePipeReactions, updateHazards, updateMovingPlatforms, updatePipeHintSign, updateSecretSigns, updateSecrets, updateSigns, updateTrampolines } from "./world.js?v=20260930v97";
+import { makeTextures } from "../textures.js?v=20260930v97";
+import { initBackground, drawSun, NIGHT_THEMES, drawStars, clouds, drawCloud, updateTrail, updateFootsteps, updateDoorGlow, updatePlatformDecor, bgConfetti } from "../background.js?v=20260930v97";
+import { isMuted, ensureAudio, SFX, beep } from "../audio.js?v=20260930v97";
+import { LEVELS, THEMES } from "../data-levels.js?v=20260930v97";
+import { ACHIEVEMENTS_DEFS } from "../data-progression.js?v=20260930v97";
+import { unlockedAchievements } from "../achievements.js?v=20260930v97";
+import { totalStarsEarned } from "../stars.js?v=20260930v97";
+import { PAUSE_TIPS } from "../data-flavor.js?v=20260930v97";
 
 // ===== Salas secretas isoladas ("tipo os bosses") =====
 // Em vez de uma plataforma algures no mesmo mundo do nível, entrar num
@@ -584,7 +584,7 @@ function updateCritters() {
 // interrompe a própria função update() do Phaser antes de esta terminar —
 // como o motor de jogo volta a chamar update() através do seu próprio
 // requestAnimationFrame recursivo, uma exceção a meio impede esse
-// reagendamento e o jogo congela por completo, para sempre, exactamente
+// reagendamento e o jogo congela por completo, para sempre, exatamente
 // como reportado (ecrã parado, sem resposta a nada). Isto explica também
 // vários bugs de "travamento" já corrigidos antes (cada um por sua causa
 // própria) — o padrão é sempre o mesmo: uma exceção nova e ainda não
@@ -680,7 +680,7 @@ function updateGameFrame() {
        // updateHazards/etc. voltavam a correr, o boss ainda em fase
        // "intro"), o jogador podia mover-se e a arena reagir de forma
        // inconsistente enquanto a caixa de fala continuava especada por
-       // cima — exactamente a sensação de "o jogo bloqueia ao chegar ao
+       // cima — exatamente a sensação de "o jogo bloqueia ao chegar ao
        // boss" reportada. Sem esta linha, era só uma questão de tempo (o
        // combate acabava mesmo por arrancar quando a cinemática terminasse
        // sozinha, ~9-27s depois) — mas com ela o watchdog deixa de mexer

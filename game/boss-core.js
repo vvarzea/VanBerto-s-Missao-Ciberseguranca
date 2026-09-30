@@ -7,22 +7,22 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { clearMiniViruses, clearPopupHazard, clearToxicZones, doBossBlink, doBossHop, doBossIdleArms, doBossIdleBlink, doBossRollQmark, doBossSmokePuff, doBossTeleport, doBossThrowBook, maintainMiniViruses, spawnMiniViruses, spawnPopupHazard, spawnToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260929v96";
-import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260929v96";
-import { quizOverlay } from "./dom.js?v=20260929v96";
-import { showFloat } from "./feedback.js?v=20260929v96";
-import { clearDoubleJump, clearPower, clearStarPower, setInvuln } from "./items.js?v=20260929v96";
-import { clearExtremoAllies } from "./level.js?v=20260929v96";
-import { applyBackground, bgKeyForLevel } from "./map.js?v=20260929v96";
-import { snapPlayerToGround } from "./rooms.js?v=20260929v96";
-import { _critterSession, balloons, bossLockIcon, bossOverlay, bossRageIcon, bossState, bossTimers, bossVignette, critters, currentLevel, door, enemyTimers, getBossExtraHp, getBossSpeedMult, hudText, inBossFight, itemCountText, itemsGroup, malwareGroup, pipeExitDecor, platforms, player, set__critterSession, set__doorAnimRunning, set_awaitingQuiz, set_awaitingStory, set_balloons, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossTimers, set_bossVignette, set_controlsInvertedUntil, set_critters, set_door, set_enemyTimers, set_inBossFight, set_invuln, set_pipeExitDecor, tipText } from "./state.js?v=20260929v96";
-import { clearMovingPlatforms, clearSign, clearTrampolines, spawnBossSign, spawnMovingPlatforms } from "./world.js?v=20260929v96";
-import { BOSS_BY_LEVEL } from "../data-bosses.js?v=20260929v96";
-import { clearPlatformDecor } from "../background.js?v=20260929v96";
-import { LEVELS, THEMES } from "../data-levels.js?v=20260929v96";
-import { makePlatformTextureThemed } from "../textures.js?v=20260929v96";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
-import { BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_HP_TAUNTS } from "../data-story.js?v=20260929v96";
+import { clearMiniViruses, clearPopupHazard, clearToxicZones, doBossBlink, doBossHop, doBossIdleArms, doBossIdleBlink, doBossRollQmark, doBossSmokePuff, doBossTeleport, doBossThrowBook, maintainMiniViruses, spawnMiniViruses, spawnPopupHazard, spawnToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260930v97";
+import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260930v97";
+import { quizOverlay } from "./dom.js?v=20260930v97";
+import { showFloat } from "./feedback.js?v=20260930v97";
+import { clearDoubleJump, clearPower, clearStarPower, setInvuln } from "./items.js?v=20260930v97";
+import { clearExtremoAllies } from "./level.js?v=20260930v97";
+import { applyBackground, bgKeyForLevel } from "./map.js?v=20260930v97";
+import { snapPlayerToGround } from "./rooms.js?v=20260930v97";
+import { _critterSession, balloons, bossLockIcon, bossOverlay, bossRageIcon, bossState, bossTimers, bossVignette, critters, currentLevel, door, enemyTimers, getBossExtraHp, getBossSpeedMult, hudText, inBossFight, itemCountText, itemsGroup, malwareGroup, pipeExitDecor, platforms, player, set__critterSession, set__doorAnimRunning, set_awaitingQuiz, set_awaitingStory, set_balloons, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossTimers, set_bossVignette, set_controlsInvertedUntil, set_critters, set_door, set_enemyTimers, set_inBossFight, set_invuln, set_pipeExitDecor, tipText } from "./state.js?v=20260930v97";
+import { clearMovingPlatforms, clearSign, clearTrampolines, spawnBossSign, spawnMovingPlatforms } from "./world.js?v=20260930v97";
+import { BOSS_BY_LEVEL } from "../data-bosses.js?v=20260930v97";
+import { clearPlatformDecor } from "../background.js?v=20260930v97";
+import { LEVELS, THEMES } from "../data-levels.js?v=20260930v97";
+import { makePlatformTextureThemed } from "../textures.js?v=20260930v97";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20260930v97";
+import { BOSS_OBJECTIVE, BOSS_INTRO_VB, BOSS_HP_TAUNTS } from "../data-story.js?v=20260930v97";
 
 
 // =====================================================================
@@ -131,7 +131,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // de melodia (_starMelodyInterval, um setInterval() nativo, à parte de
   // qualquer array de timers que a arena do boss limpa) e o próprio
   // clearStarPower/clearPower a meio da cinemática, a forçar setAlpha(1)/
-  // setScale/clearTint no VanBerto's exactamente enquanto este código está
+  // setScale/clearTint no VanBerto's exatamente enquanto este código está
   // com muito cuidado a posicioná-lo e a só revelá-lo no momento certo (ver
   // comentário mais abaixo, "setAlpha(1) só aqui"). Limpar tudo aqui, ANTES
   // de mais nada, garante que nenhum poder da tentativa anterior sobrevive
@@ -193,7 +193,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // ===== Arena — Fase "Bosses de Verdade" =====
   // def.arena (opt-in, data-bosses.js) permite a cada boss ter o seu próprio
   // tamanho de mundo e layout de plataformas, em vez da arena genérica
-  // partilhada por todos. Bosses sem def.arena (ainda) caem exactamente no
+  // partilhada por todos. Bosses sem def.arena (ainda) caem exatamente no
   // layout de sempre — zero impacto nos combates que ainda não foram lá.
   const worldW = def.arena?.worldW || 1600;
   // worldH (opt-in, ver data-bosses.js): normalmente o chão de uma arena
@@ -251,7 +251,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // de sempre (120px, bem junto à margem esquerda). Sem isto o VanBerto's
   // aparecia sempre encostado à esquerda em TODAS as arenas de boss,
   // mesmo nas mais largas — pedido para começar mais ao centro. Bosses
-  // sem este campo mantêm exactamente o comportamento de sempre (120).
+  // sem este campo mantêm exatamente o comportamento de sempre (120).
   const playerStartX = def.arena?.playerStartX != null ? def.arena.playerStartX : 120;
   // CORRIGIDO (pedido: "quando morre no nível boss continua a não ficar
   // em cima da plataforma mais alta") — este cálculo já existia, mas só
@@ -296,7 +296,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // está pausada durante toda a cinemática de entrada, isso ficava visível
   // (aos "pés enterrados", ou preso a meio da plataforma) até a física
   // retomar no fim do diálogo, altura em que a colisão o empurrava de
-  // repente para a posição certa. Seguindo agora exactamente o mesmo
+  // repente para a posição certa. Seguindo agora exatamente o mesmo
   // padrão do loadLevel() (esconder → posicionar → só depois revelar),
   // o VanBerto's só aparece já na posição final correta.
   snapPlayerToGround();
@@ -305,14 +305,14 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // ignora completamente body.offset — só updateFromGameObject()/o passo de
   // física é que o aplica). Por isso, logo a seguir a um body.reset(), a
   // primeira chamada a snapPlayerToGround() calcula a distância ao chão
-  // (dy) com o "pb.bottom" a faltar exactamente offset.y (46px), o que
-  // deixa o VanBerto's exactamente offset.y a mais para baixo — enterrado.
+  // (dy) com o "pb.bottom" a faltar exatamente offset.y (46px), o que
+  // deixa o VanBerto's exatamente offset.y a mais para baixo — enterrado.
   // Nos níveis normais isto nunca se via porque revealPlayerEntrance() já
   // chama snapPlayerToGround() uma SEGUNDA vez (comentário lá: "segurança
   // extra"), sem nenhum reset() pelo meio — e, como a 1ª chamada já deixou
   // o corpo físico com o offset aplicado (via updateFromGameObject no fim
   // da própria função), essa 2ª chamada mede a posição real correctamente
-  // e converge exactamente para o chão. Os Bosses nunca tinham essa 2ª
+  // e converge exatamente para o chão. Os Bosses nunca tinham essa 2ª
   // chamada. Replicá-la aqui resolve na origem, com o mesmo mecanismo já
   // testado e a funcionar em todos os níveis normais — não uma lógica nova.
   snapPlayerToGround();
@@ -484,7 +484,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
   // abaixo, junto à chamada a playBossDialogue): se algo aqui lançar um
   // erro (ex.: cálculo do anchor com um valor inesperado do ecrã/canvas),
   // sem isto o erro escapava por completo do controlo do Phaser e travava
-  // o jogo inteiro na entrada do boss — exactamente o "trava ao chegar ao
+  // o jogo inteiro na entrada do boss — exatamente o "trava ao chegar ao
   // boss" reportado, sem nada a responder e sem o auto-avanço de 9s (nunca
   // chegava a ser armado, porque a exceção interrompia tudo antes disso).
   // Extraído para uma função nomeada para poder ser chamado tanto pela
@@ -505,7 +505,7 @@ export function startBossFight(scene, levelJustCompleted, onComplete) {
     if (def.phases) enterBossPhase(scene, def, def.hp); // fase 1 (vida cheia)
     // Só agora o boss "ganha vida": velocidade de patrulha (ver
     // spawnBossSprite) ou o tween de respiração/pulsar dos bosses "wave" —
-    // exactamente quando o jogador termina/salta o diálogo de entrada.
+    // exatamente quando o jogador termina/salta o diálogo de entrada.
     if (bossState.sprite && bossState.sprite.active) {
       if (def.movementType === "wave") {
         const b = bossState.sprite;
@@ -851,7 +851,7 @@ function spawnBossSprite(scene, def, x) {
     // a ter de se lembrar de pausar a física corretamente para o boss não
     // se mexer. Agora fica mesmo parado (velocidade 0) à nascença; a
     // velocidade de patrulha só é aplicada no fim do diálogo (ver o
-    // callback do playBossDialogue, mais abaixo), exactamente quando o
+    // callback do playBossDialogue, mais abaixo), exatamente quando o
     // jogador clica "Saltar" ou avança a última fala.
     boss.setVelocity(0,0);
   }

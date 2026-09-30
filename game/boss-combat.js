@@ -7,21 +7,21 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { clearMiniViruses, clearPopupHazard, clearToxicZones, currentContaminationZones, currentPopupConfig, doBossTeleport, showBossLaugh, spawnToxicZones, startPhishingDecoy, stopPhishingDecoy, triggerBossBlackout, updateToxicZones } from "./boss-attacks.js?v=20260929v96";
-import { destroyBossHpBar, drawBossHpBar, enterBossPhase, startBossFinalStandBurst } from "./boss-core.js?v=20260929v96";
-import { startBossQuizPhase } from "./boss-end.js?v=20260929v96";
-import { vbSayRandom } from "./dialogue.js?v=20260929v96";
-import { hitFlash } from "./dom.js?v=20260929v96";
-import { applyHitStop, showFloat } from "./feedback.js?v=20260929v96";
-import { showGameOver } from "./flow.js?v=20260929v96";
-import { setInvuln } from "./items.js?v=20260929v96";
-import { clearExtremoAllies, spawnExtremoReinforcement, updateHearts } from "./level.js?v=20260929v96";
-import { snapPlayerToGround } from "./rooms.js?v=20260929v96";
-import { awaitingQuiz, bossExtremoAllies, bossLockIcon, bossMiniViruses, bossOverlay, bossRageIcon, bossState, bossTimers, difficulty, heartsGfx, inBossFight, invuln, itemCountText, itemsGroup, lives, livesLostThisLevel, player, sceneRef, score, scoreText, set__hudDirty, set_awaitingQuiz, set_bossExtremoAllies, set_bossLockIcon, set_bossMiniViruses, set_bossOverlay, set_bossPopupAnchors, set_bossRageIcon, set_bossTimers, set_controlsInvertedUntil, set_invuln, set_lives, set_livesLostThisLevel, set_score, starPower, tipText } from "./state.js?v=20260929v96";
-import { triggerVanBertoSad } from "./vanberto.js?v=20260929v96";
-import { ensureAudio, beep, SFX } from "../audio.js?v=20260929v96";
-import { BOSS_HP_TAUNTS } from "../data-story.js?v=20260929v96";
-import { VB_STAR_POWER } from "../data-flavor.js?v=20260929v96";
+import { clearMiniViruses, clearPopupHazard, clearToxicZones, currentContaminationZones, currentPopupConfig, doBossTeleport, showBossLaugh, spawnToxicZones, startPhishingDecoy, stopPhishingDecoy, triggerBossBlackout, updateToxicZones } from "./boss-attacks.js?v=20260930v97";
+import { destroyBossHpBar, drawBossHpBar, enterBossPhase, startBossFinalStandBurst } from "./boss-core.js?v=20260930v97";
+import { startBossQuizPhase } from "./boss-end.js?v=20260930v97";
+import { vbSayRandom } from "./dialogue.js?v=20260930v97";
+import { hitFlash } from "./dom.js?v=20260930v97";
+import { applyHitStop, showFloat } from "./feedback.js?v=20260930v97";
+import { showGameOver } from "./flow.js?v=20260930v97";
+import { setInvuln } from "./items.js?v=20260930v97";
+import { clearExtremoAllies, spawnExtremoReinforcement, updateHearts } from "./level.js?v=20260930v97";
+import { snapPlayerToGround } from "./rooms.js?v=20260930v97";
+import { awaitingQuiz, bossExtremoAllies, bossLockIcon, bossMiniViruses, bossOverlay, bossRageIcon, bossState, bossTimers, difficulty, heartsGfx, inBossFight, invuln, itemCountText, itemsGroup, lives, livesLostThisLevel, player, sceneRef, score, scoreText, set__hudDirty, set_awaitingQuiz, set_bossExtremoAllies, set_bossLockIcon, set_bossMiniViruses, set_bossOverlay, set_bossPopupAnchors, set_bossRageIcon, set_bossTimers, set_controlsInvertedUntil, set_invuln, set_lives, set_livesLostThisLevel, set_score, starPower, tipText } from "./state.js?v=20260930v97";
+import { triggerVanBertoSad } from "./vanberto.js?v=20260930v97";
+import { ensureAudio, beep, SFX } from "../audio.js?v=20260930v97";
+import { BOSS_HP_TAUNTS } from "../data-story.js?v=20260930v97";
+import { VB_STAR_POWER } from "../data-flavor.js?v=20260930v97";
 
 // Reação exagerada tipo desenho animado sempre que QUALQUER boss é atingido:
 // achata-se por meio segundo (textura "_ouch" + squash) e volta ao normal,
@@ -86,7 +86,7 @@ function handleStompBossTouch(b) {
   //
   // BUG CORRIGIDO (pedido do Berto: "a plataforma do meio está muito alta
   // ... ao estar nesta plataforma, sem me mexer, eu mato o boss"): isFalling
-  // só olhava para a velocidade vertical (>=0), que é exactamente a mesma
+  // só olhava para a velocidade vertical (>=0), que é exatamente a mesma
   // ao CAIR e ao estar PARADO, especamente no chão (a gravidade empurra
   // para baixo, a plataforma trava a queda, mas a velocidade fica em 0 —
   // igual a "a começar a cair"). Numa plataforma alta o suficiente para o
@@ -180,7 +180,7 @@ function startBossStompDefeat() {
   // de só a lágrima estática já desenhada na textura "_sad", pinga
   // lágrimas de verdade da cara do boss enquanto foge, até começar a
   // desvanecer (ver o delayedCall de 1750ms mais abaixo, que também
-  // pára este temporizador).
+  // para este temporizador).
   const tearTimer = sceneRef.time.addEvent({
     delay: 220, loop: true,
     callback: () => {
@@ -369,7 +369,7 @@ function bossEnterRage(scene, level) {
   if (bossState.orbTimer)   bossState.orbTimer.delay   = bossState.orbBaseDelay   / bossState.speedMult;
   // Idem para os bosses "stomp" (salto/bola ❓/fumo) — antes a escalada de
   // fúria só existia para bosses com fases próprias; os 4 bosses "clássicos
-  // à Mario" ficavam sempre exactamente ao mesmo ritmo do 1º ao 3º salto.
+  // à Mario" ficavam sempre exatamente ao mesmo ritmo do 1º ao 3º salto.
   if (bossState.hopTimer)   bossState.hopTimer.delay   = bossState.hopBaseDelay   / bossState.speedMult;
   if (bossState.qmarkTimer) bossState.qmarkTimer.delay = bossState.qmarkBaseDelay / bossState.speedMult;
   if (bossState.smokeTimer) bossState.smokeTimer.delay = bossState.smokeBaseDelay / bossState.speedMult;
@@ -386,7 +386,7 @@ function bossEnterRage(scene, level) {
       // Reação visual ao chão a piorar (nova) — sem isto, o alargamento das
       // zonas era silencioso, fácil de não notar a meio da ação. Um flash
       // rápido na cor do próprio perigo (verde ácido / laranja lava) chama
-      // a atenção exactamente no instante em que o chão fica mais perigoso.
+      // a atenção exatamente no instante em que o chão fica mais perigoso.
       const flashRGB = def.contaminatedArena.hazardType === "lava" ? [255,120,20] : [40,220,80];
       scene.cameras.main.flash(260, flashRGB[0], flashRGB[1], flashRGB[2]);
     }
@@ -479,7 +479,7 @@ function bossEnterRage(scene, level) {
 // ---- Alívio de fúria: chamado quando o BOSS acerta no VanBerto's (pedido:
 // "tem de se perceber quando o VanBerto's perde a vida com o Boss" — o
 // boss "recupera o fôlego" e desce 1 nível de fúria, em vez do combate
-// simplesmente continuar exactamente tão intenso como estava antes do
+// simplesmente continuar exatamente tão intenso como estava antes do
 // toque). Espelha bossEnterRage (mesmas fórmulas de speedMult/timers),
 // mas ao contrário — e só nos modos Fácil/Difícil: no Extremo, a fúria
 // já acumulada NUNCA desce, para o combate continuar tão apertado quanto
@@ -488,7 +488,7 @@ function bossEnterRage(scene, level) {
 // NÃO toca nas zonas contaminadas do Vírus Gigante/Robô do Spam (pedido
 // explícito: "não, mantêm-se do tamanho atual") — só a velocidade/cadência
 // de ataque do boss é que cede; o chão que já ficou mais perigoso continua
-// exactamente assim até ao fim do combate.
+// exatamente assim até ao fim do combate.
 
 function coolBossRageOnPlayerHit(scene) {
   if (!inBossFight || !bossState || bossState.phase !== "platform") return;
@@ -600,7 +600,7 @@ export function damageBoss(scene, x, y, label = "💥 Boss atingido!", shakeAmou
     }
     if (hitsTaken > 0 && bossState.hp > 0) bossEnterRage(scene, Math.min(2, hitsTaken));
     // Momento "último fôlego" (opt-in via def.finalStandBurst — só o
-    // Guardião das Sombras, por agora): dispara exactamente uma vez, ao
+    // Guardião das Sombras, por agora): dispara exatamente uma vez, ao
     // ficar com apenas 1 salto por dar (bossState.hp===1), independente
     // da fúria genérica acima. finalBurstDone evita repetir se o jogador
     // ainda tocar no boss mais vezes antes do 3º salto certeiro.
@@ -821,7 +821,7 @@ export function bossHitPlayer(scene, sourceObj, warnMsg) {
     // NOVO (pedido inicial: "1 sítio seguro para retomar sempre que perde
     // a vida"; refinado depois para "fique na ponta esquerda da
     // plataforma esquerda"; e agora para "a plataforma mais alta") —
-    // antes disto o VanBerto's ficava exactamente onde o empurrão do
+    // antes disto o VanBerto's ficava exatamente onde o empurrão do
     // golpe o tivesse deixado. Passou por uma versão intermédia (v49, que
     // escolhia entre o ponto de entrada e o seu espelho, o que estivesse
     // mais longe do boss); agora é sempre o mesmo sítio FIXO pedido —

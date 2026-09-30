@@ -7,18 +7,18 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20260929v96";
-import { clearQuizReview, resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20260929v96";
-import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20260929v96";
-import { globalStats, saveGlobalStats } from "./stats.js?v=20260929v96";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v96";
-import { resetAchievements } from "../achievements.js?v=20260929v96";
-import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20260929v96";
-import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20260929v96";
-import { ensureAudio, beep, SFX } from "../audio.js?v=20260929v96";
-import { LEVELS, THEMES } from "../data-levels.js?v=20260929v96";
-import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20260929v96";
-import { BOSSES } from "../data-bosses.js?v=20260929v96";
+import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20260930v97";
+import { clearQuizReview, resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20260930v97";
+import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20260930v97";
+import { globalStats, saveGlobalStats } from "./stats.js?v=20260930v97";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20260930v97";
+import { resetAchievements } from "../achievements.js?v=20260930v97";
+import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20260930v97";
+import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20260930v97";
+import { ensureAudio, beep, SFX } from "../audio.js?v=20260930v97";
+import { LEVELS, THEMES } from "../data-levels.js?v=20260930v97";
+import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20260930v97";
+import { BOSSES } from "../data-bosses.js?v=20260930v97";
 
 // Popup curto "Direito recuperado!" — mostrado ao concluir um nível
 // =====================================================
@@ -48,7 +48,7 @@ function saveArtefacts() {
 // collectedArtefacts acima, só que a chave é o id do boss (data-bosses.js)
 // em vez do índice no ARTEFACTS. Namespace próprio ("bossRights"), não
 // misturado com "artefacts", para os 20 artefactos normais continuarem
-// exactamente como estavam para quem já tenha progresso guardado.
+// exatamente como estavam para quem já tenha progresso guardado.
 
 export let collectedBossRights = {};
 

@@ -7,8 +7,8 @@
  * Estado partilhado: LÊ-SE diretamente (import); para ALTERAR usa as funções set_<nome>() — os imports ES são só de leitura.
  *************************************************/
 
-import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v96";
-import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "../data-quiz.js?v=20260929v96";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20260930v97";
+import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO } from "../data-quiz.js?v=20260930v97";
 
 export let playerName = "";
 
@@ -107,7 +107,7 @@ export let decorativePipes = [];
 // CORRIGIDO — _pipeWarping (e player.body.moves) só voltavam a false dentro do
 // onComplete da 2ª tween da animação de cano/sala secreta (~400ms depois de
 // começar). Se essa cadeia de tweens fosse interrompida a meio — killAll()
-// faz exactamente isso, sem disparar onComplete — as duas ficavam presas
+// faz exatamente isso, sem disparar onComplete — as duas ficavam presas
 // para sempre: update() força setVelocityX(0) todos os frames enquanto
 // _pipeWarping for true (linha ~1485), e body.moves=false impede a física
 // de mexer o jogador de todo. Resultado: o VanBerto's congelava
@@ -148,7 +148,7 @@ export let pipeHintSign = null;
 // a ROOM_WORLD_W. inSecretRoom=true enquanto o jogador está lá dentro;
 // secretRoomReturn guarda onde aterrar de volta no nível principal;
 // secretRoomHidden guarda os objetos do nível principal escondidos
-// temporariamente (para os repor exactamente como estavam); secretRoomTemp
+// temporariamente (para os repor exatamente como estavam); secretRoomTemp
 // guarda os objetos efémeros da própria sala (destruídos ao sair).
 
 export let inSecretRoom = false;

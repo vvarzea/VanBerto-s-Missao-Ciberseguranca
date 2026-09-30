@@ -7,11 +7,11 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { bossHitPlayer } from "./boss-combat.js?v=20260929v96";
-import { showFloat } from "./feedback.js?v=20260929v96";
-import { bossMiniViruses, bossState, bossTimers, inBossFight, invuln, itemsGroup, malwareGroup, platforms, player, sceneRef, set_bossMiniViruses, set_bossPopupAnchors } from "./state.js?v=20260929v96";
-import { _drawHazard } from "./world.js?v=20260929v96";
-import { ensureAudio, beep } from "../audio.js?v=20260929v96";
+import { bossHitPlayer } from "./boss-combat.js?v=20260930v97";
+import { showFloat } from "./feedback.js?v=20260930v97";
+import { bossMiniViruses, bossState, bossTimers, inBossFight, invuln, itemsGroup, malwareGroup, platforms, player, sceneRef, set_bossMiniViruses, set_bossPopupAnchors } from "./state.js?v=20260930v97";
+import { _drawHazard } from "./world.js?v=20260930v97";
+import { ensureAudio, beep } from "../audio.js?v=20260930v97";
 
 // ---- Arena contaminada (Vírus Gigante): zonas tóxicas + vírus pequenos ----
 // 100% aditivo e opt-in via def.contaminatedArena — não afeta bosses normais.
@@ -395,7 +395,7 @@ export function doBossRollQmark(scene, isFollowUp) {
   // comportamento antigo, incluindo o ressalto normal nas plataformas.
   q.body.setCollideWorldBounds(!isForcedFirstShot);
 
-  // Personalidade do arremesso (pedido: os 4 bosses tinham exactamente o
+  // Personalidade do arremesso (pedido: os 4 bosses tinham exatamente o
   // mesmo projétil físico — só a textura/tint mudavam). Cada boss "opt-in"
   // a uma pequena variação de trajectória própria, tudo por cima da mesma
   // base (gravidade 480, bounce 0.5) para continuar previsível/justo.
@@ -592,7 +592,7 @@ export function triggerBossBlackout(scene) {
 // smokePuffEvery em data-bosses.js): puramente atmosférico, nunca tira
 // vida nem colide com o jogador — só uma nuvem cinzenta a subir da
 // chaminé, que ofusca ligeiramente aquela zona da arena por instantes.
-// Pedido: os 4 bosses "stomp" partilhavam exactamente a mesma receita
+// Pedido: os 4 bosses "stomp" partilhavam exatamente a mesma receita
 // (andar/flutuar/teleportar + bola ❓); isto dá ao Poluidor uma
 // personalidade visual só sua, condizente com o tema industrial/poluente. ----
 
