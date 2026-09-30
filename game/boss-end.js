@@ -7,17 +7,17 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20260929v95";
-import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260929v95";
-import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20260929v95";
-import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260929v95";
-import { clearExtremoAllies } from "./level.js?v=20260929v95";
-import { showQuiz } from "./quiz.js?v=20260929v95";
-import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, getQuizPool, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20260929v95";
-import { playVanBertoDance } from "./vanberto.js?v=20260929v95";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v95";
-import { showAchievementToast } from "../achievements.js?v=20260929v95";
-import { BOSS_VICTORY_VB } from "../data-story.js?v=20260929v95";
+import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20260929v96";
+import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260929v96";
+import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20260929v96";
+import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260929v96";
+import { clearExtremoAllies } from "./level.js?v=20260929v96";
+import { showQuiz } from "./quiz.js?v=20260929v96";
+import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, getQuizPool, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20260929v96";
+import { playVanBertoDance } from "./vanberto.js?v=20260929v96";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
+import { showAchievementToast } from "../achievements.js?v=20260929v96";
+import { BOSS_VICTORY_VB } from "../data-story.js?v=20260929v96";
 
 // ===== Flourish de vitória próprio de cada boss — Fase "Batalhas Épicas" =====
 // Substitui/complementa o confetti genérico por algo ligado ao tema do boss

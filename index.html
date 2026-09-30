@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="VanBerto's" />
   <title>VanBerto's — Missão Cibersegurança</title>
-  <link rel="stylesheet" href="dia-crianca.css?v=20260929v95" />
+  <link rel="stylesheet" href="dia-crianca.css?v=20260929v96" />
 </head>
 <body>
 
@@ -94,7 +94,7 @@
         <span class="hint-pc">PC: ← → para andar, ↑/Espaço para saltar e ↓/S para agachar.<br></span>
         Tablet/telemóvel: mantém o dedo no lado esquerdo/direito para andar e faz um toque rápido para saltar.
       </p>
-      <p class="tiny" id="versionTag" style="opacity:0.45;margin:2px 0 0;line-height:1;">Versão 20260929v95</p>
+      <p class="tiny" id="versionTag" style="opacity:0.45;margin:2px 0 0;line-height:1;">Versão 20260929v96</p>
     </div>
   </div>
 
@@ -311,8 +311,8 @@
     <div class="card certificate-card">
       <div class="certificate-header">
         <div class="certificate-seal">🏛️</div>
-        <h2 class="certificate-title">Certificado Oficial</h2>
-        <p class="certificate-subtitle">de Guardião da Cibersegurança</p>
+        <h2 class="certificate-title" id="certTitle">Certificado Oficial</h2>
+        <p class="certificate-subtitle" id="certSubtitle">de Guardião da Cibersegurança</p>
       </div>
       <div class="certificate-robot">
         <img src="vanberto_real.png" alt="VanBerto's" class="certificate-robot-img" />
@@ -320,9 +320,9 @@
       <div class="certificate-body">
         <p class="certificate-text">Este certificado é atribuído a</p>
         <p class="certificate-name" id="certPlayerName">Ciber-Herói</p>
-        <p class="certificate-text">que, com coragem, atenção e sabedoria, concluiu a missão das</p>
-        <p class="certificate-highlight">20 Competências de Cibersegurança</p>
-        <p class="certificate-text">tornando-se oficialmente Guardião da Cibersegurança.</p>
+        <p class="certificate-text" id="certIntro2">que, com coragem, atenção e sabedoria, concluiu a missão das</p>
+        <p class="certificate-highlight" id="certHighlight">20 Competências de Cibersegurança</p>
+        <p class="certificate-text" id="certOutro">tornando-se oficialmente Guardião da Cibersegurança.</p>
       </div>
       <div class="certificate-stats">
         <div class="cert-stat"><span class="cert-stat-icon">🌟</span><strong id="certScore">0</strong><span>pontos</span></div>
@@ -523,6 +523,7 @@
     <button id="mBtnAlbum"        class="btn">📖 Álbum das Competências</button>
     <button id="mBtnStats"        class="btn">📊 Estatísticas</button>
     <button id="mBtnErrors"       class="btn">🧠 Rever Erros</button>
+    <button id="mBtnCertificate"  class="btn">🏅 Certificado</button>
     <button id="mBtnHow"          class="btn">❓ Como Jogar</button>
 
     <p class="tmenu-section">⚙️ Jogo</p>
@@ -817,7 +818,7 @@
       }
     }
   </script>
-  <script src="phaser.min.js?v=20260929v95"></script>
-  <script type="module" src="dia-crianca.js?v=20260929v95"></script>
+  <script src="phaser.min.js?v=20260929v96"></script>
+  <script type="module" src="dia-crianca.js?v=20260929v96"></script>
 </body>
 </html>

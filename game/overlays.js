@@ -7,11 +7,11 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { historyOverlay, howOverlay, quizOverlay, startOverlay } from "./dom.js?v=20260929v95";
-import { _doorAnimRunning, _historySubOpen, _starMelodyInterval, _winOverlaySubOpen, awaitingQuiz, awaitingStory, currentLevel, difficulty, pausedByTeacher, sceneRef, set__historySubOpen, set__overlayPaused, set__starMelodyInterval, set__winOverlaySubOpen, set_awaitingQuiz, set_awaitingStory, set_difficulty } from "./state.js?v=20260929v95";
-import { updatePlayTime } from "./stats.js?v=20260929v95";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v95";
-import { isMuted, setMuted } from "../audio.js?v=20260929v95";
+import { historyOverlay, howOverlay, quizOverlay, startOverlay } from "./dom.js?v=20260929v96";
+import { _doorAnimRunning, _historySubOpen, _starMelodyInterval, _winOverlaySubOpen, awaitingQuiz, awaitingStory, currentLevel, difficulty, pausedByTeacher, sceneRef, set__historySubOpen, set__overlayPaused, set__starMelodyInterval, set__winOverlaySubOpen, set_awaitingQuiz, set_awaitingStory, set_difficulty } from "./state.js?v=20260929v96";
+import { updatePlayTime } from "./stats.js?v=20260929v96";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v96";
+import { isMuted, setMuted } from "../audio.js?v=20260929v96";
 
 // ===== Guardar =====
 // "settings" guarda apenas preferências (som, alto contraste) — nunca
@@ -29,7 +29,8 @@ import { isMuted, setMuted } from "../audio.js?v=20260929v95";
 // esta função corre já no arranque.)
 
 const _SUB_OVERLAY_IDS = ["mapOverlay", "worldMapOverlay", "achievementsOverlay", "albumOverlay",
-  "statsOverlay", "optionsOverlay", "howOverlay", "reviewOverlay", "artefactGalleryOverlay"];
+  "statsOverlay", "optionsOverlay", "howOverlay", "reviewOverlay", "artefactGalleryOverlay",
+  "certificateOverlay"]; // certificateOverlay: agora também abre a meio do jogo (☰ Menu → 🏅 Certificado)
 
 let _historySubLevel = -1;
 

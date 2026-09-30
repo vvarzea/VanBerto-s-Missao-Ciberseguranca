@@ -7,21 +7,21 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { createArtOrbs } from "./artefacts.js?v=20260929v95";
-import { clearBossArenaDecor } from "./boss-core.js?v=20260929v95";
-import { tryOpenDoor } from "./door.js?v=20260929v95";
-import { showFloat } from "./feedback.js?v=20260929v95";
-import { clearDoubleJump, clearPower, clearStarPower } from "./items.js?v=20260929v95";
-import { applyBackground, bgKeyForLevel, prefetchBackgrounds } from "./map.js?v=20260929v95";
-import { saveGame } from "./overlays.js?v=20260929v95";
-import { setCrouchHitbox, snapPlayerToGround } from "./rooms.js?v=20260929v95";
-import { _doorWatchdogTimer, _landingCheckTimer, awaitingQuiz, bossExtremoAllies, bossState, bossTimers, currentLevel, currentLevelTip, decorativePipes, difficulty, door, doorOverlap, enemyTimers, getDifficulty, getMaxLives, getVillainJumpIntervalMult, getVillainSpeedMult, heartsGfx, hudText, invuln, isItemVisibleInDificil, isReducibleItemKind, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, malwareGroup, pipeExitDecor, pipes, platforms, player, playerName, playerNameHUD, powerHaloGfx, powerIndicator, powered, progressFill, resetPipeWarpState, score, scoreText, set__doorAnimRunning, set__doorWatchdogTimer, set__hudDirty, set__landingCheckTimer, set__pendingEntranceReveal, set_awaitingQuiz, set_bossExtremoAllies, set_bossTimers, set_collectedItemIndices, set_collectedRoomPipes, set_controlsInvertedUntil, set_currentLevel, set_currentLevelTip, set_decorativePipes, set_door, set_doorOverlap, set_enemyTimers, set_extraShieldCounted, set_inSecretRoom, set_invuln, set_isCrouching, set_itemsCollected, set_itemsTotal, set_livesLostThisLevel, set_pipeExitDecor, set_pipes, set_secretRoomHidden, set_secretRoomReturn, set_secretRoomTemp, shadowGfx, tipText, touch } from "./state.js?v=20260929v95";
-import { clearHazards, clearMovingPlatforms, clearPipeHintSign, clearSecretSigns, clearSecrets, clearTrampolines, difficultyFactor, spawnBalloons, spawnCritters, spawnHazards, spawnLevelSign, spawnMovingPlatforms, spawnPipeHintSign, spawnSecrets, spawnShields, spawnTrampolines } from "./world.js?v=20260929v95";
-import { LEVELS, THEMES } from "../data-levels.js?v=20260929v95";
-import { resetLevelStarTracking } from "../stars.js?v=20260929v95";
-import { makePlatformTextureThemed, makePipeTexture } from "../textures.js?v=20260929v95";
-import { spawnPlatformDecor, resetDoorGlow } from "../background.js?v=20260929v95";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v95";
+import { createArtOrbs } from "./artefacts.js?v=20260929v96";
+import { clearBossArenaDecor } from "./boss-core.js?v=20260929v96";
+import { tryOpenDoor } from "./door.js?v=20260929v96";
+import { showFloat } from "./feedback.js?v=20260929v96";
+import { clearDoubleJump, clearPower, clearStarPower } from "./items.js?v=20260929v96";
+import { applyBackground, bgKeyForLevel, prefetchBackgrounds } from "./map.js?v=20260929v96";
+import { saveGame } from "./overlays.js?v=20260929v96";
+import { setCrouchHitbox, snapPlayerToGround } from "./rooms.js?v=20260929v96";
+import { _doorWatchdogTimer, _landingCheckTimer, awaitingQuiz, bossExtremoAllies, bossState, bossTimers, currentLevel, currentLevelTip, decorativePipes, difficulty, door, doorOverlap, enemyTimers, getDifficulty, getMaxLives, getVillainJumpIntervalMult, getVillainSpeedMult, heartsGfx, hudText, invuln, isItemVisibleInDificil, isReducibleItemKind, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, malwareGroup, pipeExitDecor, pipes, platforms, player, playerName, playerNameHUD, powerHaloGfx, powerIndicator, powered, progressFill, resetPipeWarpState, score, scoreText, set__doorAnimRunning, set__doorWatchdogTimer, set__hudDirty, set__landingCheckTimer, set__pendingEntranceReveal, set_awaitingQuiz, set_bossExtremoAllies, set_bossTimers, set_collectedItemIndices, set_collectedRoomPipes, set_controlsInvertedUntil, set_currentLevel, set_currentLevelTip, set_decorativePipes, set_door, set_doorOverlap, set_enemyTimers, set_extraShieldCounted, set_inSecretRoom, set_invuln, set_isCrouching, set_itemsCollected, set_itemsTotal, set_livesLostThisLevel, set_pipeExitDecor, set_pipes, set_secretRoomHidden, set_secretRoomReturn, set_secretRoomTemp, shadowGfx, tipText, touch } from "./state.js?v=20260929v96";
+import { clearHazards, clearMovingPlatforms, clearPipeHintSign, clearSecretSigns, clearSecrets, clearTrampolines, difficultyFactor, spawnBalloons, spawnCritters, spawnHazards, spawnLevelSign, spawnMovingPlatforms, spawnPipeHintSign, spawnSecrets, spawnShields, spawnTrampolines } from "./world.js?v=20260929v96";
+import { LEVELS, THEMES } from "../data-levels.js?v=20260929v96";
+import { resetLevelStarTracking } from "../stars.js?v=20260929v96";
+import { makePlatformTextureThemed, makePipeTexture } from "../textures.js?v=20260929v96";
+import { spawnPlatformDecor, resetDoorGlow } from "../background.js?v=20260929v96";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20260929v96";
 
 // ===== Carregar nível =====
 

@@ -207,6 +207,63 @@ with sync_playwright() as p:
 
     MEDAL_PAIRS = {"Ouro": ("Perfeito", "Excelente"), "Prata": ("Muito bom",), "Bronze": ("Bom",), "continua a treinar": ("A Melhorar",)}
 
+    @test("Certificado de Progresso: sem terminar os 20 níveis, o ☰ Menu mostra o progresso (não 'Oficial'), a percentagem é justa e sem botão de reiniciar")
+    def _():
+        # Pedido da Vanda: os alunos jogam cada um no seu computador — o certificado deixou de
+        # exigir terminar o jogo, para um aluno poder levar o que já fez até ao fim da aula.
+        save = {"map": {"levelsCompleted": [0, 1, 2], "highestLevelReached": 3},
+                "globalStats": {"quizTotal": 3, "quizCorrect": 3, "totalScoreEarned": 300},
+                "stars": {str(i): {"allItems": True, "noDamage": True, "firstTry": True} for i in range(3)}}
+        errs = []; pg = new_page(B, errs=errs)
+        pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        open_map(pg); pg.click(".map-region--current")
+        pg.wait_for_selector(".level-node--current"); pg.click(".level-node--current"); pg.wait_for_selector("canvas", timeout=15000)
+        # Não dispensa o cartão «Sabias que…?»: serve também para testar que o certificado fica por
+        # cima dele (mesma proteção da Base do «Cartão «Sabias que…?»» — ver _SUB_OVERLAY_IDS).
+        pg.wait_for_selector("#historyOverlay:not(.hidden)", timeout=15000); pg.wait_for_timeout(400)
+        pg.click("#btnTeacherMenu"); pg.click("#mBtnCertificate"); pg.wait_for_selector("#certificateOverlay:not(.hidden)"); pg.wait_for_timeout(400)
+        on_top = pg.evaluate("""()=>{const r=document.querySelector('#certificateOverlay .card').getBoundingClientRect();
+          const el=document.elementFromPoint(r.left+r.width/2, r.top+r.height/2); return !!(el && el.closest('#certificateOverlay'))}""")
+        assert on_top, "o certificado não ficou por cima do cartão «Sabias que…?»"
+        txt = lambda sel: pg.evaluate("(s)=>document.querySelector(s).textContent.trim()", sel)
+        title, subtitle, pct = txt("#certTitle"), txt("#certSubtitle"), txt("#certCorrect")
+        assert title == "Certificado de Progresso", f"título: {title!r}"
+        assert "3 de 20 níveis" in subtitle, f"subtítulo: {subtitle!r}"
+        # SEM o ajuste ao denominador (ver comentário em showCertificate), isto dava 15% (3 acertos
+        # sobre os 20 níveis todos) em vez de 100% (3 acertos sobre os 3 níveis já jogados) — o
+        # aluno via uma nota injustamente baixa só por não ter terminado.
+        assert pct == "100%", f"percentagem devia refletir só os níveis já jogados (100%), veio {pct}"
+        assert "hidden" in (pg.get_attribute("#btnCertRestart", "class") or ""), "«Jogar de novo» devia estar escondido a meio da aventura"
+        pg.click("#btnCertBack"); pg.wait_for_timeout(400)
+        assert pg.evaluate("document.getElementById('certificateOverlay').classList.contains('hidden')"), "«Voltar» não fechou o certificado"
+        assert pg.evaluate("document.getElementById('winOverlay').classList.contains('hidden')"), "«Voltar» a meio do jogo não devia mostrar o ecrã de vitória"
+        assert pg.evaluate("document.body.classList.contains('game-started')"), "o jogo devia continuar em curso depois de «Voltar»"
+        assert not errs, errs[:3]; pg.context.close()
+        return "título/percentagem corretos a meio da aventura; certificado por cima do cartão; «Voltar» resume o jogo"
+
+    @test("Certificado ao terminar os 20 níveis: o ☰ Menu mostra 'Oficial' (não 'Progresso') e o botão de reiniciar")
+    def _():
+        save = {"map": {"levelsCompleted": list(range(20)), "highestLevelReached": 19},
+                "globalStats": {"quizTotal": 20, "quizCorrect": 20, "totalScoreEarned": 6000},
+                "stars": {str(i): {"allItems": True, "noDamage": True, "firstTry": True} for i in range(20)}}
+        errs = []; pg = new_page(B, errs=errs)
+        pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
+        pg.goto(BASE + "/index.html", wait_until="networkidle")
+        # Com os 20 níveis completos, nenhuma região fica "--current" (todas passam a "--done") — ao
+        # contrário do teste de progresso acima, aqui entra-se por uma região "--done" (o Mapa continua
+        # a deixar repetir níveis já feitos).
+        pg.click("#btnOpenMap"); pg.wait_for_selector(".map-region--done")
+        pg.click(".map-region--done >> nth=0"); pg.wait_for_selector(".level-node:not(.level-node--locked)")
+        pg.click(".level-node:not(.level-node--locked) >> nth=0")
+        pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 5); pg.wait_for_timeout(800)
+        pg.click("#btnTeacherMenu"); pg.click("#mBtnCertificate"); pg.wait_for_selector("#certificateOverlay:not(.hidden)"); pg.wait_for_timeout(400)
+        title = pg.evaluate("document.getElementById('certTitle').textContent.trim()")
+        assert title == "Certificado Oficial", f"título: {title!r}"
+        assert "hidden" not in (pg.get_attribute("#btnCertRestart", "class") or ""), "«Jogar de novo» devia estar visível depois de terminar"
+        assert not errs, errs[:3]; pg.context.close()
+        return "título 'Certificado Oficial' e botão de reiniciar visível quando os 20 níveis estão feitos"
+
     @test("Vitória e Certificado: mesmos pontos, mesma percentagem, medalhas coerentes e erros de toda a aventura")
     def _():
         save = {"globalStats": {"quizTotal": 27, "quizCorrect": 17, "quizWrong": 10, "totalScoreEarned": 10225, "quizErrors": [

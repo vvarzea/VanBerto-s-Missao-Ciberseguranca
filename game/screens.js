@@ -7,23 +7,23 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { renderAlbum, resetAllProgress } from "./artefacts.js?v=20260929v95";
-import { btnMute, btnPause } from "./dom.js?v=20260929v95";
-import { playLevelTransition } from "./door.js?v=20260929v95";
-import { loadLevel, updateHearts } from "./level.js?v=20260929v95";
-import { BG_FILES } from "./map.js?v=20260929v95";
-import { closeOverlay, openOverlay, saveGame } from "./overlays.js?v=20260929v95";
-import { showHistory } from "./quiz.js?v=20260929v95";
-import { showPauseScreen } from "./scene.js?v=20260929v95";
-import { _certificateOpenedFrom, difficulty, getStartLives, mapProgress, pausedByTeacher, playerName, powerHaloGfx, sceneRef, score, scoreText, setDifficulty, set__certificateOpenedFrom, set__overlayPaused, set_awaitingQuiz, set_currentLevel, set_lives, set_livesLostThisLevel, set_pausedByTeacher, set_score, shadowGfx } from "./state.js?v=20260929v95";
-import { adventureScore, globalStats, medalTextCert, medalTier, updatePlayTime } from "./stats.js?v=20260929v95";
-import { toggleFullscreen } from "./ui.js?v=20260929v95";
-import { ensureAudio, SFX, isMuted, toggleMuted } from "../audio.js?v=20260929v95";
-import { renderAchievements, unlockedAchievements } from "../achievements.js?v=20260929v95";
-import { LEVELS } from "../data-levels.js?v=20260929v95";
-import { totalStarsEarned, levelStars } from "../stars.js?v=20260929v95";
-import { ACHIEVEMENTS_DEFS } from "../data-progression.js?v=20260929v95";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v95";
+import { renderAlbum, resetAllProgress } from "./artefacts.js?v=20260929v96";
+import { btnMute, btnPause } from "./dom.js?v=20260929v96";
+import { playLevelTransition } from "./door.js?v=20260929v96";
+import { loadLevel, updateHearts } from "./level.js?v=20260929v96";
+import { BG_FILES } from "./map.js?v=20260929v96";
+import { closeOverlay, openOverlay, saveGame } from "./overlays.js?v=20260929v96";
+import { showHistory } from "./quiz.js?v=20260929v96";
+import { showPauseScreen } from "./scene.js?v=20260929v96";
+import { _certificateOpenedFrom, difficulty, getStartLives, mapProgress, pausedByTeacher, playerName, powerHaloGfx, sceneRef, score, scoreText, setDifficulty, set__certificateOpenedFrom, set__overlayPaused, set_awaitingQuiz, set_currentLevel, set_lives, set_livesLostThisLevel, set_pausedByTeacher, set_score, shadowGfx } from "./state.js?v=20260929v96";
+import { adventureScore, globalStats, medalTextCert, medalTier, updatePlayTime } from "./stats.js?v=20260929v96";
+import { toggleFullscreen } from "./ui.js?v=20260929v96";
+import { ensureAudio, SFX, isMuted, toggleMuted } from "../audio.js?v=20260929v96";
+import { renderAchievements, unlockedAchievements } from "../achievements.js?v=20260929v96";
+import { LEVELS } from "../data-levels.js?v=20260929v96";
+import { totalStarsEarned, levelStars } from "../stars.js?v=20260929v96";
+import { ACHIEVEMENTS_DEFS } from "../data-progression.js?v=20260929v96";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20260929v96";
 
 // =====================================================
 // ===== CONQUISTAS =====
@@ -221,9 +221,49 @@ function showCertificate() {
   const overlay = document.getElementById("certificateOverlay");
   if (!overlay) return;
 
+  // Pedido da Vanda: o certificado deixou de exigir ter terminado os 20 níveis — agora também
+  // pode ser aberto A MEIO da aventura (novo botão "🏅 Certificado" no ☰ Menu, ver
+  // window.__vb_openCertificate mais abaixo), para um aluno levar consigo o que já fez até ao
+  // fim da aula, mesmo sem ter chegado ao fim. `finished` decide qual dos dois textos usar.
+  // Só o caminho novo (☰ Menu, a meio de um nível) precisa de descobrir se o jogo já terminou —
+  // "win" (ecrã de vitória) e "stats" (que só mostra o botão do certificado depois de terminar, ver
+  // showCertificate ao contrário: o botão só aparece com levelsComp>=levelsTotal) só são alcançáveis
+  // DEPOIS de terminar, por construção, e devem continuar a comportar-se exatamente como antes desta
+  // funcionalidade — mesmo que, como nos saves sintéticos dos testes, mapProgress.levelsCompleted
+  // nunca tenha chegado a ser preenchido (só a via oficial de jogar preenche o Mapa; o atalho
+  // window.__vb_showVictory() dos testes não passa por lá).
+  const levelsCompletedSoFar = mapProgress.levelsCompleted.length;
+  const finished = _certificateOpenedFrom !== "menu" || levelsCompletedSoFar >= LEVELS.length;
+
   // Nome
   const certName = document.getElementById("certPlayerName");
   if (certName) certName.textContent = playerName || "Ciber-Herói";
+
+  // Título, subtítulo e texto do corpo — só mudam de "Oficial" (missão concluída) para
+  // "Progresso" (a meio da aventura); os restantes campos abaixo (pontos, estrelas, %, medalha,
+  // data) usam sempre o mesmo cálculo, os dois casos só diferem no enquadramento do texto.
+  const certTitle = document.getElementById("certTitle");
+  if (certTitle) certTitle.textContent = finished ? "Certificado Oficial" : "Certificado de Progresso";
+  const certSubtitle = document.getElementById("certSubtitle");
+  if (certSubtitle) certSubtitle.textContent = finished
+    ? "de Guardião da Cibersegurança"
+    : `em Cibersegurança — ${levelsCompletedSoFar} de ${LEVELS.length} níveis`;
+  const certIntro2 = document.getElementById("certIntro2");
+  if (certIntro2) certIntro2.textContent = finished
+    ? "que, com coragem, atenção e sabedoria, concluiu a missão das"
+    : "que, com coragem, atenção e sabedoria, está a completar a missão das";
+  const certHighlight = document.getElementById("certHighlight");
+  if (certHighlight) certHighlight.textContent = finished
+    ? "20 Competências de Cibersegurança"
+    : `${levelsCompletedSoFar} de 20 Competências de Cibersegurança`;
+  const certOutro = document.getElementById("certOutro");
+  if (certOutro) certOutro.textContent = finished
+    ? "tornando-se oficialmente Guardião da Cibersegurança."
+    : "e está a caminho de se tornar Guardião da Cibersegurança.";
+  // "Jogar de novo" apaga TODO o progresso (resetAllProgress, ver o próprio botão mais abaixo) —
+  // faz sentido logo depois de terminar o jogo, mas seria perigoso deixá-lo à vista a meio da
+  // aventura: um clique sem querer, a pensar que era só fechar o certificado, apagava tudo.
+  document.getElementById("btnCertRestart")?.classList.toggle("hidden", !finished);
 
   // Pontuação
   // BUG CORRIGIDO: "score" só reflete a tentativa/sessão atual (ver
@@ -266,8 +306,16 @@ function showCertificate() {
   // nível se a pergunta da porta foi acertada à primeira (rec.firstTry).
   // Usa-se sempre o valor MAIS BAIXO dos dois — nunca mostra 100% a não
   // ser que AMBAS as fontes concordem que não houve nenhum erro.
+  //
+  // AJUSTE (certificado de progresso, ver `finished` acima): dividir por LEVELS.length (todos os
+  // 20) só é justo quando o jogo terminou — o aluno teve mesmo oportunidade de errar em todos.
+  // A meio da aventura isso penalizava sem razão: um aluno com 100% de acertos nos 3 níveis que já
+  // fez via, por exemplo, "3 de 20" → 15%, não "100%". Por isso, sem terminar, a percentagem é
+  // calculada sobre os níveis já feitos (levelsCompletedSoFar), não sobre os 20 — mede o
+  // desempenho no que já jogou, não penaliza o que ainda não chegou a jogar. (globalStats.quizTotal/
+  // quizCorrect já eram só "até agora" por natureza — nada a corrigir nesse lado.)
   const firstTryLevels = Object.keys(levelStars).filter(k => levelStars[k]?.firstTry).length;
-  const pctFromStars = Math.round((firstTryLevels / LEVELS.length) * 100);
+  const pctFromStars = Math.round((firstTryLevels / (finished ? LEVELS.length : Math.max(levelsCompletedSoFar, 1))) * 100);
   const pctFromGlobalStats = globalStats.quizTotal > 0
     ? Math.round((globalStats.quizCorrect / globalStats.quizTotal) * 100)
     : 100;
@@ -275,10 +323,10 @@ function showCertificate() {
   const certCorrect = document.getElementById("certCorrect");
   if (certCorrect) certCorrect.textContent = `${pct}%`;
 
-  // Medalha
+  // Medalha — "(até agora)" só no certificado de progresso, para não se ler como resultado final.
   const certMedal = document.getElementById("certMedal");
   if (certMedal) {
-    certMedal.textContent = medalTextCert(medalTier(pct));
+    certMedal.textContent = medalTextCert(medalTier(pct)) + (finished ? "" : " (até agora)");
   }
 
   // Estrelas
@@ -410,9 +458,16 @@ export function init_screens_0() {
     showCertificate();
   });
 
-  // "Voltar" — fecha certificado e regressa a quem o abriu (ecrã de vitória
-  // ou Estatísticas, ver _certificateOpenedFrom).
+  // Certificado a meio da aventura (☰ Menu, a qualquer momento) — ver comentário sobre
+  // `finished` no início de showCertificate(). Ao contrário de "stats"/"win" (abertos de dentro de
+  // OUTRO overlay, já com o jogo em pausa), este pode ser aberto a meio de um nível em curso, por
+  // isso passa por openOverlay(), que trata de pausar a física e fechar outros overlays sozinho.
+  window.__vb_openCertificate = () => { set__certificateOpenedFrom("menu"); openOverlay("certificateOverlay", showCertificate); };
+
+  // "Voltar" — fecha certificado e regressa a quem o abriu (ecrã de vitória,
+  // Estatísticas ou — a meio do jogo — o próprio jogo; ver _certificateOpenedFrom).
   document.getElementById("btnCertBack")?.addEventListener("click", () => {
+    if (_certificateOpenedFrom === "menu") { closeOverlay("certificateOverlay"); return; }
     document.getElementById("certificateOverlay")?.classList.add("hidden");
     if (_certificateOpenedFrom === "stats") {
       openOverlay("statsOverlay", renderStats);
