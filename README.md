@@ -18,6 +18,10 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
   (pelo menos 2 níveis depois) como **«Revisão rápida»**, antes do quiz do nível: sem perder vidas e sem contar para pontos,
   estatísticas ou certificado; acertar (ou falhar 2 revisões) tira-a da lista. Estrelas por nível (até 3),
   artefactos, conquistas, mapa da aventura e certificado.
+- **Sem perguntas repetidas** numa aventura: os 20 níveis usam 20 temas distintos (um por nível), e dentro de cada
+  tema uma pergunta só volta a sair depois de todas as outras do banco terem saído (`pickQuizForLevel`,
+  `game/quiz.js`). O quiz de cada boss usa o mesmo tema do último nível desse mundo e também passa por esta
+  proteção, para nunca repetir a pergunta que o aluno acabou de ver à porta desse nível.
 - **Certificado**, a qualquer momento (☰ Menu → 🏅 Certificado, mesmo a meio de um nível) — não só ao terminar os 20
   níveis. Antes de terminar mostra "Certificado de Progresso" (níveis feitos, pontos, estrelas, e a percentagem de
   acertos calculada só sobre os níveis já jogados — não penaliza o que ainda falta) e esconde "🔄 Jogar de novo"
@@ -110,7 +114,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20260930v97`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20261001v98`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
