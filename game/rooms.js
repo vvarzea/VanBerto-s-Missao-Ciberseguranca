@@ -7,14 +7,14 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { setInvuln } from "./items.js?v=20260930v97";
-import { applyBackground, bgKeyForLevel } from "./map.js?v=20260930v97";
-import { ROOM_ITEM_XY, ROOM_LANDING_Y, ROOM_LEDGE, ROOM_PIPE_XY, ROOM_THEME_IDX, ROOM_WORLD_W } from "./scene.js?v=20260930v97";
-import { _pendingEntranceReveal, _pipeWarping, balloons, collectedRoomPipes, critters, currentLevel, currentSign, door, inSecretRoom, isCrouching, itemsGroup, malwareGroup, movingPlatforms, pipes, platforms, player, sceneRef, secretRoomHidden, secretRoomReturn, secretRoomTemp, set__pendingEntranceReveal, set__pipeWarping, set__suppressCrouchUntilRelease, set_inSecretRoom, set_isCrouching, set_secretRoomHidden, set_secretRoomReturn, set_secretRoomTemp, trampolines } from "./state.js?v=20260930v97";
-import { clearSecretSigns, spawnSecretSign } from "./world.js?v=20260930v97";
-import { ensureAudio, beep, SFX } from "../audio.js?v=20260930v97";
-import { makePlatformTextureThemed, makePipeTexture } from "../textures.js?v=20260930v97";
-import { LEVELS, THEMES } from "../data-levels.js?v=20260930v97";
+import { setInvuln } from "./items.js?v=20261001v98";
+import { applyBackground, bgKeyForLevel } from "./map.js?v=20261001v98";
+import { ROOM_ITEM_XY, ROOM_LANDING_Y, ROOM_LEDGE, ROOM_PIPE_XY, ROOM_THEME_IDX, ROOM_WORLD_W } from "./scene.js?v=20261001v98";
+import { _pendingEntranceReveal, _pipeWarping, balloons, collectedRoomPipes, critters, currentLevel, currentSign, door, inSecretRoom, isCrouching, itemsGroup, malwareGroup, movingPlatforms, pipes, platforms, player, sceneRef, secretRoomHidden, secretRoomReturn, secretRoomTemp, set__pendingEntranceReveal, set__pipeWarping, set__suppressCrouchUntilRelease, set_inSecretRoom, set_isCrouching, set_secretRoomHidden, set_secretRoomReturn, set_secretRoomTemp, trampolines } from "./state.js?v=20261001v98";
+import { clearSecretSigns, spawnSecretSign } from "./world.js?v=20261001v98";
+import { ensureAudio, beep, SFX } from "../audio.js?v=20261001v98";
+import { makePlatformTextureThemed, makePipeTexture } from "../textures.js?v=20261001v98";
+import { LEVELS, THEMES } from "../data-levels.js?v=20261001v98";
 
 // Anima a entrada do VanBerto's (fade-in + "pop" estica-encolhe) — chamada
 // só quando o jogo realmente arranca (ver showHistory), nunca enquanto o

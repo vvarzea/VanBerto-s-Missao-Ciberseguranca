@@ -7,17 +7,17 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20260930v97";
-import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20260930v97";
-import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20260930v97";
-import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20260930v97";
-import { clearExtremoAllies } from "./level.js?v=20260930v97";
-import { showQuiz } from "./quiz.js?v=20260930v97";
-import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, getQuizPool, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20260930v97";
-import { playVanBertoDance } from "./vanberto.js?v=20260930v97";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20260930v97";
-import { showAchievementToast } from "../achievements.js?v=20260930v97";
-import { BOSS_VICTORY_VB } from "../data-story.js?v=20260930v97";
+import { collectedBossRights, saveBossRights } from "./artefacts.js?v=20261001v98";
+import { clearMiniViruses, clearPopupHazard, clearToxicZones, stopPhishingDecoy } from "./boss-attacks.js?v=20261001v98";
+import { destroyBossHpBar, showBossBanner } from "./boss-core.js?v=20261001v98";
+import { bossDialogueAnchor, playBossDialogue, vbDialogueAnchor } from "./dialogue.js?v=20261001v98";
+import { clearExtremoAllies } from "./level.js?v=20261001v98";
+import { pickQuizForLevel, showQuiz } from "./quiz.js?v=20261001v98";
+import { bossLockIcon, bossOverlay, bossRageIcon, bossState, bossVignette, currentLevel, hudText, itemCountText, player, sceneRef, set__doorAnimRunning, set_awaitingQuiz, set_bossLockIcon, set_bossOverlay, set_bossRageIcon, set_bossState, set_bossVignette, set_inBossFight, tipText } from "./state.js?v=20261001v98";
+import { playVanBertoDance } from "./vanberto.js?v=20261001v98";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20261001v98";
+import { showAchievementToast } from "../achievements.js?v=20261001v98";
+import { BOSS_VICTORY_VB } from "../data-story.js?v=20261001v98";
 
 // ===== Flourish de vitória próprio de cada boss — Fase "Batalhas Épicas" =====
 // Substitui/complementa o confetti genérico por algo ligado ao tema do boss
@@ -47,8 +47,15 @@ function playBossVictoryFlourish(scene, def) {
 export function startBossQuizPhase() {
   bossState.phase = "quiz";
   if(bossState.sprite) bossState.sprite.destroy();
-  const pool = getQuizPool(bossState.def.quizTheme);
-  const quiz = pool[Math.floor(Math.random()*pool.length)];
+  // Pedido da Vanda: confirmar que nenhuma pergunta se repete. O quiz do boss usa o MESMO tema do
+  // último nível desse mundo (ex.: boss após o nível 4 → tema "virus_malware", igual ao nível 4) —
+  // antes, esta 1.ª pergunta do boss era escolhida ao acaso diretamente do banco (pool[random]),
+  // SEM olhar para as perguntas já usadas nesse tema, por isso podia calhar a MESMA pergunta que o
+  // aluno acabou de ver à porta do nível anterior. pickQuizForLevel() é a função usada em todo o
+  // resto do jogo para isto (incluindo nas tentativas seguintes DESTE MESMO quiz do boss, se a
+  // resposta for errada — showQuiz() já a chama de novo em quiz.js) — passa a ser usada também aqui,
+  // na 1.ª pergunta, para ficar consistente com o resto e nunca repetir.
+  const quiz = pickQuizForLevel(currentLevel, bossState.def.quizTheme);
   set_awaitingQuiz( true);
   sceneRef.physics.pause();
   player.setAlpha(0);

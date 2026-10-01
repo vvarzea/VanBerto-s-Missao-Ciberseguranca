@@ -516,6 +516,42 @@ with sync_playwright() as p:
         assert not errs, errs[:3]; pg.context.close()
         return "falhou a 2.ª revisão → sai da lista e o quiz normal segue"
 
+    @test("Quiz do boss: a 1.ª pergunta nunca repete a que o aluno acabou de ver à porta do nível anterior")
+    def _():
+        # O quiz do boss usa o MESMO tema do último nível desse mundo (ex.: boss após o nível 5 →
+        # tema "virus_malware", igual ao do nível 5) — por isso a pergunta da porta e a 1.ª pergunta
+        # do boss vêm do mesmo banco. Antes, startBossQuizPhase() (game/boss-end.js) escolhia com
+        # pool[random], sem olhar para o que já tinha saído; passou a usar pickQuizForLevel() como o
+        # resto do jogo. Simula a pergunta da porta a sério (chamando pickQuizForLevel, que marca a
+        # pergunta como usada) e depois DEFENDE UM BOSS A SÉRIO, lendo a pergunta que o jogo mostra
+        # de facto — não chama startBossQuizPhase() diretamente, para apanhar o erro mesmo que volte
+        # a aparecer noutro sítio da cadeia.
+        errs = []; pg = new_page(B, 960, 600, False, errs=errs); to_level1(pg); start_level(pg)
+        pg.wait_for_selector("canvas", timeout=15000); dismiss_cards(pg, 6); pg.wait_for_timeout(800)
+        door_q = pg.evaluate("""async(stamp)=>{
+            const quiz = await import('./game/quiz.js?v='+stamp);
+            return quiz.pickQuizForLevel(4, 'virus_malware').q;   // simula a pergunta à porta do nível 5 (tema do 1.º boss)
+        }""", STAMP)
+        pg.evaluate("(a)=>window.__vb_test.startBoss(a)", 4)
+        for _ in range(40):
+            if pg.evaluate("window.__vb_test.inBossFight() && !!window.__vb_test.boss()"): break
+            btn = pg.query_selector(".overlay:not(.hidden) .btn.primary, #cineSkip, .cine-skip")
+            if btn:
+                try: btn.click(timeout=500)
+                except Exception: pass
+            pg.wait_for_timeout(500)
+        info = pg.evaluate("window.__vb_test.boss()"); assert info, "o boss não arrancou"
+        for _ in range(info["max"] + 2):
+            pg.evaluate("window.__vb_test.hitBoss()"); pg.evaluate("window.__vb_test.keepAlive()"); pg.wait_for_timeout(1300)
+            if pg.query_selector("#quizOverlay:not(.hidden)"): break
+            left = pg.evaluate("window.__vb_test.boss()")
+            if not left: break
+        pg.wait_for_selector("#quizOverlay:not(.hidden)", timeout=20000)
+        boss_q = pg.evaluate("document.getElementById('quizQuestion').textContent")
+        assert door_q not in boss_q, f"o quiz do boss repetiu a pergunta da porta: {door_q!r}"
+        assert not errs, errs[:3]; pg.context.close()
+        return "a 1.ª pergunta do boss não repetiu a pergunta simulada à porta do nível anterior"
+
     @test("Bosses: os 4 combates arrancam, correm 5 s com todos os ataques ativos, e a derrota leva ao quiz do boss")
     def _():
         # Os bosses são ~1/3 do código do jogo e nenhum outro teste passa por lá: um nome mal ligado ao dividir o
