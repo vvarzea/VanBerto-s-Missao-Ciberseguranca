@@ -114,7 +114,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20261001v98`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20261003v99`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -142,6 +142,15 @@ No fim do menu inicial, em letra pequena e discreta, aparece "Versão <string>" 
 Serve para, ao receber um print de um problema, saber logo se é a versão mais recente ou uma mais
 antiga ainda por atualizar no sítio onde está publicado. `_dev/release.py` já a atualiza sozinho,
 como o resto do `?v=`; `_dev/check.mjs` recusa a versão se a etiqueta ficar desatualizada.
+
+## Toque no telemóvel (touch-action)
+
+Qualquer cartão clicável dentro de uma lista que desliza (`.map-region` no Mapa, `.album-card` no Álbum) tem
+`touch-action: none`, e todos os botões (`.btn`, incluindo cada "Fechar") têm `touch-action: manipulation`. Sem
+isto, um toque com um pequeno tremor pode ser lido pelo telemóvel como o início de um gesto de deslizar
+(`touchcancel` em vez de `touchend`) — o toque nunca chega ao `onclick`, o cartão "não reage" e pode parecer que o
+jogo ficou preso, sem fazer nada aos toques seguintes. Ao mexer em CSS de um cartão ou botão clicável dentro de
+uma lista com `overflow-y: auto`, mantém (ou acrescenta) o `touch-action` adequado.
 
 ## Erro inesperado
 
