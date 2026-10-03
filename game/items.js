@@ -7,22 +7,22 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { handleBossItemCollect, handleBossMalwareCollision } from "./boss-combat.js?v=20261001v98";
-import { vbSayRandom } from "./dialogue.js?v=20261001v98";
-import { hitFlash } from "./dom.js?v=20261001v98";
-import { applyHitStop, pickPraise, showFloat } from "./feedback.js?v=20261001v98";
-import { showGameOver } from "./flow.js?v=20261001v98";
-import { updateHearts } from "./level.js?v=20261001v98";
-import { saveGame } from "./overlays.js?v=20261001v98";
-import { snapPlayerToGround } from "./rooms.js?v=20261001v98";
-import { _critterSession, _overlayPaused, _starMelodyInterval, awaitingQuiz, collectedItemIndices, collectedRoomPipes, currentLevel, currentLevelTip, difficulty, doubleJumpActive, doubleJumpCountdown, doubleJumpTimer, getMaxLives, heartsGfx, inSecretRoom, invuln, invulnBlinkEvent, invulnEndEvent, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, livesLostThisLevel, pausedByTeacher, player, powerCountdown, powerIndicator, powered, poweredTimer, sceneRef, score, scoreText, secretRoomTemp, set__hudDirty, set__starMelodyInterval, set_awaitingQuiz, set_doubleJumpActive, set_doubleJumpCountdown, set_doubleJumpTimer, set_doubleJumpUsed, set_invuln, set_invulnBlinkEvent, set_invulnEndEvent, set_itemsCollected, set_lives, set_livesLostThisLevel, set_powerCountdown, set_powered, set_poweredTimer, set_score, set_starPower, set_starPowerCountVal, set_starPowerCountdown, set_starPowerTimer, starPower, starPowerCountVal, starPowerCountdown, starPowerTimer, tipText, touch } from "./state.js?v=20261001v98";
-import { globalStats, saveGlobalStats } from "./stats.js?v=20261001v98";
-import { triggerVanBertoHappy, triggerVanBertoSad } from "./vanberto.js?v=20261001v98";
-import { spawnShields } from "./world.js?v=20261001v98";
-import { onSecretRoomFoundForAchievements } from "../achievements.js?v=20261001v98";
-import { ensureAudio, SFX, beep } from "../audio.js?v=20261001v98";
-import { LEVELS } from "../data-levels.js?v=20261001v98";
-import { VB_HIT, VB_STAR_POWER } from "../data-flavor.js?v=20261001v98";
+import { handleBossItemCollect, handleBossMalwareCollision } from "./boss-combat.js?v=20261003v99";
+import { vbSayRandom } from "./dialogue.js?v=20261003v99";
+import { hitFlash } from "./dom.js?v=20261003v99";
+import { applyHitStop, pickPraise, showFloat } from "./feedback.js?v=20261003v99";
+import { showGameOver } from "./flow.js?v=20261003v99";
+import { updateHearts } from "./level.js?v=20261003v99";
+import { saveGame } from "./overlays.js?v=20261003v99";
+import { snapPlayerToGround } from "./rooms.js?v=20261003v99";
+import { _critterSession, _overlayPaused, _starMelodyInterval, awaitingQuiz, collectedItemIndices, collectedRoomPipes, currentLevel, currentLevelTip, difficulty, doubleJumpActive, doubleJumpCountdown, doubleJumpTimer, getMaxLives, heartsGfx, inSecretRoom, invuln, invulnBlinkEvent, invulnEndEvent, isStarAllowedExtremo, itemCountText, itemsCollected, itemsGroup, itemsTotal, lives, livesLostThisLevel, pausedByTeacher, player, powerCountdown, powerIndicator, powered, poweredTimer, sceneRef, score, scoreText, secretRoomTemp, set__hudDirty, set__starMelodyInterval, set_awaitingQuiz, set_doubleJumpActive, set_doubleJumpCountdown, set_doubleJumpTimer, set_doubleJumpUsed, set_invuln, set_invulnBlinkEvent, set_invulnEndEvent, set_itemsCollected, set_lives, set_livesLostThisLevel, set_powerCountdown, set_powered, set_poweredTimer, set_score, set_starPower, set_starPowerCountVal, set_starPowerCountdown, set_starPowerTimer, starPower, starPowerCountVal, starPowerCountdown, starPowerTimer, tipText, touch } from "./state.js?v=20261003v99";
+import { globalStats, saveGlobalStats } from "./stats.js?v=20261003v99";
+import { triggerVanBertoHappy, triggerVanBertoSad } from "./vanberto.js?v=20261003v99";
+import { spawnShields } from "./world.js?v=20261003v99";
+import { onSecretRoomFoundForAchievements } from "../achievements.js?v=20261003v99";
+import { ensureAudio, SFX, beep } from "../audio.js?v=20261003v99";
+import { LEVELS } from "../data-levels.js?v=20261003v99";
+import { VB_HIT, VB_STAR_POWER } from "../data-flavor.js?v=20261003v99";
 
 // ===== Itens =====
 

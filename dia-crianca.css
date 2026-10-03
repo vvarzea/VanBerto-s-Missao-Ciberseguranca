@@ -178,6 +178,14 @@ canvas { width: 100% !important; height: 100% !important; display: block; touch-
   box-shadow: 4px 4px 0 #0a0520, inset 0 1px 0 rgba(255,180,80,0.12);
   user-select: none; letter-spacing: 0.2px;
   transition: background 0.12s, transform 0.08s, box-shadow 0.08s;
+  /* Todos os botões (incluindo cada "Fechar"): evita o duplo-toque-para-ampliar do telemóvel
+     (um toque perto da borda de um botão pode ser lido como o 1.º toque de um duplo-toque de
+     zoom) e o atraso de ~300ms de alguns navegadores antigos antes de aceitar um toque como
+     clique. "manipulation" (e não "none") porque alguns botões vivem dentro de listas que
+     deslizam (.map-regions-grid, .achievements-grid, .album-grid) e continuam a precisar de
+     deixar esse gesto passar; .map-region e .album-card, que são o próprio alvo a tocar dentro
+     dessas listas, têm o touch-action:none mais específico (e mais forte) de que precisam. */
+  touch-action: manipulation;
 }
 /* :hover só se aplica a dispositivos com ponteiro fino e hover real (rato) —
    em ecrãs de toque, alguns navegadores tratam o primeiro toque num elemento
@@ -1531,6 +1539,13 @@ body.hc-mode .difficulty-tile span { color: #ffff00 !important; }
   font-family: 'Nunito', sans-serif;
   transition: background 0.15s, border-color 0.15s;
   color: inherit;
+  /* Pedido da Vanda: no telemóvel, tocar num mundo às vezes "não dava em nada" e ficava sem
+     forma de voltar atrás. A .map-regions-grid desliza (overflow-y:auto, ver mais abaixo) — um
+     toque com um pequeno tremor podia ser interpretado como o INÍCIO de um gesto de deslizar
+     (touchcancel em vez de touchend: o toque nunca chega ao onclick, o cartão "não reage" e
+     parece vazio). É o MESMO motivo, já diagnosticado e corrigido, do #quizAnswers .btn mais
+     abaixo neste ficheiro — aqui faltava o mesmo touch-action:none. */
+  touch-action: none;
 }
 .map-region:hover:not(.map-region--locked) {
   background-color: rgba(255,107,53,0.18);
@@ -1964,6 +1979,7 @@ body.hc-mode .achv-card-desc { color:#fff !important; }
   text-align: center;
   transition: transform 0.15s, box-shadow 0.15s;
   cursor: default;
+  touch-action: none; /* mesmo motivo do .map-region acima — .album-grid também desliza */
 }
 .album-card--unlocked {
   background: linear-gradient(145deg, #1e0840 0%, #12052a 100%);

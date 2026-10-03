@@ -175,6 +175,14 @@ function ensureTitleDOM() {
 // data: { icon, name, sub, lines: [string, string] }
 export function playTitleCard(data, onComplete) {
   ensureTitleDOM();
+  // Dois toques quase seguidos no mesmo mundo/nível (ex.: ecrã lento a responder, o jogador
+  // toca outra vez) chamavam isto duas vezes: a 2.ª chamada reescrevia titleEl.onclick/ontouchend
+  // e o temporizador automático, e o onComplete() da 1.ª chamada (que é quem de facto avança para
+  // o nível, ver playRegionTitleCard/startTransition em game/map.js) ficava órfão — nunca mais
+  // era chamado por nada. Normalmente o 2.º onComplete ainda corria (jogo recuperava sozinho),
+  // mas nada garantia isso. Enquanto um cartão já está a meio, ignora um novo pedido — o
+  // onComplete da chamada em curso continua a ser a única fonte da verdade.
+  if (titleEl.classList.contains("show")) return;
   document.getElementById("ctcIcon").textContent = data.icon || "🌍";
   document.getElementById("ctcName").textContent = data.name || "";
   document.getElementById("ctcSub").textContent = data.sub || "";

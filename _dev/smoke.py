@@ -602,6 +602,27 @@ with sync_playwright() as p:
         pg.context.close()
         return "4 bosses: " + ", ".join(seen)
 
+    @test("Toque no telemóvel: os cartões do Mapa/Álbum (dentro de listas que deslizam) e os botões não ficam vulneráveis a um toque com tremor ser lido como início de scroll")
+    def _():
+        # Pedido da Vanda: no telemóvel, tocar num mundo do Mapa às vezes "não dava em nada" e não
+        # havia forma de voltar atrás. A .map-regions-grid desliza (overflow-y:auto) — sem
+        # touch-action:none no próprio cartão, um toque com um pequeno tremor pode ser lido pelo
+        # telemóvel como o INÍCIO de um gesto de deslizar (touchcancel em vez de touchend): o toque
+        # nunca chega ao onclick e o cartão "não reage" — o mesmo problema, já diagnosticado antes
+        # neste jogo, do #quizAnswers .btn (ver o comentário ao lado de touch-action no CSS).
+        errs = []; pg = new_page(B, 390, 844, True, errs=errs); pg.goto(BASE + "/index.html", wait_until="networkidle")
+        pg.click("#btnOpenMap"); pg.wait_for_selector(".map-region")
+        ta_region = pg.evaluate("getComputedStyle(document.querySelector('.map-region')).touchAction")
+        ta_btn = pg.evaluate("getComputedStyle(document.getElementById('btnCloseMap')).touchAction")
+        assert ta_region == "none", f".map-region tem touch-action: {ta_region!r} (devia ser 'none')"
+        assert ta_btn == "manipulation", f"#btnCloseMap tem touch-action: {ta_btn!r} (devia ser 'manipulation')"
+        pg.click("#btnCloseMap"); pg.wait_for_timeout(200)
+        pg.click("#btnAlbum"); pg.wait_for_selector(".album-card")
+        ta_album = pg.evaluate("getComputedStyle(document.querySelector('.album-card')).touchAction")
+        assert ta_album == "none", f".album-card tem touch-action: {ta_album!r} (devia ser 'none')"
+        assert not errs, errs[:3]; pg.context.close()
+        return "touch-action correto em .map-region, .album-card e no botão de fechar"
+
     @test("Movimento reduzido: sem animações CSS nem abanões")
     def _():
         out = []
