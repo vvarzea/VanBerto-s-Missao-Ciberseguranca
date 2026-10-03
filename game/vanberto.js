@@ -7,10 +7,10 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { historyOverlay, startOverlay } from "./dom.js?v=20261003v99";
-import { showFloat } from "./feedback.js?v=20261003v99";
-import { _eyeOverrideUntil, _overlayPaused, awaitingQuiz, awaitingStory, doubleJumpActive, invuln, pausedByTeacher, player, powered, set__eyeOverrideUntil, starPower } from "./state.js?v=20261003v99";
-import { ensureAudio, beep } from "../audio.js?v=20261003v99";
+import { historyOverlay, startOverlay } from "./dom.js?v=20261003v100";
+import { showFloat } from "./feedback.js?v=20261003v100";
+import { _eyeOverrideUntil, _overlayPaused, awaitingQuiz, awaitingStory, doubleJumpActive, invuln, pausedByTeacher, player, powered, set__eyeOverrideUntil, starPower } from "./state.js?v=20261003v100";
+import { ensureAudio, beep } from "../audio.js?v=20261003v100";
 
 // ===== Animação VanBerto =====
 
@@ -218,6 +218,7 @@ export function init_vanberto_0() {
   // =====================================================
   (function initVanbertoPersonality() {
     function blinkRobots() {
+      if (document.hidden) return; // separador em segundo plano: nada para piscar
       document.querySelectorAll(
         ".win-robot-img, .pause-robot-img, .gameover-robot-img, .main-story-robot-img, .certificate-robot-img"
       ).forEach(img => {
@@ -245,7 +246,8 @@ export function init_vanberto_0() {
       `;
       document.head.appendChild(styleTag);
       let pIdx = 0;
-      setInterval(() => {
+      let particleTimer = null;
+      const spawnParticle = () => {
         const p = document.createElement("div");
         const colors = ["#ffd700","#ff80ff","#80d0ff","#a0ff80","#ffa0a0"];
         p.style.cssText = `
@@ -258,7 +260,19 @@ export function init_vanberto_0() {
         particlesEl.appendChild(p);
         setTimeout(() => p.remove(), 1500);
         pIdx++;
-      }, 350);
+      };
+      // Só gera partículas enquanto o ecrã da história está visível (antes corria para sempre, mesmo escondido).
+      const storyOverlay = document.getElementById("mainStoryOverlay");
+      const syncParticles = () => {
+        const visible = storyOverlay && !storyOverlay.classList.contains("hidden") && !document.hidden;
+        if (visible && !particleTimer) particleTimer = setInterval(spawnParticle, 350);
+        else if (!visible && particleTimer) { clearInterval(particleTimer); particleTimer = null; }
+      };
+      if (storyOverlay) {
+        new MutationObserver(syncParticles).observe(storyOverlay, { attributes: true, attributeFilter: ["class"] });
+        document.addEventListener("visibilitychange", syncParticles);
+        syncParticles();
+      }
     }
   })();
 }

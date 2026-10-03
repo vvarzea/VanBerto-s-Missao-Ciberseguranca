@@ -7,22 +7,22 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { damageBoss } from "./boss-combat.js?v=20261003v99";
-import { startBossFight } from "./boss-core.js?v=20261003v99";
-import { vbSayRandom } from "./dialogue.js?v=20261003v99";
-import { btnCloseQuiz, btnHistory, historyOverlay, historyText, quizAnswers, quizExplanation, quizFeedback, quizOverlay, quizQuestion, startOverlay } from "./dom.js?v=20261003v99";
-import { showDynamicMsg } from "./feedback.js?v=20261003v99";
-import { showVictoryScreen } from "./flow.js?v=20261003v99";
-import { openOverlay } from "./overlays.js?v=20261003v99";
-import { revealPlayerEntrance } from "./rooms.js?v=20261003v99";
-import { _vbTimer, bossState, currentLevel, getDifficulty, getMaxLives, getQuizPool, inBossFight, lives, mapProgress, pausedByTeacher, player, sceneRef, set__reviewReturnOverlay, set__vbTimer, set_awaitingQuiz, set_awaitingStory, set_invuln, set_lives } from "./state.js?v=20261003v99";
-import { QUIZ_ERRORS_MAX, globalStats, saveGlobalStats } from "./stats.js?v=20261003v99";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261003v99";
-import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO, QUIZ_TIPS, QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261003v99";
-import { ensureAudio, SFX } from "../audio.js?v=20261003v99";
-import { LEVELS } from "../data-levels.js?v=20261003v99";
-import { onHistoryReadForAchievements, onCorrectAnswerForAchievements, checkAchievements } from "../achievements.js?v=20261003v99";
-import { DYNAMIC_MSGS_CORRECT, VB_QUIZ_CORRECT, DYNAMIC_MSGS_WRONG, VB_QUIZ_WRONG } from "../data-flavor.js?v=20261003v99";
+import { damageBoss } from "./boss-combat.js?v=20261003v100";
+import { startBossFight } from "./boss-core.js?v=20261003v100";
+import { vbSayRandom } from "./dialogue.js?v=20261003v100";
+import { btnCloseQuiz, btnHistory, historyOverlay, historyText, quizAnswers, quizExplanation, quizFeedback, quizOverlay, quizQuestion, startOverlay } from "./dom.js?v=20261003v100";
+import { showDynamicMsg } from "./feedback.js?v=20261003v100";
+import { showVictoryScreen } from "./flow.js?v=20261003v100";
+import { openOverlay } from "./overlays.js?v=20261003v100";
+import { revealPlayerEntrance } from "./rooms.js?v=20261003v100";
+import { _vbTimer, bossState, currentLevel, getDifficulty, getMaxLives, getQuizPool, inBossFight, lives, mapProgress, pausedByTeacher, player, sceneRef, set__reviewReturnOverlay, set__vbTimer, set_awaitingQuiz, set_awaitingStory, set_invuln, set_lives } from "./state.js?v=20261003v100";
+import { QUIZ_ERRORS_MAX, globalStats, saveGlobalStats } from "./stats.js?v=20261003v100";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20261003v100";
+import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO, QUIZ_TIPS, QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261003v100";
+import { ensureAudio, SFX } from "../audio.js?v=20261003v100";
+import { LEVELS } from "../data-levels.js?v=20261003v100";
+import { onHistoryReadForAchievements, onCorrectAnswerForAchievements, checkAchievements } from "../achievements.js?v=20261003v100";
+import { DYNAMIC_MSGS_CORRECT, VB_QUIZ_CORRECT, DYNAMIC_MSGS_WRONG, VB_QUIZ_WRONG } from "../data-flavor.js?v=20261003v100";
 
 // ===== Quiz stats =====
 
@@ -464,25 +464,31 @@ export function showQuiz(quiz,done,attemptNum){
 // ----- ligações executadas no arranque (ordem original preservada; chamadas por dia-crianca.js) -----
 export function init_quiz_0() {
   loadQuizReview();
-  // Teste automático (_dev/smoke.py) — mesmo padrão de window.__vb_showVictory
-  window.__vb_quizReview = {
-    queue: () => JSON.parse(JSON.stringify(quizReviewQueue)),
-    seed: (e) => { quizReviewQueue.push({ tries: 0, ...e }); saveQuizReview(); }
-  };
+  // Usado pelo menu (☰ → Erros): fica sempre disponível.
   window.__vb_openReview = () => openReviewScreen(null);
-  window.__vb_showVictory = () => showVictoryScreen(sceneRef); // usado pelo teste em _dev/smoke.py
-  // Ganchos só para o teste de bosses em _dev/smoke.py (mesmo padrão de __vb_showVictory): arrancam um combate
-  // diretamente, tiram-lhe 1 de vida (damageBoss trata sozinho das fases, da fúria e da derrota) e deixam ver o estado.
-  window.__vb_test = {
-    startBoss: (afterLevel) => { startBossFight(sceneRef, afterLevel, () => {}); },
-    hitBoss: () => {
-      if (!bossState || !bossState.sprite || !bossState.sprite.active) return false;
-      bossState.hitCooldownUntil = 0; damageBoss(sceneRef, bossState.sprite.x, bossState.sprite.y); return true;
-    },
-    boss: () => bossState ? { id: bossState.def.id, hp: bossState.hp, max: bossState.def.hp } : null,
-    inBossFight: () => inBossFight,
-    level: () => currentLevel,
-    lives: () => lives,
-    keepAlive: () => { set_lives( getMaxLives()); set_invuln( true); }
-  };
+
+  // Ganchos SÓ para os testes automáticos (_dev/smoke.py). Só existem quando o browser está a ser controlado por
+  // automação (navigator.webdriver, que o Playwright/Chromium põe a true); num telemóvel ou computador normal
+  // um aluno não os encontra na consola. Não mudar para ficarem sempre ativos.
+  if (navigator.webdriver) {
+    window.__vb_quizReview = {
+      queue: () => JSON.parse(JSON.stringify(quizReviewQueue)),
+      seed: (e) => { quizReviewQueue.push({ tries: 0, ...e }); saveQuizReview(); }
+    };
+    window.__vb_showVictory = () => showVictoryScreen(sceneRef);
+    // Arrancam um combate de boss diretamente, tiram-lhe 1 de vida (damageBoss trata sozinho das fases, da fúria
+    // e da derrota) e deixam ver o estado.
+    window.__vb_test = {
+      startBoss: (afterLevel) => { startBossFight(sceneRef, afterLevel, () => {}); },
+      hitBoss: () => {
+        if (!bossState || !bossState.sprite || !bossState.sprite.active) return false;
+        bossState.hitCooldownUntil = 0; damageBoss(sceneRef, bossState.sprite.x, bossState.sprite.y); return true;
+      },
+      boss: () => bossState ? { id: bossState.def.id, hp: bossState.hp, max: bossState.def.hp } : null,
+      inBossFight: () => inBossFight,
+      level: () => currentLevel,
+      lives: () => lives,
+      keepAlive: () => { set_lives( getMaxLives()); set_invuln( true); }
+    };
+  }
 }
