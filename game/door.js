@@ -7,19 +7,19 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { showLevelCompleteCelebration, showRightRecovered } from "./artefacts.js?v=20261003v100";
-import { quizOverlay } from "./dom.js?v=20261003v100";
-import { nextLevel } from "./flow.js?v=20261003v100";
-import { markLevelCompleted } from "./map.js?v=20261003v100";
-import { pickQuizForLevel, showQuiz, withQuizReview } from "./quiz.js?v=20261003v100";
-import { snapPlayerToGround } from "./rooms.js?v=20261003v100";
-import { _doorAnimRunning, _doorWatchdogTimer, _landingCheckTimer, _levelAtDoorTrigger, _starMelodyInterval, awaitingQuiz, awaitingStory, currentLevel, door, doorOverlap, doubleJumpCountdown, doubleJumpTimer, invuln, invulnBlinkEvent, invulnEndEvent, itemsCollected, itemsTotal, livesLostThisLevel, mapProgress, player, playerName, powerCountdown, powerHaloGfx, poweredTimer, set__doorAnimRunning, set__doorWatchdogTimer, set__landingCheckTimer, set__levelAtDoorTrigger, set__starMelodyInterval, set_awaitingQuiz, set_doorOverlap, set_doubleJumpActive, set_doubleJumpCountdown, set_doubleJumpTimer, set_invuln, set_invulnBlinkEvent, set_invulnEndEvent, set_lastQuizTheme, set_powerCountdown, set_powered, set_poweredTimer, set_starPower, set_starPowerCountdown, set_starPowerTimer, shadowGfx, starPowerCountdown, starPowerTimer, touch } from "./state.js?v=20261003v100";
-import { playVanBertoDance } from "./vanberto.js?v=20261003v100";
-import { ensureAudio, SFX } from "../audio.js?v=20261003v100";
-import { LEVELS, THEMES } from "../data-levels.js?v=20261003v100";
-import { finalizeLevelStars } from "../stars.js?v=20261003v100";
-import { checkAchievements } from "../achievements.js?v=20261003v100";
-import { LEVEL_ENTRY_PHRASES } from "../data-flavor.js?v=20261003v100";
+import { showLevelCompleteCelebration, showRightRecovered } from "./artefacts.js?v=20261004v102";
+import { quizOverlay } from "./dom.js?v=20261004v102";
+import { nextLevel } from "./flow.js?v=20261004v102";
+import { markLevelCompleted } from "./map.js?v=20261004v102";
+import { pickQuizForLevel, showQuiz } from "./quiz.js?v=20261004v102";
+import { snapPlayerToGround } from "./rooms.js?v=20261004v102";
+import { _doorAnimRunning, _doorWatchdogTimer, _landingCheckTimer, _levelAtDoorTrigger, _starMelodyInterval, awaitingQuiz, awaitingStory, currentLevel, door, doorOverlap, doubleJumpCountdown, doubleJumpTimer, invuln, invulnBlinkEvent, invulnEndEvent, itemsCollected, itemsTotal, livesLostThisLevel, mapProgress, player, playerName, powerCountdown, powerHaloGfx, poweredTimer, set__doorAnimRunning, set__doorWatchdogTimer, set__landingCheckTimer, set__levelAtDoorTrigger, set__starMelodyInterval, set_awaitingQuiz, set_doorOverlap, set_doubleJumpActive, set_doubleJumpCountdown, set_doubleJumpTimer, set_invuln, set_invulnBlinkEvent, set_invulnEndEvent, set_lastQuizTheme, set_powerCountdown, set_powered, set_poweredTimer, set_starPower, set_starPowerCountdown, set_starPowerTimer, shadowGfx, starPowerCountdown, starPowerTimer, touch } from "./state.js?v=20261004v102";
+import { playVanBertoDance } from "./vanberto.js?v=20261004v102";
+import { ensureAudio, SFX } from "../audio.js?v=20261004v102";
+import { LEVELS, THEMES } from "../data-levels.js?v=20261004v102";
+import { finalizeLevelStars } from "../stars.js?v=20261004v102";
+import { checkAchievements } from "../achievements.js?v=20261004v102";
+import { LEVEL_ENTRY_PHRASES } from "../data-flavor.js?v=20261004v102";
 
 // ===== Porta + Quiz =====
 
@@ -128,7 +128,7 @@ function showQuizAfterDoorAnimation(scene){
     if(!awaitingQuiz) return; // segurança: só mostrar se ainda estamos à espera
     set__doorAnimRunning( false); // reset para próxima porta
     set_lastQuizTheme( LEVELS[currentLevel].quizTheme);
-    withQuizReview(() => showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
+    showQuiz(pickQuizForLevel(currentLevel, LEVELS[currentLevel].quizTheme), (ok) => {
       if(ok){
         ensureAudio();
         finalizeLevelStars(currentLevel, livesLostThisLevel, itemsCollected, itemsTotal);
@@ -148,7 +148,7 @@ function showQuizAfterDoorAnimation(scene){
           nextLevel(scene);
         });
       }
-    }));
+    });
   });
 }
 

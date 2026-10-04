@@ -7,18 +7,18 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20261003v100";
-import { clearQuizReview, resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261003v100";
-import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20261003v100";
-import { globalStats, saveGlobalStats } from "./stats.js?v=20261003v100";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261003v100";
-import { resetAchievements } from "../achievements.js?v=20261003v100";
-import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20261003v100";
-import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20261003v100";
-import { ensureAudio, beep, SFX } from "../audio.js?v=20261003v100";
-import { LEVELS, THEMES } from "../data-levels.js?v=20261003v100";
-import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261003v100";
-import { BOSSES } from "../data-bosses.js?v=20261003v100";
+import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20261004v102";
+import { resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261004v102";
+import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20261004v102";
+import { globalStats, saveGlobalStats } from "./stats.js?v=20261004v102";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20261004v102";
+import { resetAchievements } from "../achievements.js?v=20261004v102";
+import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20261004v102";
+import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20261004v102";
+import { ensureAudio, beep, SFX } from "../audio.js?v=20261004v102";
+import { LEVELS, THEMES } from "../data-levels.js?v=20261004v102";
+import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261004v102";
+import { BOSSES } from "../data-bosses.js?v=20261004v102";
 
 // Popup curto "Direito recuperado!" — mostrado ao concluir um nível
 // =====================================================
@@ -110,7 +110,6 @@ export function resetAllProgress() {
   resetQuizStats();
   Object.keys(usedQuizByLevel).forEach(k => usedQuizByLevel[k].clear());
   Object.keys(usedQuizByTheme).forEach(k => usedQuizByTheme[k].clear());
-  clearQuizReview();
 }
 
 // Verifica se um conjunto de 5 artefactos ficou completo agora

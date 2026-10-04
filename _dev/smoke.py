@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Teste de fumo do jogo num Chromium sem interface. Uso: python3 _dev/smoke.py [pasta] [--only="Nome1|Nome2"]
 Precisa de: pip install playwright && playwright install chromium (já existe no ambiente de trabalho).
+Cada teste tem um tempo limite (420 s; muda com a variável SMOKE_TEST_LIMIT) — um teste bloqueado falha em vez de ficar parado.
 Sai com código 1 se algum teste falhar."""
-import functools, http.server, json, pathlib, re, sys, threading, time
+import functools, http.server, json, os, pathlib, re, signal, sys, threading, time
 from playwright.sync_api import sync_playwright
 
 _args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -16,6 +17,14 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(ROOT)))
 BASE = f"http://127.0.0.1:{srv.server_address[1]}"
 threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+def wait_js(pg, expr, timeout=15000):
+    """Como pg.wait_for_function, mas sem eval: a Content-Security-Policy do jogo proíbe 'unsafe-eval', que o wait_for_function usa por dentro."""
+    end = time.time() + timeout / 1000
+    while time.time() < end:
+        if pg.evaluate("() => !!(" + expr + ")"): return
+        time.sleep(0.2)
+    raise AssertionError("tempo esgotado à espera de: " + expr[:80])
 
 def new_page(browser, w=960, h=600, touch=False, reduced=False, route=None, errs=None, external=None):
     # service_workers="block": estes testes interceptam pedidos com page.route, que não vê os pedidos tratados por um service worker.
@@ -73,7 +82,7 @@ TELEPORT_JS = """async()=>{ const s=window.__dc_game.scene.scenes[0], kids=s.chi
 
 def teleport_to_door(pg):
     """Apanha os itens do nível e vai ao portal. Repete se o nível ainda estiver a montar-se (evita falhas esporádicas)."""
-    pg.wait_for_function("window.__dc_game.scene.scenes[0].children.list.some(c=>c.texture&&/^door/.test(c.texture.key))", timeout=20000)
+    wait_js(pg, "window.__dc_game.scene.scenes[0].children.list.some(c=>c.texture&&/^door/.test(c.texture.key))", 20000)
     for attempt in range(4):
         pg.wait_for_timeout(800 if attempt == 0 else 1800)
         try:
@@ -92,10 +101,15 @@ def test(name):
     def deco(fn):
         if ONLY and not any(k in name for k in ONLY): return fn
         t0 = time.time()
+        limit = int(os.environ.get("SMOKE_TEST_LIMIT", "420"))
+        def _timeout(*_): raise TimeoutError(f"o teste passou de {limit} s (bloqueado?)")
+        if hasattr(signal, "SIGALRM"): signal.signal(signal.SIGALRM, _timeout); signal.alarm(limit)
         try:
             detail = fn() or ""; RESULTS.append((name, True, detail))
         except Exception as e:
             RESULTS.append((name, False, f"{type(e).__name__}: {str(e)[:300]}"))
+        finally:
+            if hasattr(signal, "SIGALRM"): signal.alarm(0)
         print(("  ok   " if RESULTS[-1][1] else "  FALHA"), name, "—", RESULTS[-1][2], f"({time.time()-t0:.1f}s)", flush=True)
         return fn
     return deco
@@ -362,11 +376,11 @@ with sync_playwright() as p:
         save = {"map": {"highestLevelReached": 19, "levelsCompleted": list(range(19))}}
         pg.add_init_script("localStorage.setItem('vanbertos_ciberseguranca_save_v1', %s)" % json.dumps(json.dumps(save)))
         pg.goto(BASE + "/index.html", wait_until="networkidle")
-        pg.wait_for_function("navigator.serviceWorker.controller", timeout=15000)
+        wait_js(pg, "navigator.serviceWorker.controller", 15000)
         pg.click("#btnOptions"); pg.wait_for_selector("#optionsOverlay:not(.hidden)")
         assert pg.evaluate("getComputedStyle(document.getElementById('optionsOfflineSection')).display") != "none", "secção «Jogar sem rede» escondida com service worker ativo"
         pg.click("#optBtnDownloadAll")
-        pg.wait_for_function("document.getElementById('offlineDownloadStatus').textContent.length>0", timeout=30000)
+        wait_js(pg, "document.getElementById('offlineDownloadStatus').textContent.length>0", 30000)
         status = pg.evaluate("document.getElementById('offlineDownloadStatus').textContent")
         assert "Tudo guardado" in status, f"estado inesperado: {status!r}"
         n = pg.evaluate(r"(name)=>caches.open(name).then(c=>c.keys()).then(ks=>ks.filter(k=>/\.webp$/.test(k.url)).length)", "vanbertos-" + STAMP)
@@ -460,61 +474,6 @@ with sync_playwright() as p:
         const c=it.a.find(x=>x.ok).t; const btns=[...document.querySelectorAll('#quizAnswers .btn')];
         const b=wantCorrect ? btns.find(x=>x.textContent===c) : btns.find(x=>x.textContent!==c);
         if(b){ b.click(); return 'ok'; } return 'botão não encontrado'; } return 'pergunta não encontrada'; }"""
-
-    @test("Revisão dos erros: uma pergunta falhada há ≥2 níveis volta como «Revisão rápida» antes do quiz do nível e sai da lista ao acertar")
-    def _():
-        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
-        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
-        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:-5})", q)
-        reach_level_quiz(pg)
-        shown = pg.evaluate("document.getElementById('quizQuestion').textContent")
-        assert "Revisão rápida" in shown and q in shown, f"1.º ecrã do quiz não é a revisão: {shown[:80]!r}"
-        STATS_JS = "(()=>{const g=JSON.parse(localStorage.getItem('vanbertos_ciberseguranca_save_v1')).globalStats||{}; return [g.quizTotal||0,g.quizCorrect||0,g.quizWrong||0]})()"
-        stats0 = pg.evaluate(STATS_JS)
-        res = pg.evaluate(ANSWER_JS, [shown, STAMP, True]); assert res == "ok", res
-        pg.wait_for_timeout(300)
-        fb = pg.evaluate("document.getElementById('quizFeedback').textContent"); assert "Boa" in fb, fb
-        assert pg.evaluate("window.__vb_quizReview.queue().length") == 0, "acertar devia tirar a pergunta da lista"
-        assert pg.evaluate(STATS_JS) == stats0, "a revisão não devia contar para as estatísticas do quiz"
-        pg.click("#btnCloseQuiz"); pg.wait_for_timeout(600)
-        nxt = pg.evaluate("document.getElementById('quizQuestion').textContent")
-        assert "Revisão rápida" not in nxt and nxt.strip(), f"depois da revisão devia vir o quiz normal: {nxt[:80]!r}"
-        n = pg.evaluate("document.querySelectorAll('#quizAnswers .btn:not(:disabled)').length"); assert n == 3, f"{n} opções no quiz normal"
-        assert not errs, errs[:3]; pg.context.close()
-        return "revisão à frente do quiz normal; acertar remove-a; quiz normal segue com 3 opções"
-
-    @test("Revisão dos erros: não aparece cedo demais, e um erro à 1.ª tentativa fica registado para mais tarde")
-    def _():
-        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
-        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
-        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:0})", q)   # falhada neste mesmo nível: ainda não vence
-        reach_level_quiz(pg)
-        shown = pg.evaluate("document.getElementById('quizQuestion').textContent")
-        assert "Revisão rápida" not in shown, "a revisão apareceu no próprio nível em que foi falhada"
-        res = pg.evaluate(ANSWER_JS, [shown, STAMP, False]); assert res == "ok", res
-        pg.wait_for_timeout(400)
-        queue = pg.evaluate("window.__vb_quizReview.queue()")
-        assert len(queue) == 2 and queue[1]["at"] == 0 and queue[1]["theme"] != "palavras_passe", f"lista: {queue}"
-        saved = pg.evaluate("JSON.parse(localStorage.getItem('vanbertos_ciberseguranca_save_v1')).quizReview.queue.length")
-        assert saved == 2, f"a lista não ficou guardada (guardadas: {saved})"
-        assert not errs, errs[:3]; pg.context.close()
-        return "sem revisão no mesmo nível; o erro ficou na lista (e guardado no localStorage)"
-
-    @test("Revisão dos erros: falhar a última revisão permitida também tira a pergunta da lista (ninguém fica preso)")
-    def _():
-        errs = []; pg = new_page(B, errs=errs); to_level1(pg)
-        q = pg.evaluate("""async(stamp)=>{ const m=await import('./data-quiz.js?v='+stamp); return m.QUIZ_BY_THEME['palavras_passe'][0].q; }""", STAMP)
-        pg.evaluate("(q)=>window.__vb_quizReview.seed({q, theme:'palavras_passe', at:-5, tries:1})", q)
-        reach_level_quiz(pg)
-        shown = pg.evaluate("document.getElementById('quizQuestion').textContent"); assert "Revisão rápida" in shown, shown[:80]
-        res = pg.evaluate(ANSWER_JS, [shown, STAMP, False]); assert res == "ok", res
-        pg.wait_for_timeout(300)
-        fb = pg.evaluate("document.getElementById('quizFeedback').textContent"); assert "resposta certa era" in fb, fb
-        assert pg.evaluate("window.__vb_quizReview.queue().length") == 0, "2.ª revisão falhada devia tirar a pergunta da lista"
-        pg.click("#btnCloseQuiz"); pg.wait_for_timeout(600)
-        nxt = pg.evaluate("document.getElementById('quizQuestion').textContent"); assert "Revisão rápida" not in nxt and nxt.strip(), nxt[:80]
-        assert not errs, errs[:3]; pg.context.close()
-        return "falhou a 2.ª revisão → sai da lista e o quiz normal segue"
 
     @test("Quiz do boss: a 1.ª pergunta nunca repete a que o aluno acabou de ver à porta do nível anterior")
     def _():

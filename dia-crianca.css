@@ -2319,8 +2319,9 @@ body.hc-mode .option-toggle-btn.active { background:#ffff00 !important; color:#0
   margin-bottom: 6px;
 }
 .cert-sig-name {
-  font-family: 'Baloo 2', sans-serif;
-  font-size: 13px; font-weight: 800;
+  /* Mesma assinatura que aparece dentro dos níveis (scene.js): Georgia itálico, «✦ © Prof.ª Vanda Várzea ✦» */
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px; font-weight: 400;
   color: #ffd700; margin: 0 0 2px;
   font-style: italic;
 }

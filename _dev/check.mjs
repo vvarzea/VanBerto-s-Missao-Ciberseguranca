@@ -28,6 +28,18 @@ for (const m of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
   const u = m[1]; if (/^(https?:|data:|mailto:)/.test(u)) { P(`Recurso externo no HTML: ${u}`); continue; }
   if (!exists(u.split("?")[0])) P(`index.html referencia ficheiro em falta: ${u}`);
 }
+// 2b) Content-Security-Policy: cada <script> inline tem de ter o seu hash na política (senão o browser bloqueia-o e o jogo não arranca)
+{
+  const cspM = /http-equiv="Content-Security-Policy"\s+content="([^"]*)"/.exec(html);
+  if (!cspM) P("index.html não tem Content-Security-Policy");
+  else {
+    const crypto = await import("node:crypto");
+    for (const m of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
+      const h = "sha256-" + crypto.createHash("sha256").update(m[1], "utf8").digest("base64");
+      if (!cspM[1].includes(h)) P(`Script inline sem hash na CSP — troca o hash antigo por 'sha256-${h.slice(7)}' no <meta> da CSP`);
+    }
+  }
+}
 const css = read("dia-crianca.css");
 for (const m of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
   const u = m[1]; if (u.startsWith("data:") || u.startsWith("#") || u.startsWith("%23")) continue;

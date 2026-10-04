@@ -33,6 +33,7 @@ if not a.check_only:
     print(f"Carimbo {old} → {new} ({n} substituições)" if new != old else f"Versão {new} já estava carimbada.")
 
 run(["node", str(DEV / "check.mjs")], "verificações estáticas")
+run(["node", str(DEV / "unit.mjs")], "testes unitários (save, estrelas, níveis, quiz)")
 if not a.no_smoke:
     # O teste completo demora ~5 min. Se o ambiente limitar o tempo por comando, corre-o por partes com
     # `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"` etc. e depois `release.py <versão> --no-smoke`.

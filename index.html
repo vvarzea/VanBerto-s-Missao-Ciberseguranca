@@ -2,6 +2,10 @@
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8" />
+  <!-- Content-Security-Policy: só código e ficheiros do próprio jogo, sem ligações a outros sites.
+       Os 2 scripts inline estão autorizados pelo hash (sha256): se editares o texto desses scripts, o hash muda e o
+       jogo deixa de arrancar — corre «node _dev/check.mjs», que o verifica e diz o valor novo. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-tq0er9YgMj5AkKnbnJ71mtSdWXq0f/aPoTRiW0I1sjM=' 'sha256-RuAraqiv2FYLC8N/puUYLXADGlp3wvWWcwLwcx2Vc4c='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self'; connect-src 'self' data: blob:; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
   <meta name="description" content="VanBerto's — Missão Cibersegurança: jogo educativo sobre segurança online para crianças." />
   <meta name="theme-color" content="#ff6b35" />
@@ -14,7 +18,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="VanBerto's" />
   <title>VanBerto's — Missão Cibersegurança</title>
-  <link rel="stylesheet" href="dia-crianca.css?v=20261003v100" />
+  <link rel="stylesheet" href="dia-crianca.css?v=20261004v102" />
 </head>
 <body>
 
@@ -94,7 +98,7 @@
         <span class="hint-pc">PC: ← → para andar, ↑/Espaço para saltar e ↓/S para agachar.<br></span>
         Tablet/telemóvel: mantém o dedo no lado esquerdo/direito para andar e faz um toque rápido para saltar.
       </p>
-      <p class="tiny" id="versionTag" style="opacity:0.45;margin:2px 0 0;line-height:1;">Versão 20261003v100</p>
+      <p class="tiny" id="versionTag" style="opacity:0.45;margin:2px 0 0;line-height:1;">Versão 20261004v102</p>
     </div>
   </div>
 
@@ -333,7 +337,7 @@
       <p class="certificate-date" id="certDate"></p>
       <div class="certificate-signature">
         <div class="cert-sig-line"></div>
-        <p class="cert-sig-name">Professora Vanda Várzea</p>
+        <p class="cert-sig-name">✦ © Prof.ª Vanda Várzea ✦</p>
         <p class="cert-sig-role">Professora de Tecnologias de Informação e Comunicação</p>
       </div>
       <div class="row" style="margin-top:14px;">
@@ -818,7 +822,7 @@
       }
     }
   </script>
-  <script src="phaser.min.js?v=20261003v100"></script>
-  <script type="module" src="dia-crianca.js?v=20261003v100"></script>
+  <script src="phaser.min.js?v=20261004v102"></script>
+  <script type="module" src="dia-crianca.js?v=20261004v102"></script>
 </body>
 </html>

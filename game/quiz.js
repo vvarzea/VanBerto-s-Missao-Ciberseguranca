@@ -7,22 +7,21 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { damageBoss } from "./boss-combat.js?v=20261003v100";
-import { startBossFight } from "./boss-core.js?v=20261003v100";
-import { vbSayRandom } from "./dialogue.js?v=20261003v100";
-import { btnCloseQuiz, btnHistory, historyOverlay, historyText, quizAnswers, quizExplanation, quizFeedback, quizOverlay, quizQuestion, startOverlay } from "./dom.js?v=20261003v100";
-import { showDynamicMsg } from "./feedback.js?v=20261003v100";
-import { showVictoryScreen } from "./flow.js?v=20261003v100";
-import { openOverlay } from "./overlays.js?v=20261003v100";
-import { revealPlayerEntrance } from "./rooms.js?v=20261003v100";
-import { _vbTimer, bossState, currentLevel, getDifficulty, getMaxLives, getQuizPool, inBossFight, lives, mapProgress, pausedByTeacher, player, sceneRef, set__reviewReturnOverlay, set__vbTimer, set_awaitingQuiz, set_awaitingStory, set_invuln, set_lives } from "./state.js?v=20261003v100";
-import { QUIZ_ERRORS_MAX, globalStats, saveGlobalStats } from "./stats.js?v=20261003v100";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261003v100";
-import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO, QUIZ_TIPS, QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261003v100";
-import { ensureAudio, SFX } from "../audio.js?v=20261003v100";
-import { LEVELS } from "../data-levels.js?v=20261003v100";
-import { onHistoryReadForAchievements, onCorrectAnswerForAchievements, checkAchievements } from "../achievements.js?v=20261003v100";
-import { DYNAMIC_MSGS_CORRECT, VB_QUIZ_CORRECT, DYNAMIC_MSGS_WRONG, VB_QUIZ_WRONG } from "../data-flavor.js?v=20261003v100";
+import { damageBoss } from "./boss-combat.js?v=20261004v102";
+import { startBossFight } from "./boss-core.js?v=20261004v102";
+import { vbSayRandom } from "./dialogue.js?v=20261004v102";
+import { btnCloseQuiz, btnHistory, historyOverlay, historyText, quizAnswers, quizExplanation, quizFeedback, quizOverlay, quizQuestion, startOverlay } from "./dom.js?v=20261004v102";
+import { showDynamicMsg } from "./feedback.js?v=20261004v102";
+import { showVictoryScreen } from "./flow.js?v=20261004v102";
+import { openOverlay } from "./overlays.js?v=20261004v102";
+import { revealPlayerEntrance } from "./rooms.js?v=20261004v102";
+import { _vbTimer, bossState, currentLevel, getDifficulty, getMaxLives, getQuizPool, inBossFight, lives, mapProgress, pausedByTeacher, player, sceneRef, set__reviewReturnOverlay, set__vbTimer, set_awaitingQuiz, set_awaitingStory, set_invuln, set_lives } from "./state.js?v=20261004v102";
+import { QUIZ_ERRORS_MAX, globalStats, saveGlobalStats } from "./stats.js?v=20261004v102";
+import { QUIZ_BY_THEME, QUIZ_BY_THEME_AVANCADO, QUIZ_TIPS, QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261004v102";
+import { ensureAudio, SFX } from "../audio.js?v=20261004v102";
+import { LEVELS } from "../data-levels.js?v=20261004v102";
+import { onHistoryReadForAchievements, onCorrectAnswerForAchievements, checkAchievements } from "../achievements.js?v=20261004v102";
+import { DYNAMIC_MSGS_CORRECT, VB_QUIZ_CORRECT, DYNAMIC_MSGS_WRONG, VB_QUIZ_WRONG } from "../data-flavor.js?v=20261004v102";
 
 // ===== Quiz stats =====
 
@@ -36,127 +35,18 @@ const lastQuizPickByTheme = {}; // última pergunta saída por tema (para não r
 
 export function resetQuizStats() { quizStats.total=0; quizStats.correct=0; quizStats.everWrong=false; quizStats.errors=[]; quizStats.errorsByTheme={}; }
 
-// ===== Revisão espaçada dos erros do quiz =====
-// Cada tema só aparece no seu próprio nível, por isso uma pergunta falhada à 1.ª tentativa nunca voltava a sair
-// (só por acaso, ao reiniciar). Agora fica numa lista e volta como «Revisão rápida», ANTES da pergunta normal
-// do nível, pelo menos REVIEW_MIN_GAP níveis depois de ter sido falhada (não logo a seguir, para o aluno
-// responder por memória e não por a acabar de ver). É só prática: não gasta vidas nem pontos e não conta para
-// as estatísticas, conquistas ou certificado. Acertar tira-a da lista; falhar REVIEW_MAX_TRIES revisões
-// também (ninguém fica preso à mesma pergunta). No máximo 1 revisão por nível.
-
-const REVIEW_MIN_GAP = 2;
-
-const REVIEW_MAX_TRIES = 2;
-
-const REVIEW_QUEUE_MAX = 12;
-
-let quizReviewQueue = [];
-
-function loadQuizReview() {
-  const d = loadNamespace("quizReview", {});
-  quizReviewQueue = Array.isArray(d.queue)
-    ? d.queue.filter(e => e && typeof e.q === "string" && typeof e.theme === "string" && Number.isFinite(e.at))
-        .map(e => ({ q: e.q, theme: e.theme, at: e.at, tries: Number.isFinite(e.tries) ? e.tries : 0 }))
-        .slice(-REVIEW_QUEUE_MAX)
-    : [];
+// Opções mostradas numa pergunta.
+// Fácil: 3 opções (1 certa + 2 erradas). Difícil e Extremo: 4 opções (1 certa + 3 erradas); se a pergunta só tiver
+// 2 distratores (ex.: tema sem banco avançado), ficam 3 opções. A ordem é sempre baralhada: nos dados a certa vem primeiro.
+function shuffleInPlace(arr) {
+  for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+  return arr;
 }
-
-function saveQuizReview() { saveNamespace("quizReview", { queue: quizReviewQueue }); }
-
-export function clearQuizReview() { quizReviewQueue = []; saveQuizReview(); }
-
-// A pergunta pode ter sido falhada num banco (Fácil) e a revisão cair noutro (Difícil): procura em todos.
-
-function findQuizByText(theme, q) {
-  for (const pool of [getQuizPool(theme), QUIZ_BY_THEME[theme], QUIZ_BY_THEME_AVANCADO[theme]]) {
-    const hit = pool && pool.find(x => x.q === q);
-    if (hit) return hit;
-  }
-  return null;
-}
-
-function noteMissedQuiz(quiz, theme) {
-  if (!quiz || !quiz.q || !theme) return;
-  if (quizReviewQueue.some(e => e.q === quiz.q)) return;
-  quizReviewQueue.push({ q: quiz.q, theme, at: currentLevel, tries: 0 });
-  if (quizReviewQueue.length > REVIEW_QUEUE_MAX) quizReviewQueue.shift();
-  saveQuizReview();
-}
-
-function nextDueReview() {
-  for (const e of quizReviewQueue) {
-    if (currentLevel - e.at < REVIEW_MIN_GAP) continue;
-    const quiz = findQuizByText(e.theme, e.q);
-    if (quiz) return { entry: e, quiz };
-    quizReviewQueue = quizReviewQueue.filter(x => x !== e); // já não existe no banco (perguntas atualizadas)
-    saveQuizReview();
-    return nextDueReview();
-  }
-  return null;
-}
-
-// Se houver uma revisão «vencida», mostra-a primeiro e só depois arranca o quiz normal do nível.
-
-export function withQuizReview(startLevelQuiz) {
-  const due = nextDueReview();
-  if (due) showReviewQuestion(due, startLevelQuiz); else startLevelQuiz();
-}
-
-function showReviewQuestion({ entry, quiz }, next) {
-  const bindTap = (el, handler) => { el.onclick = handler; el.ontouchend = (e) => { e.preventDefault(); handler(); }; };
-  quizOverlay.classList.remove("hidden");
-  quizQuestion.innerHTML = `<span class="quiz-article-badge">🔁 Revisão rápida — sem perder vidas</span><br>` + quiz.q;
-  quizAnswers.innerHTML = ""; quizFeedback.textContent = ""; quizFeedback.style.color = "#ff6b35";
-  quizExplanation.textContent = ""; quizExplanation.classList.add("hidden");
-  btnCloseQuiz.classList.add("hidden"); btnCloseQuiz.onclick = null; btnCloseQuiz.ontouchend = null;
-
-  const correct = quiz.a.filter(x => x.ok), wrong = quiz.a.filter(x => !x.ok);
-  for (let i = wrong.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [wrong[i], wrong[j]] = [wrong[j], wrong[i]]; }
+function buildQuizOptions(quiz) {
+  const correct = quiz.a.filter(x => x.ok);
+  const wrong = shuffleInPlace(quiz.a.filter(x => !x.ok));
   const nWrong = getDifficulty() === "facil" ? 2 : 3;
-  const opts = [...correct.slice(0, 1), ...wrong.slice(0, nWrong)];
-  for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
-  quizAnswers.classList.toggle("answers--four", opts.length >= 4);
-
-  let answered = false;
-  opts.forEach(ans => {
-    const b = document.createElement("button");
-    b.className = "btn"; b.textContent = ans.t;
-    b.setAttribute("aria-label", `Resposta: ${ans.t}`);
-    bindTap(b, () => {
-      if (answered) return; answered = true;
-      ensureAudio();
-      quizAnswers.querySelectorAll(".btn").forEach(btn => {
-        btn.disabled = true;
-        if (btn.textContent === correct[0].t) {
-          btn.style.background = "rgba(20,80,20,0.75)"; btn.style.borderColor = "#4caf50"; btn.style.color = "#b8ffb8";
-        } else if (btn === b && !ans.ok) {
-          btn.style.background = "rgba(100,20,20,0.75)"; btn.style.borderColor = "#c0392b"; btn.style.color = "#ffb8b8";
-        } else { btn.style.opacity = "0.35"; }
-      });
-      if (ans.ok) {
-        SFX.coin();
-        quizFeedback.textContent = "✅ Boa! Já sabes esta!"; quizFeedback.style.color = "#208050";
-        quizReviewQueue = quizReviewQueue.filter(x => x !== entry);
-      } else {
-        SFX.hit();
-        entry.tries += 1;
-        quizFeedback.textContent = "❌ Quase! A resposta certa era: " + correct[0].t; quizFeedback.style.color = "#e84d10";
-        if (entry.tries >= REVIEW_MAX_TRIES) quizReviewQueue = quizReviewQueue.filter(x => x !== entry);
-      }
-      saveQuizReview();
-      const tip = QUIZ_TIPS[entry.theme] || "";
-      const expText = quiz.exp ? "💡 " + quiz.exp : (tip ? "📌 Recorda: " + tip : "");
-      if (expText) { quizExplanation.textContent = expText; quizExplanation.classList.remove("hidden"); }
-      btnCloseQuiz.classList.remove("hidden"); btnCloseQuiz.textContent = "Continuar ▶";
-      bindTap(btnCloseQuiz, () => {
-        btnCloseQuiz.classList.add("hidden"); btnCloseQuiz.onclick = null; btnCloseQuiz.ontouchend = null;
-        next(); // o quiz normal do nível reaproveita o mesmo ecrã (sem o esconder e mostrar de novo)
-      });
-      btnCloseQuiz.focus({ preventScroll: true });
-    });
-    quizAnswers.appendChild(b);
-  });
-  quizAnswers.querySelector(".btn")?.focus({ preventScroll: true });
+  return shuffleInPlace([...correct.slice(0, 1), ...wrong.slice(0, nWrong)]);
 }
 
 
@@ -164,6 +54,9 @@ function showReviewQuestion({ entry, quiz }, next) {
 // (vitória final, ecrã de "Missão Falhada" e menu suspenso a meio do jogo).
 // Preenche a lista #reviewList com as perguntas erradas da tentativa atual.
 
+
+// Escapa texto vindo do localStorage (os erros guardados) antes de o pôr em innerHTML.
+const escHTML = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
 function populateReviewList(source = "attempt") {
   const reviewList = document.getElementById("reviewList");
@@ -183,9 +76,9 @@ function populateReviewList(source = "attempt") {
     div.className="review-question";
     div.innerHTML=`
         ${art?`<div style="margin-bottom:5px;"><span class="quiz-article-badge">📜 ${art}</span></div>`:""}
-        <div class="review-question-text">${i+1}. ${e.level} — ${e.q}</div>
-        <div class="review-wrong">❌ A tua resposta: <strong>${e.wrong}</strong></div>
-        <div class="review-correct">✅ Resposta certa: <strong>${e.correct}</strong></div>
+        <div class="review-question-text">${i+1}. ${escHTML(e.level)} — ${escHTML(e.q)}</div>
+        <div class="review-wrong">❌ A tua resposta: <strong>${escHTML(e.wrong)}</strong></div>
+        <div class="review-correct">✅ Resposta certa: <strong>${escHTML(e.correct)}</strong></div>
         ${exp?`<div class="review-explanation">💡 ${exp}</div>`:""}
       `;
     reviewList.appendChild(div);
@@ -342,13 +235,8 @@ export function showQuiz(quiz,done,attemptNum){
   // Limpar sempre o btnCloseQuiz ao abrir nova pergunta — evita cliques acidentais
   btnCloseQuiz.classList.add("hidden"); btnCloseQuiz.onclick=null; btnCloseQuiz.ontouchend=null;
 
-  const correct=quiz.a.filter(x=>x.ok), wrong=quiz.a.filter(x=>!x.ok);
-  for(let i=wrong.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wrong[i],wrong[j]]=[wrong[j],wrong[i]];}
-  // Fácil: 3 opções (1 certa + 2 erradas). Difícil e Extremo: 4 opções (1 certa + 3 erradas);
-  // se a pergunta só tiver 2 distratores (ex.: tema sem banco avançado), ficam 3 opções.
-  const nWrong = getDifficulty()==="facil" ? 2 : 3;
-  const opts=[...correct.slice(0,1),...wrong.slice(0,nWrong)];
-  for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
+  const correct = quiz.a.filter(x => x.ok); // a resposta certa (usada ao comparar e ao mostrar «A resposta certa era…»)
+  const opts = buildQuizOptions(quiz);
 
   quizAnswers.classList.toggle("answers--four", opts.length>=4); // 2×2 em ecrãs largos (ver CSS)
   let answered=false;
@@ -434,7 +322,6 @@ export function showQuiz(quiz,done,attemptNum){
           const _err = {level:LEVELS[currentLevel]?.name||`Nível ${currentLevel+1}`,theme:qTheme,q:quiz.q,wrong:ans.t,correct:correct[0].t};
           quizStats.errors.push(_err);
           quizStats.errorsByTheme[qTheme] = (quizStats.errorsByTheme[qTheme]||0) + 1;
-          noteMissedQuiz(quiz, qTheme); // volta mais tarde como «Revisão rápida»
           // Registo persistente: o relatório final mostra a aventura toda, não só a tentativa atual
           globalStats.quizErrors.push(_err);
           if (globalStats.quizErrors.length > QUIZ_ERRORS_MAX) globalStats.quizErrors.splice(0, globalStats.quizErrors.length - QUIZ_ERRORS_MAX);
@@ -463,7 +350,6 @@ export function showQuiz(quiz,done,attemptNum){
 
 // ----- ligações executadas no arranque (ordem original preservada; chamadas por dia-crianca.js) -----
 export function init_quiz_0() {
-  loadQuizReview();
   // Usado pelo menu (☰ → Erros): fica sempre disponível.
   window.__vb_openReview = () => openReviewScreen(null);
 
@@ -471,10 +357,6 @@ export function init_quiz_0() {
   // automação (navigator.webdriver, que o Playwright/Chromium põe a true); num telemóvel ou computador normal
   // um aluno não os encontra na consola. Não mudar para ficarem sempre ativos.
   if (navigator.webdriver) {
-    window.__vb_quizReview = {
-      queue: () => JSON.parse(JSON.stringify(quizReviewQueue)),
-      seed: (e) => { quizReviewQueue.push({ tries: 0, ...e }); saveQuizReview(); }
-    };
     window.__vb_showVictory = () => showVictoryScreen(sceneRef);
     // Arrancam um combate de boss diretamente, tiram-lhe 1 de vida (damageBoss trata sozinho das fases, da fúria
     // e da derrota) e deixam ver o estado.
