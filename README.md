@@ -14,9 +14,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
   | Fortaleza da Proteção Digital | 10–15 | Robô do Spam |
   | Cidade da Identidade Digital | 16–20 | Espião das Sombras |
 
-- **Quiz** no fim de cada nível (e outro depois de vencer cada boss). Uma pergunta falhada à 1.ª tentativa volta mais tarde
-  (pelo menos 2 níveis depois) como **«Revisão rápida»**, antes do quiz do nível: sem perder vidas e sem contar para pontos,
-  estatísticas ou certificado; acertar (ou falhar 2 revisões) tira-a da lista. Estrelas por nível (até 3),
+- **Quiz** no fim de cada nível (e outro depois de vencer cada boss). Estrelas por nível (até 3),
   artefactos, conquistas, mapa da aventura e certificado.
 - **Sem perguntas repetidas** numa aventura: os 20 níveis usam 20 temas distintos (um por nível), e dentro de cada
   tema uma pergunta só volta a sair depois de todas as outras do banco terem saído (`pickQuizForLevel`,
@@ -114,7 +112,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20261003v100`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20261004v102`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
@@ -126,9 +124,10 @@ lado, corre as verificações e o teste no Chromium e gera o zip.
 - `node _dev/check.mjs` — verificações estáticas: uma só string `?v=`, ficheiros referenciados,
   ausência de pedidos externos, banco de perguntas (nº de opções, uma certa por pergunta, tamanhos),
   português europeu (palavras a evitar e grafia) e sintaxe de todos os módulos.
-- `python3 _dev/smoke.py` — teste de fumo em Chromium sem interface (precisa do Playwright): arranque,
+- `node _dev/unit.mjs` — testes unitários rápidos (segundos, sem browser): gravação e migração do save (incl. dois separadores abertos, JSON corrompido, armazenamento cheio), estrelas (uma repetição nunca baixa), **alcançabilidade dos 20 níveis** (porta e plataformas, com a física real do jogo — se mudares a gravidade, o salto ou a velocidade, o teste avisa para atualizar as constantes) e coerência das perguntas do quiz (1 certa, sem opções repetidas, com explicação).
+- `python3 _dev/smoke.py` — teste de fumo (cada teste tem tempo limite de 420 s, `SMOKE_TEST_LIMIT` muda isso; os ganchos `window.__vb_test` & co. só existem sob automação) em Chromium sem interface (precisa do Playwright): arranque,
   carregamento dos fundos, quiz Fácil e Difícil, revisão espaçada dos erros, os 4 combates de boss, movimento reduzido, HUD, botões e títulos sempre à vista nos ecrãs do menu, o cartão «Sabias que…?» a ficar por baixo desses ecrãs, coerência entre a Vitória e o Certificado, o Certificado de Progresso a meio da aventura, modo offline (automático e «Guardar tudo»), atualização do service worker, menu inicial sem scroll, sem botões soltos na grelha em telemóvel, etiqueta de versão e o ecrã de erro inesperado.
-- `python3 _dev/release.py --check-only` — corre as duas coisas sem mudar nada.
+- `python3 _dev/release.py --check-only` — corre tudo isto sem mudar nada. O `release.py` corre sempre o `unit.mjs`, mesmo com `--no-smoke`.
 
 O teste completo demora cerca de 5 minutos. Se o ambiente limitar o tempo por comando, corre-se por
 partes, por exemplo `python3 _dev/smoke.py --only="Quiz Fácil|Quiz Difícil"`, e depois
