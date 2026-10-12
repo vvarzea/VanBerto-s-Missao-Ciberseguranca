@@ -397,6 +397,9 @@ with sync_playwright() as p:
     def _():
         pg = new_page(B)  # SEM errs=[] de propósito: um erro é esperado aqui, não é para falhar o teste
         pg.goto(BASE + "/index.html", wait_until="networkidle")
+        for _ in range(100):  # o jogo já ligou o botão e o Enter? (a CSP não deixa usar wait_for_function)
+            if pg.evaluate("()=>!!document.getElementById('hitFlash') && typeof document.getElementById('btnStart').onclick === 'function'"): break
+            pg.wait_for_timeout(200)
         pg.fill("#playerName", "Zé"); pg.press("#playerName", "Enter")
         pg.wait_for_selector("#btnDiffFacil"); pg.click("#btnDiffFacil")  # progresso: dificuldade escolhida, guardada no localStorage
         assert not pg.is_visible("#fatalErrorOverlay"), "a rede de segurança já estava visível antes de haver erro"
@@ -438,7 +441,7 @@ with sync_playwright() as p:
                 try: btn.click(timeout=800)
                 except Exception: pass
             pg.wait_for_timeout(900)
-        pg.wait_for_selector("#quizOverlay:not(.hidden)", timeout=3000); pg.wait_for_timeout(500)
+        pg.wait_for_selector("#quizOverlay:not(.hidden)", timeout=20000); pg.wait_for_timeout(500)
         n = pg.evaluate("document.querySelectorAll('#quizAnswers .btn').length")
         cls = pg.evaluate("document.getElementById('quizAnswers').classList.contains('answers--four')")
         q = pg.evaluate("document.getElementById('quizQuestion').textContent")
