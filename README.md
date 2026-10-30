@@ -5,6 +5,7 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 
 ## O jogo
 
+- **v105:** o Mapa ficou mais compacto em janelas entre 521 e 820 px de altura (os 5 cartões cabem sem cortar o último); o número da versão já não aparece no ecrã inicial (a etiqueta `#versionTag` continua no HTML, escondida, porque os testes em `_dev/` leem-na); o Mapa ganhou «🏠 Menu principal» (sempre disponível, mesmo antes do 1.º nível; pede confirmação se houver um nível em curso) e «🚪 Sair do jogo»; «Fechar» só fecha o mapa — e, se o mapa abriu logo depois de «Nova Aventura», volta ao menu principal em vez de deixar o ecrã escuro.
 - **20 níveis em 4 mundos**, cada um terminado por um boss temático:
 
   | Mundo | Níveis | Boss |
@@ -112,7 +113,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20261012v104`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20261030v105`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
