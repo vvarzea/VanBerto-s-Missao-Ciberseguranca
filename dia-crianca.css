@@ -3235,3 +3235,13 @@ body.hc-mode #cineDialog,body.hc-mode .cine-bar,body.hc-mode #cineTitleCard{ dis
   #achievementsOverlay .achievements-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 2px 0; }
   #albumOverlay .album-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 2px 0; }
 }
+
+/* Mapa em janelas pouco altas (portátil/monitor com a barra do browser): os 5 cartões têm de caber sem
+   cortar o último — cartões e margens mais compactos entre 521 e 820 px de altura
+   (abaixo de 520 px já há as regras compactas mais acima). */
+@media (min-height: 521px) and (max-height: 820px) {
+  #mapOverlay .map-card { padding-top: 12px; padding-bottom: 12px; }
+  #mapOverlay .map-card > .map-progress-track { margin-bottom: 8px; }
+  #mapOverlay .map-region { min-height: 0; padding: 6px 14px; }
+  #mapOverlay .map-regions-grid { gap: 8px; }
+}

@@ -7,19 +7,19 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { resetAllProgress } from "./artefacts.js?v=20261012v104";
-import { startBossFight } from "./boss-core.js?v=20261012v104";
-import { btnCloseHow, btnHow, btnMute, btnPause, btnStart, gameOverOverlay, playerNameInput, quizAnswers, quizOverlay, startOverlay, winOverlay } from "./dom.js?v=20261012v104";
-import { playLevelTransition } from "./door.js?v=20261012v104";
-import { loadLevel, updateHearts } from "./level.js?v=20261012v104";
-import { renderMap } from "./map.js?v=20261012v104";
-import { closeOverlay, openOverlay, saveGame } from "./overlays.js?v=20261012v104";
-import { resetQuizStats, showHistory, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261012v104";
-import { showPauseScreen } from "./scene.js?v=20261012v104";
-import { bossState, currentLevel, getStartLives, inBossFight, pausedByTeacher, powerHaloGfx, sceneRef, score, scoreText, setDifficulty, set__overlayPaused, set_awaitingQuiz, set_currentLevel, set_lives, set_livesLostThisLevel, set_pausedByTeacher, set_playerName, set_score, shadowGfx } from "./state.js?v=20261012v104";
-import { flushScoreToStats } from "./stats.js?v=20261012v104";
-import { toggleMuted, ensureAudio, SFX } from "../audio.js?v=20261012v104";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261012v104";
+import { resetAllProgress } from "./artefacts.js?v=20261030v105";
+import { startBossFight } from "./boss-core.js?v=20261030v105";
+import { btnCloseHow, btnHow, btnMute, btnPause, btnStart, gameOverOverlay, playerNameInput, quizAnswers, quizOverlay, startOverlay, winOverlay } from "./dom.js?v=20261030v105";
+import { playLevelTransition } from "./door.js?v=20261030v105";
+import { loadLevel, updateHearts } from "./level.js?v=20261030v105";
+import { renderMap } from "./map.js?v=20261030v105";
+import { closeOverlay, openOverlay, saveGame } from "./overlays.js?v=20261030v105";
+import { resetQuizStats, showHistory, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261030v105";
+import { showPauseScreen } from "./scene.js?v=20261030v105";
+import { bossState, currentLevel, getStartLives, inBossFight, pausedByTeacher, powerHaloGfx, sceneRef, score, scoreText, setDifficulty, set__overlayPaused, set_awaitingQuiz, set_currentLevel, set_lives, set_livesLostThisLevel, set_pausedByTeacher, set_playerName, set_score, shadowGfx } from "./state.js?v=20261030v105";
+import { flushScoreToStats } from "./stats.js?v=20261030v105";
+import { toggleMuted, ensureAudio, SFX } from "../audio.js?v=20261030v105";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20261030v105";
 
 // Botão "Sair" no menu principal — fecha mesmo o jogo (diferente do
 // "Sair para o Menu" que existe durante o jogo, que só volta ao menu
@@ -100,6 +100,10 @@ function reallyStartNewGame(){
   // initPhaser()/o resto do arranque fica todo a cargo de
   // startLevelFromMap(), chamado quando o nó do nível é tocado.
   const beginAdventure = () => {
+    // Marca que este mapa abriu logo a seguir a «Nova Aventura» (ainda não há nível nenhum em jogo):
+    // se o jogador carregar em «Fechar», volta ao menu principal em vez de ficar num ecrã escuro.
+    const mo = document.getElementById("mapOverlay");
+    if (mo) mo.dataset.fromStart = "1";
     openOverlay("mapOverlay", renderMap);
   };
 
@@ -188,15 +192,18 @@ export function init_ui_0() {
   btnHow.onclick = () => { openOverlay("howOverlay"); };
   btnCloseHow.onclick = () => { closeOverlay("howOverlay"); };
   window.__vb_openHow = () => { openOverlay("howOverlay"); };
-  if (btnExitGame) {
-    btnExitGame.onclick = () => {
-      if (!confirm("🚪 Sair do jogo?")) return;
-      window.close();
-      setTimeout(() => {
-        alert("👋 Já podes fechar este separador. Até à próxima aventura!");
-      }, 300);
-    };
-  }
+  // «Sair» do menu principal e «🚪 Sair do jogo» do Mapa: mesma ação.
+  // O «Fechar» do Mapa só fecha o mapa e volta ao jogo — não fecha a aplicação, para ninguém perder o nível sem querer.
+  const exitGame = () => {
+    if (!confirm("🚪 Sair do jogo?")) return;
+    window.close();
+    setTimeout(() => {
+      alert("👋 Já podes fechar este separador. Até à próxima aventura!");
+    }, 300);
+  };
+  if (btnExitGame) btnExitGame.onclick = exitGame;
+  const btnMapExit = document.getElementById("btnMapExit");
+  if (btnMapExit) btnMapExit.onclick = exitGame;
   document.addEventListener("fullscreenchange",()=>updateFsButtons(!!document.fullscreenElement));
   document.addEventListener("webkitfullscreenchange",()=>updateFsButtons(!!document.webkitFullscreenElement));
   if(btnFs) btnFs.onclick=toggleFullscreen;
@@ -335,6 +342,24 @@ export function init_ui_0() {
     openOverlay("mapOverlay", renderMap);
   });
   document.getElementById("btnCloseMap")?.addEventListener("click", () => {
+    const mo = document.getElementById("mapOverlay");
+    if (mo?.dataset.fromStart === "1") {
+      // Mapa aberto no início da aventura, sem nível em jogo: «Fechar» volta ao menu principal.
+      // (O menu é reposto ANTES de fechar o mapa, para o jogo não retomar a física por baixo dele.)
+      delete mo.dataset.fromStart;
+      startOverlay.classList.remove("hidden");
+    }
+    closeOverlay("mapOverlay");
+  });
+  // «🏠 Menu principal»: o Mapa tem sempre uma saída para o menu, mesmo antes do primeiro nível.
+  document.getElementById("btnMapMenu")?.addEventListener("click", () => {
+    const mo = document.getElementById("mapOverlay");
+    const noLevelYet = mo?.dataset.fromStart === "1" || !document.body.classList.contains("game-started");
+    if (!noLevelYet && !confirm("🏠 Voltar ao menu principal?\nO progresso deste nível ainda não guardado perde-se.")) return;
+    if (mo) delete mo.dataset.fromStart;
+    ensureAudio(); SFX.coin();
+    window.__vb_exitToMenu?.();
+    startOverlay.classList.remove("hidden");   // rede de segurança, caso a função não exista
     closeOverlay("mapOverlay");
   });
   document.getElementById("btnBackToMap")?.addEventListener("click", () => {

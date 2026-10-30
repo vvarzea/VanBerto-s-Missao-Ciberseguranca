@@ -7,23 +7,23 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { vbSay } from "./dialogue.js?v=20261012v104";
-import { startOverlay } from "./dom.js?v=20261012v104";
-import { playLevelTransition } from "./door.js?v=20261012v104";
-import { loadLevel } from "./level.js?v=20261012v104";
-import { openOverlay, saveGame } from "./overlays.js?v=20261012v104";
-import { showHistory } from "./quiz.js?v=20261012v104";
-import { initPhaser } from "./scene.js?v=20261012v104";
-import { currentLevel, getStartLives, mapProgress, pausedByTeacher, playerName, playerNameHUD, powerHaloGfx, sceneRef, score, set__historySubOpen, set__overlayPaused, set__winOverlaySubOpen, set_currentLevel, set_lives, shadowGfx } from "./state.js?v=20261012v104";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261012v104";
-import { MAP_REGIONS } from "../data-progression.js?v=20261012v104";
-import { applyBackground as applyBackgroundRaw } from "../background.js?v=20261012v104";
-import { LEVELS, THEMES } from "../data-levels.js?v=20261012v104";
-import { ensureAudio, SFX } from "../audio.js?v=20261012v104";
-import { playTitleCard } from "../cinematics.js?v=20261012v104";
-import { starsForLevel } from "../stars.js?v=20261012v104";
-import { REGION_INTRO } from "../data-story.js?v=20261012v104";
-import { VB_LEVEL_INTRO } from "../data-flavor.js?v=20261012v104";
+import { vbSay } from "./dialogue.js?v=20261030v105";
+import { startOverlay } from "./dom.js?v=20261030v105";
+import { playLevelTransition } from "./door.js?v=20261030v105";
+import { loadLevel } from "./level.js?v=20261030v105";
+import { openOverlay, saveGame } from "./overlays.js?v=20261030v105";
+import { showHistory } from "./quiz.js?v=20261030v105";
+import { initPhaser } from "./scene.js?v=20261030v105";
+import { currentLevel, getStartLives, mapProgress, pausedByTeacher, playerName, playerNameHUD, powerHaloGfx, sceneRef, score, set__historySubOpen, set__overlayPaused, set__winOverlaySubOpen, set_currentLevel, set_lives, shadowGfx } from "./state.js?v=20261030v105";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20261030v105";
+import { MAP_REGIONS } from "../data-progression.js?v=20261030v105";
+import { applyBackground as applyBackgroundRaw } from "../background.js?v=20261030v105";
+import { LEVELS, THEMES } from "../data-levels.js?v=20261030v105";
+import { ensureAudio, SFX } from "../audio.js?v=20261030v105";
+import { playTitleCard } from "../cinematics.js?v=20261030v105";
+import { starsForLevel } from "../stars.js?v=20261030v105";
+import { REGION_INTRO } from "../data-story.js?v=20261030v105";
+import { VB_LEVEL_INTRO } from "../data-flavor.js?v=20261030v105";
 
 
 // ===== Dicas =====
@@ -417,6 +417,7 @@ export function enterLevelWithStory(scene, nextIdx, onMidpoint, onComplete) {
 function startLevelFromMap(idx) {
   set__historySubOpen( false); // escolher outro nível a partir do Mapa: o cartão «Sabias que…?» antigo não volta
   document.getElementById("mapOverlay")?.classList.add("hidden");
+  const _mo = document.getElementById("mapOverlay"); if (_mo) delete _mo.dataset.fromStart; // já há um nível em jogo
   document.getElementById("worldMapOverlay")?.classList.add("hidden");
   startOverlay.classList.add("hidden");
   document.getElementById("winOverlay")?.classList.add("hidden");
