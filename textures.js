@@ -481,7 +481,203 @@ function makeVilaosTextures(scene){
 
 // ── Bosses — silhuetas próprias, uma por boss, para deixarem de ser o
 //    vilão normal aumentado. Cada textura é desenhada uma única vez. ────
+// ── Bosses redesenhados (v108) — estilo da imagem de referência da Vanda: Vírus Malicioso (esfera roxa
+// com espigões, olhos de fogo, símbolo de risco biológico), Pescador de Dados (chapéu, lenço vermelho,
+// cana de pesca com envelope), Hacker da Fortaleza (capuz azul, escudo com cadeado, portátil com caveira)
+// e Manipulador da Verdade (cartola, fantoches de jornais «FAKE NEWS»). São criados ANTES dos blocos antigos
+// de makeBossTextures: como estes só criam a textura se ainda não existir, os desenhos antigos ficam sem efeito.
+// Chaves e poses mantidas (a lógica de combate, os testes e os guardados não mudam): robo_spam = Hacker,
+// espiao_sombras = Manipulador da Verdade.
+function makeRedesignedBosses(scene){
+  const S=116;
+  const POSES=[["","normal","wave"],["_armsdown","normal","rest"],["_blink","blink","wave"],["_ouch","ouch","wave"],["_laugh","laugh","wave"],["_angry","angry","wave"],["_sad","sad","rest"]];
+  function make(key,draw){
+    POSES.forEach(([suf,mood,arms])=>{
+      const k=key+suf; if(scene.textures.exists(k)) return;
+      const tex=scene.textures.createCanvas(k,S,S), ctx=tex.getContext();
+      ctx.lineJoin="round"; ctx.lineCap="round";
+      ctx.fillStyle="rgba(0,0,0,0.28)"; ctx.beginPath(); ctx.ellipse(58,S-12,32,6,0,0,Math.PI*2); ctx.fill();
+      draw(ctx,mood,arms); tex.refresh();
+    });
+  }
+  // olhos inclinados e brilhantes; o humor muda a forma (piscar, ai, riso, raiva, tristeza)
+  function eyes(ctx,mood,lx,rx,y,w,h,col,glowc,rot){
+    ctx.save(); ctx.shadowColor=glowc; ctx.shadowBlur=8; ctx.fillStyle=col; ctx.strokeStyle=col; ctx.lineWidth=2.2;
+    [[lx,-1],[rx,1]].forEach(([x,d])=>{
+      ctx.save(); ctx.translate(x,y);
+      if(mood==="blink"){ ctx.beginPath(); ctx.moveTo(-w,0); ctx.lineTo(w,0); ctx.stroke(); }
+      else if(mood==="ouch"){ ctx.beginPath(); ctx.moveTo(-w*.8,-h); ctx.lineTo(w*.8,h); ctx.moveTo(w*.8,-h); ctx.lineTo(-w*.8,h); ctx.stroke(); }
+      else if(mood==="laugh"){ ctx.beginPath(); ctx.arc(0,h*.6,w*.8,Math.PI*1.1,Math.PI*1.9); ctx.stroke(); }
+      else{ const s=mood==="angry"?1.25:mood==="sad"?0.8:1;
+        ctx.rotate(-d*rot*(mood==="sad"?-0.6:1)*(mood==="angry"?1.25:1));
+        ctx.beginPath(); ctx.ellipse(0,0,w*s,h*s,0,0,Math.PI*2); ctx.fill(); }
+      ctx.restore();
+    });
+    ctx.restore();
+  }
+  function brow(ctx,mood,lx,rx,y,w,col){
+    if(mood!=="angry") return;
+    ctx.save(); ctx.strokeStyle=col; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(lx-w,y-3); ctx.lineTo(lx+w,y+3); ctx.moveTo(rx+w,y-3); ctx.lineTo(rx-w,y+3); ctx.stroke(); ctx.restore();
+  }
+  function teethMouth(ctx,mood,x,y,w,dark,tooth){
+    const open={normal:6,blink:6,angry:10,laugh:13,ouch:5,sad:0}[mood];
+    if(mood==="sad"){ ctx.strokeStyle=dark; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x,y+8,w*.35,Math.PI*1.2,Math.PI*1.8); ctx.stroke(); return; }
+    ctx.fillStyle=dark; ctx.strokeStyle="#000"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.ellipse(x,y,mood==="ouch"?w*.22:w/2,open/2+1,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    if(mood==="ouch") return;
+    ctx.fillStyle=tooth; const n=5;
+    for(let i=0;i<n;i++){ const tx=x-w/2+4+i*(w-8)/(n-1);
+      ctx.beginPath(); ctx.moveTo(tx-2.4,y-open/2); ctx.lineTo(tx+2.4,y-open/2); ctx.lineTo(tx,y-open/2+3.6); ctx.fill();
+      if(open>8){ ctx.beginPath(); ctx.moveTo(tx-2,y+open/2); ctx.lineTo(tx+2,y+open/2); ctx.lineTo(tx,y+open/2-3); ctx.fill(); } }
+  }
+
+  // ── 1. Vírus Gigante → «Vírus Malicioso»
+  make("boss_virus_gigante",(ctx,mood,arms)=>{
+    const cx=58,cy=60,R=29,up=arms==="wave";
+    // braços com garras (atrás do corpo)
+    [-1,1].forEach(d=>{
+      const hx=cx+d*(up?42:40), hy=up?cy-24:cy+26;
+      ctx.strokeStyle="#3b1559"; ctx.lineWidth=8; ctx.beginPath(); ctx.moveTo(cx+d*R*.8,cy+4); ctx.lineTo(hx,hy); ctx.stroke();
+      ctx.fillStyle="#2a0f45"; ctx.beginPath(); ctx.arc(hx,hy,6,0,7); ctx.fill();
+      ctx.fillStyle="#ff4d6d"; ctx.strokeStyle="#5a0f2b"; ctx.lineWidth=1;
+      for(let k=-1;k<=1;k++){ const a=(up?-Math.PI/2:Math.PI/2)+k*0.7+d*0.25, bx=hx+Math.cos(a)*5, by=hy+Math.sin(a)*5;
+        ctx.beginPath(); ctx.moveTo(bx-2,by-2); ctx.lineTo(hx+Math.cos(a)*13,hy+Math.sin(a)*13); ctx.lineTo(bx+2,by+2); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    });
+    // pés
+    ctx.fillStyle="#1a0a2b"; ctx.beginPath(); ctx.ellipse(46,97,8,4,0,0,7); ctx.ellipse(70,97,8,4,0,0,7); ctx.fill();
+    // espigões com bolinhas vermelhas
+    for(let i=0;i<14;i++){ const a=i/14*Math.PI*2+0.2, c=Math.cos(a), s=Math.sin(a);
+      ctx.strokeStyle="#3b1559"; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(cx+c*(R-2),cy+s*(R-2)); ctx.lineTo(cx+c*(R+8),cy+s*(R+8)); ctx.stroke();
+      ctx.fillStyle="#ff4d6d"; ctx.strokeStyle="#5a0f2b"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(cx+c*(R+10),cy+s*(R+10),4.2,0,7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle="rgba(255,255,255,.55)"; ctx.beginPath(); ctx.arc(cx+c*(R+9)-1.2,cy+s*(R+9)-1.4,1.2,0,7); ctx.fill(); }
+    // corpo
+    const g=ctx.createRadialGradient(cx-10,cy-12,4,cx,cy,R+4); g.addColorStop(0,"#8a4cc4"); g.addColorStop(.55,"#4a1f78"); g.addColorStop(1,"#220c3a");
+    ctx.fillStyle=g; ctx.strokeStyle="#12041f"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="rgba(255,255,255,.18)"; ctx.beginPath(); ctx.ellipse(cx-11,cy-17,9,5,-0.6,0,7); ctx.fill();
+    eyes(ctx,mood,46,70,cy-8,6.5,4.6,"#ff5a1f","#ff3b00",0.5); brow(ctx,mood,46,70,cy-15,7,"#14061f");
+    if(mood!=="blink"&&mood!=="ouch"&&mood!=="laugh"){ ctx.fillStyle="#ffe08a"; ctx.beginPath(); ctx.arc(47,cy-8,1.6,0,7); ctx.arc(69,cy-8,1.6,0,7); ctx.fill(); }
+    teethMouth(ctx,mood,cx,cy+6,26,"#1a0510","#fff5e6");
+    // símbolo de risco biológico na barriga
+    ctx.save(); ctx.strokeStyle="#ff9a1a"; ctx.shadowColor="#ff6a00"; ctx.shadowBlur=5; ctx.lineWidth=3;
+    for(let k=0;k<3;k++){ const a=k*Math.PI*2/3-Math.PI/2; ctx.beginPath(); ctx.arc(cx,cy+22,6.5,a+0.35,a+1.75); ctx.stroke(); }
+    ctx.fillStyle="#ff9a1a"; ctx.beginPath(); ctx.arc(cx,cy+22,1.7,0,7); ctx.fill(); ctx.restore();
+  });
+
+  // ── 2. Monstro do Phishing → «Pescador de Dados»
+  make("boss_monstro_phishing",(ctx,mood,arms)=>{
+    const up=arms==="wave", tip=up?[106,12]:[104,36];
+    // cana, fio, anzol e envelope com aviso
+    ctx.strokeStyle="#7a4b1d"; ctx.lineWidth=3.5; ctx.beginPath(); ctx.moveTo(84,74); ctx.lineTo(tip[0],tip[1]); ctx.stroke();
+    const hy=tip[1]+(up?34:26);
+    ctx.strokeStyle="rgba(235,240,255,.9)"; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(tip[0],tip[1]); ctx.lineTo(tip[0]-1,hy); ctx.stroke();
+    ctx.strokeStyle="#d9b24a"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(tip[0]-1,hy); ctx.lineTo(tip[0]-1,hy+5); ctx.arc(tip[0]-4,hy+5,3,0,Math.PI*0.9); ctx.stroke();
+    ctx.fillStyle="#fffaff"; ctx.strokeStyle="#333"; ctx.lineWidth=1.2; ctx.beginPath(); ctx.roundRect(tip[0]-15,hy+9,19,13,2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tip[0]-15,hy+9); ctx.lineTo(tip[0]-5.5,hy+16); ctx.lineTo(tip[0]+4,hy+9); ctx.stroke();
+    ctx.fillStyle="#e8352a"; ctx.beginPath(); ctx.arc(tip[0]+2,hy+20,4.6,0,7); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(tip[0]+1.2,hy+17.4,1.6,3.4); ctx.fillRect(tip[0]+1.2,hy+21.4,1.6,1.6);
+    // casaco comprido
+    const g=ctx.createLinearGradient(0,60,0,100); g.addColorStop(0,"#3a3a46"); g.addColorStop(1,"#14141a");
+    ctx.fillStyle=g; ctx.strokeStyle="#08080c"; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.moveTo(35,62); ctx.lineTo(81,62); ctx.lineTo(91,100); for(let i=0;i<5;i++){ ctx.lineTo(91-i*13.2-6.6,95); ctx.lineTo(91-(i+1)*13.2,100); } ctx.lineTo(25,100); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#5a3a14"; ctx.fillRect(34,76,48,6); ctx.fillStyle="#e0b030"; ctx.fillRect(53,75,10,8); ctx.strokeStyle="#6b4a10"; ctx.lineWidth=1; ctx.strokeRect(53,75,10,8);
+    ctx.fillStyle="#d9a82a"; ctx.fillRect(29,60,12,5);
+    // braços e punhos vermelhos
+    ctx.strokeStyle="#2c2c36"; ctx.lineWidth=8; ctx.beginPath(); ctx.moveTo(38,64); ctx.lineTo(up?24:30,up?52:80); ctx.moveTo(80,64); ctx.lineTo(86,74); ctx.stroke();
+    ctx.fillStyle="#c9272d"; ctx.beginPath(); ctx.arc(up?24:30,up?52:80,5.2,0,7); ctx.arc(86,74,5.2,0,7); ctx.fill();
+    ctx.fillStyle="#0c0c12"; ctx.beginPath(); ctx.arc(up?22:28,up?47:84,4.6,0,7); ctx.arc(87,70,4.6,0,7); ctx.fill();
+    // cabeça escura, olhos amarelos, lenço vermelho
+    ctx.fillStyle="#0c0c12"; ctx.beginPath(); ctx.ellipse(58,48,16,13,0,0,7); ctx.fill();
+    eyes(ctx,mood,51,65,46,4.6,3.2,"#ffd400","#ffb800",0.4);
+    ctx.fillStyle="#d4272d"; ctx.strokeStyle="#7a1015"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(42,52); ctx.quadraticCurveTo(58,50,74,52); ctx.lineTo(70,63); ctx.quadraticCurveTo(58,68,46,63); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(52,56); ctx.lineTo(60,64); ctx.moveTo(62,55); ctx.lineTo(66,60); ctx.stroke();
+    if(mood==="laugh"||mood==="ouch"){ ctx.fillStyle="#1a0508"; ctx.beginPath(); ctx.ellipse(58,60,5,mood==="laugh"?4:3,0,0,7); ctx.fill(); }
+    // chapéu de aba larga com fita dourada
+    ctx.fillStyle="#1d1d26"; ctx.strokeStyle="#000"; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.roundRect(41,8,34,26,6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#c99a2e"; ctx.fillRect(41.5,24,33,6);
+    ctx.fillStyle="#17171f"; ctx.beginPath(); ctx.ellipse(58,35,38,8,-0.04,0,7); ctx.fill(); ctx.stroke();
+    brow(ctx,mood,51,65,41,6,"#0c0c12");
+  });
+
+  // ── 3. Robô do Spam → «Hacker da Fortaleza» (chave interna: robo_spam)
+  make("boss_robo_spam",(ctx,mood,arms)=>{
+    const up=arms==="wave";
+    ctx.save(); ctx.shadowColor="#37d0ff"; ctx.shadowBlur=8;
+    const g=ctx.createLinearGradient(0,10,0,100); g.addColorStop(0,"#2f6bff"); g.addColorStop(1,"#0b2a9e");
+    ctx.fillStyle=g; ctx.strokeStyle="#06155c"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(58,8); ctx.bezierCurveTo(84,8,92,34,86,58); ctx.lineTo(94,100); ctx.lineTo(22,100); ctx.lineTo(30,58); ctx.bezierCurveTo(24,34,32,8,58,8); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.strokeStyle="rgba(120,200,255,.5)"; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(40,70); ctx.lineTo(34,98); ctx.moveTo(76,70); ctx.lineTo(82,98); ctx.stroke();
+    ctx.fillStyle="#05070f"; ctx.strokeStyle="#e8b830"; ctx.lineWidth=2.6; ctx.beginPath(); ctx.ellipse(58,40,18,17,0,0,7); ctx.fill(); ctx.stroke();
+    eyes(ctx,mood,50,66,40,5.8,3.6,"#c8f8ff","#37d0ff",0.4); brow(ctx,mood,50,66,34,6,"#c8f8ff");
+    if(mood==="laugh"){ ctx.strokeStyle="#c8f8ff"; ctx.lineWidth=2.4; ctx.beginPath(); ctx.arc(58,48,7,0.2,Math.PI-0.2); ctx.stroke(); }
+    // escudo com cadeado (esquerda)
+    const sy=up?44:58;
+    ctx.save(); ctx.shadowColor="#66e0ff"; ctx.shadowBlur=9; ctx.fillStyle="rgba(70,190,255,.45)"; ctx.strokeStyle="#7ae6ff"; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.moveTo(10,sy); ctx.lineTo(36,sy); ctx.lineTo(36,sy+16); ctx.quadraticCurveTo(36,sy+30,23,sy+36); ctx.quadraticCurveTo(10,sy+30,10,sy+16); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.fillStyle="#fff"; ctx.fillRect(18,sy+16,10,9); ctx.strokeStyle="#fff"; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(23,sy+16,4,Math.PI,0); ctx.stroke();
+    ctx.fillStyle="#0b2a9e"; ctx.fillRect(22,sy+19,2,4);
+    // portátil com caveira (direita)
+    const ly=up?46:60;
+    ctx.fillStyle="#0c1124"; ctx.strokeStyle="#37d0ff"; ctx.lineWidth=2.2; ctx.beginPath(); ctx.roundRect(76,ly,30,21,3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#37d0ff"; ctx.beginPath(); ctx.arc(91,ly+9,5,0,7); ctx.fill(); ctx.fillRect(88,ly+12,6,4);
+    ctx.fillStyle="#0c1124"; ctx.beginPath(); ctx.arc(89,ly+9,1.3,0,7); ctx.arc(93,ly+9,1.3,0,7); ctx.fill();
+    ctx.fillStyle="#1b2a55"; ctx.fillRect(73,ly+21,36,4);
+    ctx.fillStyle="#0a1030"; ctx.beginPath(); ctx.arc(75,ly+26,5,0,7); ctx.arc(106,ly+24,5,0,7); ctx.fill();
+  });
+
+  // ── 4. Espião das Sombras → «Manipulador da Verdade» (chave interna: espiao_sombras)
+  make("boss_espiao_sombras",(ctx,mood,arms)=>{
+    const up=arms==="wave", L=up?[20,52]:[26,76], Rr=up?[96,52]:[90,76];
+    // fios dos fantoches até aos jornais
+    ctx.strokeStyle="rgba(235,230,255,.85)"; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(L[0],L[1]); ctx.lineTo(12,86); ctx.moveTo(Rr[0],Rr[1]); ctx.lineTo(104,88);
+    ctx.moveTo(L[0]+2,L[1]+2); ctx.lineTo(42,80); ctx.moveTo(Rr[0]-2,Rr[1]+2); ctx.lineTo(74,80); ctx.stroke();
+    function paper(x,y,w,h,rot,big){ ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.fillStyle="#f4f1e8"; ctx.strokeStyle="#2b2b38"; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.roundRect(-w/2,-h/2,w,h,2); ctx.fill(); ctx.stroke();
+      if(big){ ctx.fillStyle="#d4272d"; ctx.font="900 12px sans-serif"; ctx.textAlign="center"; ctx.fillText("FAKE",0,-1); ctx.font="900 9px sans-serif"; ctx.fillText("NEWS",0,9); }
+      else{ ctx.fillStyle="#d4272d"; ctx.fillRect(-w/2+2,-h/2+2,w-4,4); ctx.fillStyle="#9aa3b5"; ctx.fillRect(-w/2+2,-h/2+9,w-4,3); ctx.fillRect(-w/2+2,-h/2+14,w-8,3); } ctx.restore(); }
+    paper(12,92,16,20,-0.2,false); paper(104,94,16,20,0.2,false);
+    // fato, camisa e gravata vermelha
+    ctx.fillStyle="#181822"; ctx.strokeStyle="#08080c"; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.moveTo(30,64); ctx.quadraticCurveTo(58,55,86,64); ctx.lineTo(92,100); ctx.lineTo(24,100); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#f4f4f8"; ctx.beginPath(); ctx.moveTo(50,62); ctx.lineTo(66,62); ctx.lineTo(58,84); ctx.closePath(); ctx.fill();
+    ctx.fillStyle="#d4272d"; ctx.beginPath(); ctx.moveTo(55,64); ctx.lineTo(61,64); ctx.lineTo(63,78); ctx.lineTo(58,86); ctx.lineTo(53,78); ctx.closePath(); ctx.fill();
+    // braços + mãos
+    ctx.strokeStyle="#181822"; ctx.lineWidth=8; ctx.beginPath(); ctx.moveTo(34,66); ctx.lineTo(L[0],L[1]); ctx.moveTo(82,66); ctx.lineTo(Rr[0],Rr[1]); ctx.stroke();
+    ctx.fillStyle="#e2c2a8"; ctx.strokeStyle="#6b4a3a"; ctx.lineWidth=1.2;
+    [L,Rr].forEach(h=>{ ctx.beginPath(); ctx.arc(h[0],h[1],5.2,0,7); ctx.fill(); ctx.stroke(); });
+    // papel grande «FAKE NEWS» à frente
+    paper(58,93,40,24,0,true);
+    // cabeça, olhos vermelhos, sorriso
+    ctx.fillStyle="#3b1519"; ctx.beginPath(); ctx.ellipse(58,46,17,15,0,0,7); ctx.fill();
+    eyes(ctx,mood,50,66,44,5,3.4,"#ff3030","#ff1a1a",0.4); brow(ctx,mood,50,66,38,6,"#14040a");
+    ctx.fillStyle="#fff"; ctx.strokeStyle="#200"; ctx.lineWidth=1.6;
+    if(mood==="sad"){ ctx.strokeStyle="#ff9090"; ctx.lineWidth=2.6; ctx.beginPath(); ctx.arc(58,60,7,Math.PI*1.2,Math.PI*1.8); ctx.stroke(); }
+    else if(mood==="ouch"){ ctx.fillStyle="#1a0508"; ctx.beginPath(); ctx.ellipse(58,57,4,5,0,0,7); ctx.fill(); }
+    else{ const o=mood==="laugh"?9:mood==="angry"?6:4; ctx.beginPath(); ctx.moveTo(45,53); ctx.quadraticCurveTo(58,53+o+4,71,53); ctx.quadraticCurveTo(58,53+o*0.3,45,53); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.lineWidth=1; ctx.beginPath(); for(let x=50;x<=66;x+=4){ ctx.moveTo(x,54); ctx.lineTo(x,54+o*0.5+1.5); } ctx.stroke(); }
+    // cartola com fita vermelha
+    ctx.fillStyle="#121218"; ctx.strokeStyle="#000"; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.roundRect(41,3,34,28,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle="#d4272d"; ctx.fillRect(41.5,21,33,6);
+    ctx.fillStyle="#1a1a22"; ctx.beginPath(); ctx.ellipse(58,32,27,6,0,0,7); ctx.fill(); ctx.stroke();
+  });
+
+  // jornal «FAKE» atirado pelo Manipulador (substitui a orbe sombria)
+  if(!scene.textures.exists("boss_proj_fakenews")){
+    const tex=scene.textures.createCanvas("boss_proj_fakenews",30,30), ctx=tex.getContext();
+    ctx.save(); ctx.translate(15,15); ctx.rotate(-0.15);
+    ctx.shadowColor="rgba(168,85,247,.8)"; ctx.shadowBlur=6;
+    ctx.fillStyle="#f7f4ea"; ctx.strokeStyle="#2b2b38"; ctx.lineWidth=1.6; ctx.beginPath(); ctx.roundRect(-11,-12,22,24,2); ctx.fill(); ctx.stroke(); ctx.shadowBlur=0;
+    ctx.fillStyle="#d4272d"; ctx.fillRect(-9.5,-10.5,19,6.5);
+    ctx.fillStyle="#fff"; ctx.fillRect(-6,-9,12,1.6); ctx.fillStyle="#9aa3b5"; ctx.fillRect(-9,-1,18,2.2); ctx.fillRect(-9,4,18,2.2); ctx.fillRect(-9,8.5,11,2);
+    ctx.restore(); tex.refresh();
+  }
+}
+
 function makeBossTextures(scene){
+  makeRedesignedBosses(scene);
   const S = 116, C = 58;
 
   function bossShadow(ctx){

@@ -5,7 +5,8 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
 
 ## O jogo
 
-- **v106:** estética «Hora do Código» nos menus e janelas (fundo creme com pontinhos, cartões brancos com contorno escuro e sombra de botão); só mudou o `dia-crianca.css`.
+- **v108:** bosses redesenhados ao estilo da referência — Vírus Malicioso e Pescador de Dados (ex-Monstro do Phishing) melhorados; Hacker da Fortaleza e Manipulador da Verdade (Fake News) no lugar do Robô do Spam e do Espião das Sombras (chaves internas `robo_spam`/`espiao_sombras` mantidas).
+- **v107:** estética «Hora do Código» nos menus e janelas (fundo creme com pontinhos, cartões brancos com contorno escuro e sombra de botão); só mudou o `dia-crianca.css` (v107: o Mapa mantém o fundo creme com pontinhos e as imagens dos mundos nos cartões).
 - **v105:** o Mapa ficou mais compacto em janelas entre 521 e 820 px de altura (os 5 cartões cabem sem cortar o último); o número da versão já não aparece no ecrã inicial (a etiqueta `#versionTag` continua no HTML, escondida, porque os testes em `_dev/` leem-na); o Mapa ganhou «🏠 Menu principal» (sempre disponível, mesmo antes do 1.º nível; pede confirmação se houver um nível em curso) e «🚪 Sair do jogo»; «Fechar» só fecha o mapa — e, se o mapa abriu logo depois de «Nova Aventura», volta ao menu principal em vez de deixar o ecrã escuro.
 - **20 níveis em 4 mundos**, cada um terminado por um boss temático:
 
@@ -13,8 +14,8 @@ Sem *build step*: os ficheiros publicam-se tal como estão (GitHub Pages).
   | --- | --- | --- |
   | Reino dos Fundamentos | 1–5 | Vírus Gigante |
   | Vale da Comunicação Segura | 6–9 | Monstro do Phishing |
-  | Fortaleza da Proteção Digital | 10–15 | Robô do Spam |
-  | Cidade da Identidade Digital | 16–20 | Espião das Sombras |
+  | Fortaleza da Proteção Digital | 10–15 | Hacker da Fortaleza |
+  | Cidade da Identidade Digital | 16–20 | Manipulador da Verdade |
 
 - **Quiz** no fim de cada nível (e outro depois de vencer cada boss). Estrelas por nível (até 3),
   artefactos, conquistas, mapa da aventura e certificado.
@@ -114,7 +115,7 @@ e abrir <http://localhost:8000>.
 ## Versões e cache
 
 Todos os ficheiros carregados pelo `index.html` e todos os `import` internos levam **a mesma**
-string `?v=…` (atualmente `20261109v106`). Tem de ser sempre igual em todo o lado: o mesmo módulo
+string `?v=…` (atualmente `20261110v108`). Tem de ser sempre igual em todo o lado: o mesmo módulo
 importado com strings diferentes é carregado duas vezes, como duas instâncias separadas, e os
 browsers que já têm o jogo podem ficar com uma mistura de ficheiros velhos e novos.
 
