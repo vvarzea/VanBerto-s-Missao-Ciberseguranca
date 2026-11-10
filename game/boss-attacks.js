@@ -7,11 +7,11 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { bossHitPlayer } from "./boss-combat.js?v=20261109v107";
-import { showFloat } from "./feedback.js?v=20261109v107";
-import { bossMiniViruses, bossState, bossTimers, inBossFight, invuln, itemsGroup, malwareGroup, platforms, player, sceneRef, set_bossMiniViruses, set_bossPopupAnchors } from "./state.js?v=20261109v107";
-import { _drawHazard } from "./world.js?v=20261109v107";
-import { ensureAudio, beep } from "../audio.js?v=20261109v107";
+import { bossHitPlayer } from "./boss-combat.js?v=20261110v108";
+import { showFloat } from "./feedback.js?v=20261110v108";
+import { bossMiniViruses, bossState, bossTimers, inBossFight, invuln, itemsGroup, malwareGroup, platforms, player, sceneRef, set_bossMiniViruses, set_bossPopupAnchors } from "./state.js?v=20261110v108";
+import { _drawHazard } from "./world.js?v=20261110v108";
+import { ensureAudio, beep } from "../audio.js?v=20261110v108";
 
 // ---- Arena contaminada (Vírus Gigante): zonas tóxicas + vírus pequenos ----
 // 100% aditivo e opt-in via def.contaminatedArena — não afeta bosses normais.
@@ -581,7 +581,7 @@ export function triggerBossBlackout(scene) {
   g.fillRect(W - margin, 0, margin, H);
   scene.tweens.add({ targets: g, alpha: 1, duration: 260, ease: "Sine.easeOut" });
   const b = bossState.sprite;
-  showFloat(scene, b ? b.x : bossState.baseX, (b ? b.y : bossState.baseY) - 74, "🌑 Não vais ver o que aí vem!", "#c9a0ff");
+  showFloat(scene, b ? b.x : bossState.baseX, (b ? b.y : bossState.baseY) - 74, "📰 Não vais saber o que é verdade!", "#c9a0ff");
   ensureAudio(); beep({ freq: 140, dur: 0.22, type: "sine", vol: 0.05, slideTo: 60 });
   scene.time.delayedCall(2300, () => {
     scene.tweens.add({ targets: g, alpha: 0, duration: 400, ease: "Sine.easeIn", onComplete: () => { try{ g.destroy(); }catch{} } });

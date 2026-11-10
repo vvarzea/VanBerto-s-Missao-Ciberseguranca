@@ -1,3 +1,5 @@
+// NOTA (v108): as chaves internas "robo_spam" e "espiao_sombras" foram mantidas (guardados, testes e lógica de combate),
+// mas o 3.º boss é agora o «Hacker da Fortaleza» e o 4.º o «Manipulador da Verdade» (comentários antigos podem falar do Robô do Spam/Espião).
 // ===== Definições dos Bosses temáticos — Fase 3 =====
 // Ficheiro puramente de dados — zero acoplamento ao motor do jogo.
 // "afterLevel" é o índice (0-based) do nível DEPOIS do qual o boss aparece,
@@ -357,15 +359,15 @@ export const BOSSES = [
                               // Digital" (Níveis 16-20) E o jogo inteiro. Ao ser derrotado,
                               // nextLevel() já não tem mais níveis a seguir (ver next>=LEVELS.length
                               // em goToNextLevel) e mostra o ecrã de vitória final.
-    name: "Espião das Sombras",
-    emoji: "🌑",
+    name: "Manipulador da Verdade",
+    emoji: "📰",
     // Cor alinhada com o redesenho "feiticeiro-espião" (ver makeBossTextures
     // em textures.js, secção 3) — antes era um cinzento-arroxeado neutro
     // (0x3a3a5c) da capa lisa antiga; agora é o mesmo magenta do brilho da
     // cara/garras/capuz do novo boss. Mesma família visual do Monstro do
     // Phishing (que usa ciano), só que este é magenta — reforça que os dois
     // partilham a mesma "receita" de design.
-    color: 0xff4fe6,
+    color: 0x8b3dff,
     // Mesma conversão para stompBoss — mantém o teletransporte entre 3
     // pontos (agora sempre à altura do chão, ver bossY/doBossTeleport em
     // dia-crianca.js) como a sua marca própria, mais difícil de apanhar
@@ -394,8 +396,8 @@ export const BOSSES = [
     patrolSpeed: 190,
     hopEvery: 2200,
     qmarkEvery: 1600,          // 2000→1600: pedido "demoram muito a atirar" (ver mesmo ajuste nos outros 2 bosses "normais", em monstro_phishing e robo_spam)
-    orbTexture: "boss_proj_shadow", // orbe sombrio próprio — antes reutilizava a bola "?" do Monstro só retintada, sem sentido temático para um guardião das sombras
-    orbTint: 0x6a3fb5,
+    orbTexture: "boss_proj_fakenews", // orbe sombrio próprio — antes reutilizava a bola "?" do Monstro só retintada, sem sentido temático para um guardião das sombras
+    orbTint: 0xffffff,
     // Personalidade do arremesso (ver doBossRollQmark em dia-crianca.js):
     // a orbe parte mais devagar que os outros 3, mas vai-se "puxando"
     // ligeiramente atrás do VanBerto's nos primeiros instantes de voo —
@@ -410,7 +412,7 @@ export const BOSSES = [
     finalStandBurst: true,
     // Falas próprias de fúria (nova) — ver comentário completo no Monstro
     // do Phishing (data-bosses.js, boss monstro_phishing).
-    rageLines: { angry: "As sombras ficam mais fundas!", desperate: "A tua privacidade... está a vencer-me!" },
+    rageLines: { angry: "A verdade é o que eu disser!", desperate: "As minhas notícias falsas... desmascaradas!" },
     // extraTeleportOnRage removido (ver comentário completo junto a
     // movementType, acima) — dependia do teletransporte que fazia este
     // boss desaparecer; sem ele, a fúria só fica mais difícil pela
@@ -423,7 +425,7 @@ export const BOSSES = [
     // outros bosses "stomp" não têm nenhum efeito de ecrã na sua fúria.
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
-    stompLabel: "👁️ Exposições",
+    stompLabel: "📰 Boatos",
     // Reforço do chefe no Extremo — ver comentário completo junto ao
     // Monstro do Phishing (data-bosses.js, boss monstro_phishing).
     extremoReinforcement: true,
@@ -444,15 +446,15 @@ export const BOSSES = [
     // abaixo) — mesma lógica dos outros bosses (ver comentário no Monstro
     // da Ignorância).
     signX: 220,
-    intro: "Nas sombras, ninguém vê os teus dados a desaparecer!",
-    defeatLine: "A tua privacidade... venceu-me!",
-    quizTheme: "direitos_digitais", // CORRIGIDO: estava "contacto_desconhecidos" (tema do
+    intro: "Acredita em tudo o que lês — eu trato do resto!",
+    defeatLine: "A verdade... venceu-me!",
+    quizTheme: "fake_news", // CORRIGIDO: estava "contacto_desconhecidos" (tema do
                               // Nível 19), por isso a pergunta do boss não coincidia com a
                               // pergunta que já tinha fechado o Nível 20 — pareciam duas
                               // perguntas a mais/desencontradas em vez de reforçarem o mesmo tema.
     hp: 3,                     // 4→3: agora são sempre 3 saltos na cabeça
     // themeIdx próprio removido — ver comentário igual no boss do phishing.
-    rightRecovered: { emoji: "🔐", name: "Privacidade Protegida" },
+    rightRecovered: { emoji: "🔎", name: "Informação Verdadeira" },
     // Arena do tamanho do ecrã, tal como o Monstro — agora com 3
     // plataformas e movimento de patrulha (ver comentário completo junto
     // a movementType, acima), em vez do teletransporte antigo.
@@ -489,9 +491,9 @@ export const BOSSES = [
     id: "robo_spam",
     afterLevel: 14,          // Fecha o mundo "Fortaleza da Proteção Digital" (Níveis 10-15 —
                              // dispositivos, família, wi-fi, backups, acessibilidade, spam).
-    name: "Robô do Spam",
-    emoji: "📮",
-    color: 0xc7291f,
+    name: "Hacker da Fortaleza",
+    emoji: "💻",
+    color: 0x2f7dff,
     // Mesma conversão para stompBoss — mantém a patrulha rápida (sensação
     // industrial) mas larga as plataformas móveis e a arena poluída, para
     // caber num único ecrã sem scroll, tal como os outros 3 bosses.
@@ -507,7 +509,7 @@ export const BOSSES = [
     finalStandBurst: true,
     // Falas próprias de fúria (nova) — ver comentário completo no Monstro
     // do Phishing.
-    rageLines: { angry: "Mais mensagens! Mais spam!", desperate: "Os meus circuitos... sobrecarregados!" },
+    rageLines: { angry: "Vou invadir tudo!", desperate: "A minha invasão... está a falhar!" },
     // Rótulo temático do contador de saltos no HUD (nova, ver mesmo
     // comentário no Monstro do Phishing).
     stompLabel: "📛 Bloqueios",
@@ -591,12 +593,12 @@ export const BOSSES = [
     // abaixo) — mesma lógica dos outros bosses (ver comentário no Monstro
     // da Ignorância).
     signX: 200,
-    intro: "Vou encher a tua caixa de correio para sempre!",
-    defeatLine: "As minhas mensagens... foram todas bloqueadas!",
-    quizTheme: "spam_compras",
+    intro: "A tua fortaleza digital vai cair! Vou invadir os teus dispositivos!",
+    defeatLine: "As minhas invasões... foram todas bloqueadas!",
+    quizTheme: "dispositivos",
     hp: 3,                     // 5→3: agora são sempre 3 saltos na cabeça
     // themeIdx próprio removido — ver comentário igual no boss do phishing.
-    rightRecovered: { emoji: "📭", name: "Caixa de Correio Limpa" },
+    rightRecovered: { emoji: "🏰", name: "Fortaleza Segura" },
     // Arena do tamanho do ecrã, tal como o Monstro.
     arena: {
       worldW: 960,
@@ -620,9 +622,9 @@ export const BOSSES = [
       // 685-835), continuando a aterrar no chão principal.
       playerStartX: 400,
       decor: [
-        { emoji:"📧", x:90,  y:140 },
-        { emoji:"⚙️", x:480, y:110 },
-        { emoji:"📩", x:870, y:160 }
+        { emoji:"💻", x:90,  y:140 },
+        { emoji:"🔓", x:480, y:110 },
+        { emoji:"👾", x:870, y:160 }
       ]
     }
   }

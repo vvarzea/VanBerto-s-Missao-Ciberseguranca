@@ -7,18 +7,18 @@
  * As variáveis de estado vivem em state.js; aqui alteram-se com set_<nome>().
  *************************************************/
 
-import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20261109v107";
-import { resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261109v107";
-import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20261109v107";
-import { globalStats, saveGlobalStats } from "./stats.js?v=20261109v107";
-import { loadNamespace, saveNamespace } from "../storage.js?v=20261109v107";
-import { resetAchievements } from "../achievements.js?v=20261109v107";
-import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20261109v107";
-import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20261109v107";
-import { ensureAudio, beep, SFX } from "../audio.js?v=20261109v107";
-import { LEVELS, THEMES } from "../data-levels.js?v=20261109v107";
-import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261109v107";
-import { BOSSES } from "../data-bosses.js?v=20261109v107";
+import { isLastLevelOfRegion, saveMapProgress } from "./map.js?v=20261110v108";
+import { resetQuizStats, usedQuizByLevel, usedQuizByTheme } from "./quiz.js?v=20261110v108";
+import { itemsTotal, mapProgress, score, scoreText, set_mapProgress, set_score } from "./state.js?v=20261110v108";
+import { globalStats, saveGlobalStats } from "./stats.js?v=20261110v108";
+import { loadNamespace, saveNamespace } from "../storage.js?v=20261110v108";
+import { resetAchievements } from "../achievements.js?v=20261110v108";
+import { resetAllStars, getStarRecord, starsForLevel } from "../stars.js?v=20261110v108";
+import { ARTEFACTS, ARTEFACT_SETS, SET_REACTIONS } from "../data-progression.js?v=20261110v108";
+import { ensureAudio, beep, SFX } from "../audio.js?v=20261110v108";
+import { LEVELS, THEMES } from "../data-levels.js?v=20261110v108";
+import { QUIZ_ARTICLE, HISTORY } from "../data-quiz.js?v=20261110v108";
+import { BOSSES } from "../data-bosses.js?v=20261110v108";
 
 // Popup curto "Direito recuperado!" — mostrado ao concluir um nível
 // =====================================================
